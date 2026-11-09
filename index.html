@@ -66,7 +66,8 @@ table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
 .en{position:relative;text-align:start;border-radius:6px;border-inline-start:3px solid var(--sc,#888);background:var(--sb,#f4f4f4);padding:.1em .3em;margin:.12em 0;cursor:grab}
 .en:hover{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
 .en b{display:block;font-size:1.02em;line-height:1.15;color:#000}.en i{display:block;font-style:normal;font-size:.8em;color:#333}
-.en i.un{color:#b42318;font-style:italic}.en small{display:block;font-size:.7em;color:#6b4e00;font-weight:700}
+.en i.un{color:#b42318;font-style:italic}.si{display:inline-block;margin-inline-end:.28em;font-size:1.15em;line-height:1;vertical-align:-.12em}img.si{height:1.3em;width:1.3em;object-fit:contain;border-radius:3px}
+.en small{display:block;font-size:.7em;color:#6b4e00;font-weight:700}
 .en.bad{box-shadow:inset 0 0 0 2px var(--bad);background:#fff0f0}.en.wn{box-shadow:inset 0 0 0 2px #d18a00;background:#fff7e6}
 .cb{position:absolute;top:1px;inset-inline-end:2px;width:15px;height:15px;border-radius:50%;font:700 10px/15px Poppins,sans-serif;text-align:center;color:#fff;cursor:pointer;text-decoration:none}
 .cb.e{background:var(--bad)}.cb.w{background:var(--amber);color:#222}
@@ -99,19 +100,20 @@ table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
 #pa .print-brand small,#pa .print-title small{display:block;font-size:10px;color:#394b64;font-weight:400}
 #pa .print-title{text-align:right}#pa .print-title>b{display:block;font-size:1.9em;color:#1f3a68}
 #pa .print-foot{display:flex;justify-content:space-between;border-top:1px solid #9aa8b8;margin-top:7px;padding-top:4px;font-size:.8em;color:#394b64}
-@media print{@page{size:A4 landscape;margin:7mm 8mm 9mm 8mm}body>*:not(#pa){display:none!important}#pa{display:block}#pa .sheet{page-break-after:always}#pa .sheet:last-child{page-break-after:auto}body{background:#fff}}
+@media print{html,body{width:auto}#pa .sheet{overflow:hidden;max-width:100%}@page{size:A4 landscape;margin:7mm 8mm 9mm 8mm}body>*:not(#pa){display:none!important}#pa{display:block}#pa .sheet{page-break-after:always}#pa .sheet:last-child{page-break-after:auto}body{background:#fff}}
 @media (max-width:700px){main{padding:10px}header .ti{order:3;flex-basis:100%}}
 </style>
 
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
+window.APP_BASE = new URL('./', location.href).href;      /* folder the app lives in (works at the site root or inside a sub-folder) */
 window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if (q) localStorage.setItem('tok', q); window.TOK = q || localStorage.getItem('tok') || ''; } catch (e) { }
 /* installed app: start from an address that carries the token, so the installed icon opens straight into the person's own timetable */
 (function () {
   if (!window.TOK) return;
   try {
-    var o = location.origin + '/', m = { id: o, name: 'VIA Timetable', short_name: 'Timetable', start_url: o + '?k=' + encodeURIComponent(window.TOK), scope: o, display: 'standalone', background_color: '#173B5E', theme_color: '#173B5E',
+    var o = window.APP_BASE, m = { id: o, name: 'VIA Timetable', short_name: 'Timetable', start_url: o + '?k=' + encodeURIComponent(window.TOK), scope: o, display: 'standalone', background_color: '#173B5E', theme_color: '#173B5E',
       icons: [{ src: o + 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: o + 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: o + 'icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }] };
     document.getElementById('mf').href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
   } catch (e) { }
@@ -138,7 +140,7 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
       post(fn, args).then(function (j) {
         if (j && j.ok) {
           var d = j.data;
-          if (fn == 'api_users' && d && (!d.base || /script[.]google[.]com/.test(d.base))) d.base = location.origin + '/';
+          if (fn == 'api_users' && d && (!d.base || /script[.]google[.]com/.test(d.base))) d.base = window.APP_BASE;
           if (!QUIET[fn]) setTimeout(function () { post('api_flushPush', []).catch(function () { }) }, 400);
           if (ok) ok(d);
         } else {
@@ -253,13 +255,13 @@ function srv(fn, ...a) {
 
 /* ---------- derived indexes (rebuilt after every server answer) ---------- */
 function index() {
-  I = { days: S.set.days.map(Number).sort((a, b) => a - b), sch: {}, cs: {}, tn: {}, lang: {}, col: {}, cell: {}, byId: {}, cf: {}, byT: {}, ign: new Set(S.ignored) };
+  I = { days: S.set.days.map(Number).sort((a, b) => a - b), sch: {}, cs: {}, tn: {}, lang: {}, col: {}, ico: {}, cell: {}, byId: {}, cf: {}, byT: {}, ign: new Set(S.ignored) };
   S.sch.forEach(r => { const g = (I.sch[r[0]] = I.sch[r[0]] || {}); (g[r[1]] = g[r[1]] || []).push({ k: +r[2], label: r[3], s: toMin(r[4]), e: toMin(r[5]), brk: /^y/i.test(r[6]) }) });
   for (const g in I.sch) for (const d in I.sch[g]) I.sch[g][d].sort((a, b) => a.k - b.k);
   S.cls.forEach(r => I.cs[r[0]] = r[1]);
   I.classes = Object.keys(I.cs).sort(natural);
   S.tch.forEach(r => { I.tn[r[0]] = r[1]; if (r[4]) I.lang[r[0]] = r[4] });
-  S.subj.forEach(r => { if (r[1]) I.col[lc(r[0])] = r[1] });
+  S.subj.forEach(r => { if (r[1]) I.col[lc(r[0])] = r[1]; if (r[2]) I.ico[lc(r[0])] = r[2] });
   S.lessons.forEach(l => {
     l.sl = slotOf(l.c, l.d, l.p);
     I.byId[l.id] = l; const k = l.c + '|' + l.d + '|' + l.p; (I.cell[k] = I.cell[k] || []).push(l);
@@ -280,6 +282,8 @@ function slotsOf(g, d, W) {                // slot k spans until the next slot n
   const a = (I.sch[g] || {})[d] || [];
   return a.map((x, i) => ({ k: x.k, x, sp: (i + 1 < a.length ? a[i + 1].k : W + 1) - x.k }));
 }
+/* subject picture: an emoji from the library, or a small uploaded image (see Icons.html) */
+const subjIco = s => { const v = I.ico[lc(s)]; return !v ? '' : /^data:image\//.test(v) ? `<img class="si" src="${esc(v)}" alt="">` : `<span class="si">${esc(v)}</span>` };
 function subjCol(s) {                      // colour per subject: set in Subjects, else a stable hash colour
   const c = I.col[lc(s)];
   if (c) return { c, b: c + '33' };
@@ -325,7 +329,7 @@ function enH(l, mode) {
   const cf = PRINT ? [] : (I.cf[l.id] || []), sev = cf.some(x => x.sev == 'error') ? 'e' : cf.length ? 'w' : '', col = subjCol(l.s);
   const badge = sev ? `<a class="cb ${sev}" data-cf="${esc(cf[0].id)}" title="${esc(cf.map(cmsg).join('\n'))}">!</a>` : '';
   const tch = l.t.length ? l.t.map(id => `<i>${esc(short(tname(id)))}</i>`).join('') : `<i class="un">${t('Teacher unassigned')}</i>`;
-  const body = mode == 'o' ? `<b>${esc(l.c)}</b><i>${esc(l.s)}</i>` : `<b>${esc(l.s)}</b>${tch}`;
+  const body = mode == 'o' ? `<b>${esc(l.c)}</b><i>${subjIco(l.s)}${esc(l.s)}</i>` : `<b>${subjIco(l.s)}${esc(l.s)}</b>${tch}`;
   return `<div class="en ${sev == 'e' ? 'bad' : sev == 'w' ? 'wn' : ''}" ${PRINT ? '' : 'draggable="true"'} data-id="${l.id}" data-c="${l.c}" data-d="${l.d}" data-p="${l.p}" style="--sc:${col.c};--sb:${col.b}">${badge}${body}${l.g ? `<small>${esc(l.g)}</small>` : ''}${l.l ? `<small class="lk">${ic('lock')}</small>` : ''}</div>`;
 }
 function cellEntries(c, d, p) {
@@ -505,10 +509,16 @@ function sheet(title, sub, body) {
   const issued = fmtD(new Date(S.week.issued + 'T00:00:00'));
   return `<div class="sheet"><div class="print-head"><div class="print-brand"><img src="${LOGO.n}" alt=""><div><b>${esc(S.set.school)}</b><small>${esc(S.set.division)}</small></div></div><div class="print-title"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<small>${t('Week')}: ${weekTxt()} · ${t('Issued')}: ${issued}</small></div></div>${body}<div class="print-foot"><span>${esc(S.set.school)} – ${esc(S.set.division)}</span><span>${t('Week')}: ${weekTxt()} · ${t('Issued')}: ${issued}</span></div></div>`;
 }
-function printHtml(h) {                     // fit the font so each sheet is exactly one A4 landscape page
-  const pa = $('#pa'); pa.innerHTML = h; const o = pa.style.cssText;
-  pa.style.cssText = 'display:block;position:absolute;left:-99999px;top:0;width:1062px';
-  pa.querySelectorAll('.sheet').forEach(s => { let lo = 6, hi = 15; for (let i = 0; i < 8; i++) { const m = (lo + hi) / 2; s.style.setProperty('--fs', m + 'px'); if (s.offsetHeight <= 712) lo = m; else hi = m } s.style.setProperty('--fs', lo.toFixed(2) + 'px') });
+function printHtml(h) {                     // every sheet is fitted to exactly ONE A4 landscape page: font first, then a final zoom if a wide table is still too big
+  const pa = $('#pa'); pa.innerHTML = h; const o = pa.style.cssText, W = 1062, H = 712;
+  pa.style.cssText = 'display:block;position:absolute;left:-99999px;top:0;width:' + W + 'px';
+  pa.querySelectorAll('.sheet').forEach(s => {
+    const fits = () => s.offsetHeight <= H && s.scrollWidth <= W + 1;
+    s.style.zoom = ''; let lo = 3, hi = 15;
+    for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; s.style.setProperty('--fs', m + 'px'); if (fits()) lo = m; else hi = m }
+    s.style.setProperty('--fs', lo.toFixed(2) + 'px');
+    if (!fits()) s.style.zoom = Math.min(W / s.scrollWidth, H / s.offsetHeight, 1).toFixed(3);
+  });
   pa.style.cssText = o; window.print();
 }
 function buildPrint(kind, ids) {
@@ -552,14 +562,16 @@ function doPrint() {
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
 const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
-const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0]]), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
+const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
+const subjIco2 = v => !v ? '' : /^data:image\//.test(v) ? `<img class="si" src="${esc(v)}" alt="">` : `<span class="si">${esc(v)}</span>`;
 function edTable(n, cols, o = {}) {
   const rows = ed(n);
   const cell = (r, ri) => cols.map(([ci, , ty, op]) => {
     const v = r[ci] == null ? '' : r[ci], a = `data-e="${n}|${ri}|${ci}"`;
     if (ty == 'select') { const L = typeof op == 'function' ? op() : op; return `<td><select ${a}><option value=""></option>${opts(L, v)}</select></td>` }
+    if (ty == 'icon') { const sv = subjIco2(v); return `<td><button class="b" type="button" data-ico="${n}|${ri}|${ci}">${sv || '＋'} ${v ? '' : t('Choose')}</button>${v ? `<button class="b" type="button" data-icx="${n}|${ri}|${ci}" title="${t('Remove')}">×</button>` : ''}</td>` }
     if (ty == 'color') return `<td><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(v) ? v : '#888888'}"></td>`;
     return `<td><input ${a} value="${esc(v)}"${ty == 'num' ? ' inputmode="numeric"' : ''}${ty == 'time' ? ' placeholder="08:00"' : ''}></td>`;
   }).join('');
@@ -587,7 +599,7 @@ function sClasses() {
   return `<div class="card"><p class="msg">${t('A class uses the schedule of its stage. Give one class its own schedule name to give it its own periods.')}</p>${edTable('Classes', [[0, 'Class', 'text'], [1, 'Schedule', 'select', () => schedNames().map(x => [x, x])]], { title: 'Classes' })}</div>
 <div class="card"><h3>${t('Rooms')}</h3>${edTable('Rooms', [[0, 'Room ID', 'text'], [1, 'Name', 'text']], { title: 'Rooms' })}</div>`;
 }
-const sSubjects = () => `<div class="card"><p class="msg">${t('Renaming a subject updates every lesson, assignment and requirement.')}</p>${edTable('Subjects', [[0, 'Subject', 'text'], [1, 'Color', 'color']], { title: 'Subjects' })}</div>`;
+const sSubjects = () => `<div class="card"><p class="msg">${t('Renaming a subject updates every lesson, assignment and requirement.')}</p>${edTable('Subjects', [[0, 'Subject', 'text'], [1, 'Color', 'color'], [3, 'Picture', 'icon']], { title: 'Subjects' })}</div>`;
 const sTeachers = () => `<div class="card">${edTable('Teachers', [[0, 'Teacher ID', 'text'], [1, 'Name', 'text'], [2, 'Max per day', 'num'], [3, 'Max per week', 'num'], [4, 'Language', 'select', [['French', 'French'], ['German', 'German'], ['Arabic', 'Arabic'], ['English', 'English']]]], { title: 'Teachers' })}</div>
 <div class="card"><h3>${t('Unavailable and locked times')}</h3>${edTable('Blocked', [[0, 'Teacher', 'select', teacherOpts], [1, 'Day', 'select', dayOpts], [2, 'Start', 'time'], [3, 'End', 'time'], [4, 'Note', 'text'], [5, 'Kind', 'select', [['unavailable', t('unavailable')], ['locked', t('locked')]]]], { title: 'Unavailable times' })}</div>`;
 const sAssign = () => `<div class="bar" style="position:static"><label>${t('Class')}</label><select data-af><option value="">${t('All')}</option>${opts(I.classes.map(c => [c, c]), AF)}</select></div><div class="card">${edTable('Assignments', [[0, 'Class', 'select', () => I.classes.map(c => [c, c])], [1, 'Subject', 'select', () => S.subj.map(r => [r[0], r[0]])], [2, 'Teacher', 'select', teacherOpts], [4, 'Primary', 'select', [['Yes', 'Yes'], ['', '']]], [5, 'Active', 'select', [['Yes', 'Yes'], ['No', 'No']]]], { filter: r => !AF || r[0] == AF, title: 'Assignments' })}</div>`;
@@ -610,7 +622,7 @@ async function saveTbl(n) {
   let rows = ed(n).filter(r => String(r[n == 'Shared' ? 1 : 0]).trim());
   if (n == 'Subjects') {                                         // rename first so lessons follow the new name
     for (const r of rows) if (r[2] && lc(r[2]) != lc(r[0]) && String(r[0]).trim()) S = await srv('api_renameSubject', r[2], r[0]);
-    rows = rows.map(r => [r[0], r[1]]);
+    rows = rows.map(r => [r[0], r[1], r[3] || '']);
   }
   if (n == 'Assignments') rows = rows.map(r => { r = r.slice(); r[3] = I.tn[r[2]] || r[3]; return r });
   S = await srv('api_saveTable', n, rows); ED = {}; index(); toast(t('Saved')); render();
@@ -661,7 +673,7 @@ function exportXlsx() {
 }
 
 /* ===================== 6. APP: render, events, init ===================== */
-const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', ''], Teachers: () => ['', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
+const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', ''], Teachers: () => ['', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
 const TABS = [['tt', 'Timetables', 'grid'], ['cf', 'Conflicts', 'alert'], ['rp', 'Reports & Print', 'print'], ['st', 'Settings', 'gear']];
 function render() {
   const k = S.conflicts.counts;
@@ -1093,17 +1105,26 @@ render = function () {
 .swal2-popup{font-family:inherit!important;border-radius:18px!important}
 .swal2-container{z-index:2000!important}
 .swal2-html-container ul{margin:6px 0;padding-inline-start:20px}
-#ux-undo{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2500;display:none;align-items:center;gap:10px;background:var(--sf);color:var(--ink);border:1px solid var(--ln);border-radius:999px;padding:6px 8px 6px 14px;box-shadow:0 6px 24px rgba(0,0,0,.28);max-width:calc(100vw - 20px);font-size:14px}
-#ux-undo.on{display:flex}
+#ux-undo{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2500;display:none;max-width:calc(100vw - 20px)}
+#ux-undo.on{display:block}
+#ux-undo .bar{display:flex;align-items:center;gap:10px;background:var(--sf);color:var(--ink);border:1px solid var(--ln);border-radius:999px;padding:6px 8px 6px 14px;box-shadow:0 6px 24px rgba(0,0,0,.28);font-size:14px}
 #ux-undo .ck{color:#26806F;font-weight:700}
-#ux-undo .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ux-undo .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
 #ux-undo .u{background:#c0993f;color:#fff;border:0;border-radius:999px;padding:6px 14px;font:inherit;font-weight:600;cursor:pointer}
+#ux-undo .l{background:none;border:1px solid var(--ln);color:inherit;border-radius:999px;padding:4px 10px;font:inherit;cursor:pointer}
 #ux-undo .x{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:inherit;padding:0 6px}
+#ux-undo .ul{margin-top:6px;background:var(--sf);color:var(--ink);border:1px solid var(--ln);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-height:50vh;overflow:auto;min-width:min(440px,calc(100vw - 20px))}
+#ux-undo .r{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--ln);font-size:13px}
+#ux-undo .r:last-child{border-bottom:0}
+#ux-undo .r .tm{color:var(--mut,#667);font-variant-numeric:tabular-nums}
+#ux-undo .r .tt{flex:1}
+#ux-undo .r button{background:var(--sf);color:inherit;border:1px solid var(--ln);border-radius:10px;padding:4px 10px;font:inherit;cursor:pointer;white-space:nowrap}
 </style>
 <script>
 "use strict";
 /* Needs Scripts.html, BigMaster.html and RolesUI.html before it. SweetAlert2 dialogs: confirm before saving, centred loading screen, success message with an Undo button. */
 Object.assign(AR, {
+  'Undo to here': 'تراجع لحد هنا', 'History': 'السجل',
   'Undo': 'تراجع', 'OK': 'تمام', 'Reverted': 'تم التراجع', 'Yes, continue': 'نعم، تابع', 'Save': 'حفظ', 'Apply': 'تطبيق',
   'Save changes?': 'حفظ التغييرات؟', 'Save this cell?': 'حفظ هذه الخانة؟', 'Clear this cell?': 'تفريغ هذه الخانة؟',
   'Save users and links?': 'حفظ المستخدمين واللينكات؟', 'Changes to roles, scopes and active links take effect immediately.': 'تغيير الأدوار والنطاقات واللينكات يسري فورًا.',
@@ -1174,34 +1195,38 @@ toast = function (m, bad) {
   _uxToast(m);
 };
 /* success message: a short centred popup, plus a sticky Undo bar at the top that stays until the next action is undone, dismissed or the page is reloaded */
-UX.stack = [];
+UX.stack = []; UX.listOpen = false;
+const uxT = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
 UX.bar = () => {
   let b = document.getElementById('ux-undo');
   if (!b) { b = document.createElement('div'); b.id = 'ux-undo'; document.body.appendChild(b) }
-  const top = UX.stack[UX.stack.length - 1];
-  if (!top) { b.className = ''; b.innerHTML = ''; return }
+  const n = UX.stack.length, top = UX.stack[n - 1];
+  if (!top) { b.className = ''; b.innerHTML = ''; UX.listOpen = false; return }
   b.className = 'on';
-  b.innerHTML = '<span class="ck">✓</span><span class="tx">' + esc(top.title) + '</span><button class="u" data-uxu="1">↩ ' + esc(t('Undo')) + (UX.stack.length > 1 ? ' (' + UX.stack.length + ')' : '') + '</button><button class="x" data-uxx="1" aria-label="close">×</button>';
+  const list = UX.listOpen ? '<div class="ul">' + UX.stack.slice().reverse().map((e, k) => '<div class="r"><span class="tm">' + uxT(e.at) + '</span><span class="tt">' + esc(e.title) + '</span><button data-uxu="' + (k + 1) + '">↩ ' + esc(k ? t('Undo to here') : t('Undo')) + '</button></div>').join('') + '</div>' : '';
+  b.innerHTML = '<div class="bar"><span class="ck">✓</span><span class="tx">' + esc(top.title) + '</span><button class="u" data-uxu="1">↩ ' + esc(t('Undo')) + '</button>' +
+    (n > 1 ? '<button class="l" data-uxl="1" title="' + esc(t('History')) + '">' + n + ' ' + (UX.listOpen ? '▴' : '▾') + '</button>' : '') + '<button class="x" data-uxx="1" aria-label="close">×</button></div>' + list;
 };
 document.addEventListener('click', e => {
-  const u = e.target.closest && e.target.closest('[data-uxu]'), x = e.target.closest && e.target.closest('[data-uxx]');
-  if (u) UX.runUndo();
+  const u = e.target.closest && e.target.closest('[data-uxu]'), x = e.target.closest && e.target.closest('[data-uxx]'), l = e.target.closest && e.target.closest('[data-uxl]');
+  if (u) UX.runUndo(+u.dataset.uxu || 1);
+  else if (l) { UX.listOpen = !UX.listOpen; UX.bar() }
   else if (x) { UX.stack = []; UX.bar() }
 });
 UX.done = (title, undo) => {
-  if (undo) { UX.stack.push({ title: title, undo: undo }); if (UX.stack.length > 20) UX.stack.shift(); UX.bar() }
+  if (undo) { UX.stack.push({ title: title, undo: undo, at: new Date() }); if (UX.stack.length > 50) UX.stack.shift(); UX.bar() }
   if (!window.Swal) { _uxToast(title); return }
   Swal.fire({
     icon: 'success', title: title, position: 'center', backdrop: false, scrollbarPadding: false, heightAuto: false, returnFocus: false, focusConfirm: false,
     showConfirmButton: false, timer: 1400, timerProgressBar: true
   });
 };
-UX.runUndo = async () => {
-  const top = UX.stack[UX.stack.length - 1]; if (!top || UX.undoing) return;
-  UX.undoing = true; UX.label = t('Saving...');
-  try { await top.undo(); UX.stack.pop() } catch (e) { UX.undoing = false; return }
+UX.runUndo = async (count) => {                     // count = how many of the latest steps to undo (1 = just the last one)
+  if (UX.undoing || !UX.stack.length) return;
+  UX.undoing = true; UX.label = t('Saving...'); let done = 0;
+  try { for (let i = 0; i < (count || 1) && UX.stack.length; i++) { await UX.stack[UX.stack.length - 1].undo(); UX.stack.pop(); done++ } } catch (e) { }
   UX.undoing = false; UX.bar();
-  if (window.Swal) Swal.fire({ icon: 'info', title: t('Reverted'), position: 'center', backdrop: false, scrollbarPadding: false, heightAuto: false, returnFocus: false, showConfirmButton: false, timer: 1400 });
+  if (done && window.Swal) Swal.fire({ icon: 'info', title: t('Reverted') + (done > 1 ? ' (' + done + ')' : ''), position: 'center', backdrop: false, scrollbarPadding: false, heightAuto: false, returnFocus: false, showConfirmButton: false, timer: 1400 });
 };
 
 /* ---------- snapshots (what is restored by Undo) ---------- */
@@ -1217,9 +1242,9 @@ UX.lessonUndo = (cells, title) => {
 };
 UX.cellsOf = ls => { const m = {}; ls.forEach(l => m[l.c + '|' + l.d + '|' + l.p] = [l.c, l.d, l.p]); return Object.values(m) };
 UX.copy = x => JSON.parse(JSON.stringify(x));
-UX.COLS = { Schedules: 7, Classes: 2, Subjects: 2, Teachers: 5, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
+UX.COLS = { Schedules: 7, Classes: 2, Subjects: 3, Teachers: 5, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
 UX.LABEL = { Schedules: 'Time slots', Classes: 'Classes', Subjects: 'Subjects', Teachers: 'Teachers', Assignments: 'Assignments', WeeklyReq: 'Weekly requirements', Blocked: 'Unavailable times', Shared: 'Shared lessons', Rooms: 'Rooms', Access: 'Access' };
-UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '']) : SRC[n]().map(r => r.slice());
+UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '', r[2] || '']) : SRC[n]().map(r => r.slice());
 UX.keys = (n, rows) => rows.map(r => { const o = []; for (let i = 0; i < UX.COLS[n]; i++) o.push(String(r[i] == null ? '' : r[i]).trim()); return JSON.stringify(o) });
 UX.diff = (n, oldRows, newRows) => {
   const cnt = {}; UX.keys(n, oldRows).forEach(k => cnt[k] = (cnt[k] || 0) + 1);
@@ -1289,7 +1314,7 @@ srv = async function (fn, ...a) {
 const _uxSaveTbl = saveTbl, _uxSaveGeneral = saveGeneral, _uxAct = act;
 saveTbl = async function (n) {
   const old = UX.stateOf(n), edited = ed(n);
-  const rows = edited.filter(r => String(r[n == 'Shared' ? 1 : 0]).trim()).map(r => n == 'Subjects' ? [r[0], r[1]] : r);
+  const rows = edited.filter(r => String(r[n == 'Shared' ? 1 : 0]).trim()).map(r => n == 'Subjects' ? [r[0], r[1], r[3] || ''] : r);
   const d = UX.diff(n, old, rows);
   if (!d.any) { toast(t('No changes')); return }
   if (!(await UX.ask(t('Save changes?'), UX.diffHtml([[n, d]]), { yes: t('Save') }))) return;
@@ -1434,22 +1459,24 @@ function thStatus() {
   return (dirty ? `<span class="tag w"><i class="thdot"></i>${t('Unsaved changes')}</span><button class="b" data-th="reset">${t('Discard changes')}</button> ` : '') +
     `<button class="b pri" data-th="save"${dirty ? '' : ' disabled style="opacity:.5"'}>${ic('check')} ${t('Save all changes')}</button>`;
 }
-function rTH() {
+function thListHtml() {
   const T = ed('Teachers'), q = lc(TH.q);
   const list = T.map((r, i) => [r, i]).filter(([r]) => !q || lc(r[0] + ' ' + r[1]).includes(q)).sort((a, b) => tname0(a[0]).localeCompare(tname0(b[0])));
+  return list.length ? list.map(([r, i]) => thRow(r, i)).join('') : `<div class="empty">${t('No teachers yet.')}</div>`;
+}
+function rTH() {
   return `<div class="thbar"><input id="thq" data-thq placeholder="${t('Search')}" value="${esc(TH.q)}" style="min-width:200px"><button class="b" data-th="add">${ic('plus')} ${t('Add teacher')}</button><span class="grow"></span>
-    <span id="thst">${thStatus()}</span></div>
-    ${list.length ? list.map(([r, i]) => thRow(r, i)).join('') : `<div class="empty">${t('No teachers yet.')}</div>`}`;
+    <span id="thst">${thStatus()}</span></div><div id="thl">${thListHtml()}</div>`;
 }
 const tname0 = r => thN(r[1]) || thN(r[0]);
 
 /* put the tab into Settings > Teachers (the old two sub-tabs are replaced) */
 function thMount() {
   const v = $('#v'), nav = v && v.querySelector('nav.sub'); if (!nav) return;
+  const ae = document.activeElement, focus = ae && ae.id == 'thq' ? [ae.selectionStart, ae.selectionEnd] : null;   // read BEFORE the old DOM is removed
   while (nav.nextSibling) nav.nextSibling.remove();
-  const focus = document.activeElement && document.activeElement.id == 'thq' ? document.activeElement.selectionStart : -1;
   nav.insertAdjacentHTML('afterend', rTH());
-  if (focus >= 0) { const q = $('#thq'); if (q) { q.focus(); q.setSelectionRange(focus, focus) } }
+  if (focus) { const q = $('#thq'); if (q) { q.focus(); q.setSelectionRange(focus[0], focus[1]) } }
 }
 const _thRender = render;
 render = function () {
@@ -1587,7 +1614,7 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('input', e => {
   const el = e.target;
-  if ('thq' in el.dataset) { TH.q = el.value; return thMount() }
+  if ('thq' in el.dataset) { TH.q = el.value; const l = $('#thl'); if (l) l.innerHTML = thListHtml(); return }      // only the list under the box is redrawn, so typing never loses focus
   if (el.dataset.thf && TAB === 'st') { const [i, c] = el.dataset.thf.split('|').map(Number); if (c != 0) { ed('Teachers')[i][c] = el.value; const st = $('#thst'); if (st) st.innerHTML = thStatus() } }
 });
 document.addEventListener('change', e => {      // changing the ID also moves the teacher's classes and times to the new ID
@@ -1743,6 +1770,80 @@ function nStart() {
   nPoll(); nSub(false).then(() => { if ($('#np').classList.contains('on')) nPanel() });
 }
 setInterval(nStart, 700);       // the header exists from the start; the role arrives with the first boot answer
+</script>
+
+<style>
+.icg{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px;max-height:300px;overflow:auto;padding:4px;text-align:center}
+.icg button{font-size:26px;line-height:1;padding:8px 0;border:1px solid var(--ln);border-radius:10px;background:var(--sf);cursor:pointer}
+.icg button:hover,.icg button.on{background:var(--hl);border-color:var(--teal)}
+.icq{width:100%;box-sizing:border-box;margin:0 0 8px;padding:9px 10px;border:1px solid var(--ln);border-radius:10px;font:inherit;background:var(--sf);color:var(--ink)}
+.icu{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.icu img{height:40px;width:40px;object-fit:contain;border:1px solid var(--ln);border-radius:8px;background:#fff}
+.icm{margin:6px 0 0;font-size:12px;color:var(--mut,#667)}
+</style>
+<script>
+"use strict";
+/* Picture library for subjects. Pick one of the built-in pictures, or upload your own (it is shrunk to a small square first, so the sheet stays light). */
+Object.assign(AR, {
+  'Picture': 'الصورة', 'Choose': 'اختر', 'Remove': 'إزالة', 'Subject picture': 'صورة المادة', 'Search pictures': 'ابحث عن صورة', 'Upload your own picture': 'ارفع صورتك',
+  'Close': 'إغلاق', 'No picture matches.': 'لا توجد صورة مطابقة.', 'The file is not an image.': 'الملف ليس صورة.', 'Built-in pictures': 'صور جاهزة'
+});
+/* emoji + search words (English / Arabic) */
+const SUBJ_ICONS = [
+  ['🧮', 'math maths arithmetic رياضيات حساب'], ['➗', 'math division قسمة رياضيات'], ['📐', 'geometry math هندسة مثلث'], ['📏', 'ruler measure مسطرة قياس'], ['📊', 'statistics data business احصاء بيانات'], ['📈', 'economics growth اقتصاد'],
+  ['🔬', 'science microscope علوم ميكروسكوب'], ['🧪', 'chemistry lab كيمياء معمل'], ['⚗️', 'chemistry lab كيمياء'], ['🧬', 'biology dna احياء بيولوجي'], ['🦠', 'biology germs احياء'], ['🌱', 'plants biology نبات احياء'], ['⚛️', 'physics atom فيزياء ذرة'], ['🧲', 'physics magnet فيزياء مغناطيس'], ['💡', 'physics electricity idea فيزياء كهرباء'], ['🔭', 'astronomy space فلك فضاء'], ['🪐', 'space planet فضاء كوكب'], ['🌍', 'geography world social studies جغرافيا دراسات'], ['🗺️', 'map geography خريطة جغرافيا'], ['🧭', 'geography compass جغرافيا بوصلة'],
+  ['🔤', 'english letters alphabet انجليزي حروف'], ['📖', 'reading book read قراءة كتاب قرآن'], ['📚', 'library books library مكتبة كتب'], ['✍️', 'writing handwriting كتابة خط'], ['✏️', 'pencil writing قلم كتابة'], ['📝', 'writing notes essay تعبير املاء'], ['🗣️', 'speaking language conversation french german spanish لغة محادثة فرنسي الماني'], ['💬', 'speaking language conversation محادثة'], ['🔠', 'arabic letters alphabet عربي حروف'], ['📜', 'history arabic scroll تاريخ عربي'],
+  ['🏛️', 'history civilization social studies تاريخ حضارة'], ['⏳', 'history time تاريخ'], ['⚖️', 'law civics citizenship تربية وطنية قانون'], ['🕌', 'religion islamic quran دين اسلامية قرآن'], ['☪️', 'religion islamic دين اسلامية'], ['✝️', 'religion christian دين مسيحية'], ['🤝', 'life skills ethics values مهارات حياتية قيم'],
+  ['🎨', 'art drawing رسم فنون'], ['🖌️', 'art painting رسم فنون'], ['🎭', 'drama theatre مسرح دراما'], ['🎵', 'music موسيقى'], ['🎹', 'music piano موسيقى بيانو'], ['🎸', 'music guitar موسيقى'], ['🎤', 'music singing choir غناء كورال'],
+  ['⚽', 'pe sport football رياضة كرة قدم تربية بدنية'], ['🏀', 'pe sport basketball رياضة سلة'], ['🏃', 'pe running sport جري رياضة'], ['🏊', 'pe swimming سباحة'], ['🤸', 'pe gymnastics جمباز'], ['🥋', 'pe martial karate كاراتيه'], ['♟️', 'chess logic شطرنج'],
+  ['💻', 'computer ict technology كمبيوتر حاسب'], ['🖥️', 'computer ict كمبيوتر'], ['⌨️', 'computer typing keyboard كمبيوتر'], ['🤖', 'robotics coding روبوت برمجة'], ['🛠️', 'technology tools workshop تكنولوجيا ورشة'], ['⚙️', 'engineering technology هندسة'], ['🔌', 'electricity technology كهرباء'],
+  ['🍳', 'home economics cooking اقتصاد منزلي طبخ'], ['🧵', 'sewing home economics خياطة'], ['❤️', 'health life skills صحة'], ['🩺', 'health science صحة'], ['🧠', 'psychology thinking عقل تفكير'], ['🌳', 'environment nature بيئة طبيعة'], ['♻️', 'environment recycle بيئة'],
+  ['💼', 'business اعمال تجارة'], ['💰', 'economics money اقتصاد فلوس'], ['🏫', 'homeroom school assembly فصل طابور مدرسة'], ['👥', 'homeroom class group فصل'], ['⭐', 'activity club نشاط'], ['🎯', 'activity goal نشاط'], ['☕', 'break راحة استراحة'], ['🍽️', 'lunch break غداء']
+];
+const ICO = {
+  pick(cur) {                                   // resolves with the chosen picture ('' = none) or undefined when closed without choosing
+    return new Promise(res => {
+      let chosen; const grid = q => { q = (q || '').toLowerCase().trim(); const L = SUBJ_ICONS.filter(([, k]) => !q || k.toLowerCase().includes(q)); return L.length ? L.map(([e]) => `<button type="button" data-icp="${e}"${e === cur ? ' class="on"' : ''}>${e}</button>`).join('') : `<p class="msg">${t('No picture matches.')}</p>` };
+      Swal.fire({
+        title: t('Subject picture'), showConfirmButton: false, showCancelButton: true, cancelButtonText: t('Close'), width: 560, heightAuto: false, scrollbarPadding: false,
+        html: `<input class="icq" id="icq" placeholder="${t('Search pictures')}"><div class="icg" id="icg">${grid('')}</div>
+          <div class="icu"><label class="b" style="cursor:pointer">${t('Upload your own picture')}<input type="file" id="icf" accept="image/*" style="display:none"></label><span id="icpv"></span></div><p class="icm" id="icm"></p>`,
+        didOpen: () => {
+          const g = document.getElementById('icg'), q = document.getElementById('icq'), f = document.getElementById('icf');
+          q.addEventListener('input', () => { g.innerHTML = grid(q.value) });
+          g.addEventListener('click', e => { const b = e.target.closest('[data-icp]'); if (b) { chosen = b.dataset.icp; Swal.close() } });
+          f.addEventListener('change', async () => {
+            const file = f.files[0]; if (!file) return;
+            if (!/^image\//.test(file.type)) { document.getElementById('icm').textContent = t('The file is not an image.'); return }
+            try { chosen = await ICO.shrink(file); Swal.close() } catch (x) { document.getElementById('icm').textContent = t('The file is not an image.') }
+          });
+          q.focus();
+        }
+      }).then(() => res(chosen));
+    });
+  },
+  shrink(file) {                                // square 96 px, transparent background kept, a few KB in the sheet
+    return new Promise((ok, no) => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        try {
+          const mk = (sz, q) => { const c = document.createElement('canvas'); c.width = c.height = sz; const x = c.getContext('2d'), r = Math.min(sz / img.width, sz / img.height), w = img.width * r, h = img.height * r; x.drawImage(img, (sz - w) / 2, (sz - h) / 2, w, h); let u = c.toDataURL('image/webp', q); if (!/^data:image\/webp/.test(u)) u = c.toDataURL('image/png'); return u };
+          let u = mk(96, .85); if (u.length > 9000) u = mk(72, .75); if (u.length > 9000) u = mk(56, .65);
+          URL.revokeObjectURL(url); ok(u);
+        } catch (e) { no(e) }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); no(new Error('bad image')) };
+      img.src = url;
+    });
+  }
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-ico]'), x = e.target.closest && e.target.closest('[data-icx]');
+  if (!b && !x) return;
+  const [n, r, c] = (b || x).dataset[b ? 'ico' : 'icx'].split('|'), row = ed(n)[+r]; if (!row) return;
+  if (x) { row[+c] = ''; return render() }
+  const v = await ICO.pick(row[+c]); if (v !== undefined) { row[+c] = v; render() }
+});
 </script>
 
 <script>
