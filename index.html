@@ -122,7 +122,7 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
 <script>
 /* Bridge: every google.script.run.<fn>(...) call made by the screens is sent to the Apps Script API as JSON, together with the personal token. The server decides what this person may see or change. */
 (function () {
-  var QUIET = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1, api_pushSub: 1, api_pushUnsub: 1, api_flushPush: 1, api_register: 1 };   // reads and self-service calls: no push flush after them
+  var QUIET = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1, api_pushSub: 1, api_pushUnsub: 1, api_flushPush: 1, api_publish: 1, api_register: 1 };   // reads and self-service calls: no push flush after them
   var RETRY = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1 };                                                                            // safe to repeat
   var ar = function () { return typeof HL !== 'undefined' && HL == 'ar' };
   function post(fn, args) {
@@ -141,7 +141,7 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
         if (j && j.ok) {
           var d = j.data;
           if (fn == 'api_users' && d && (!d.base || /script[.]google[.]com/.test(d.base))) d.base = window.APP_BASE;
-          if (!QUIET[fn]) setTimeout(function () { post('api_flushPush', []).catch(function () { }) }, 400);
+          if (!QUIET[fn]) setTimeout(function () { if (window.nPoll) window.nPoll(true) }, 400);
           if (ok) ok(d);
         } else {
           var msg = (j && j.error) || 'Error';
@@ -1652,6 +1652,10 @@ document.addEventListener('change', e => {      // changing the ID also moves th
 #np .ft .go{background:#26806F;color:#fff;border-color:#26806F}
 #nsn{position:fixed;bottom:16px;inset-inline-start:50%;transform:translateX(-50%);z-index:2400;display:none;align-items:center;gap:10px;background:#173B5E;color:#fff;border-radius:999px;padding:8px 10px 8px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-size:14px;max-width:calc(100vw - 20px)}
 #nsn.on{display:flex}
+#nsv{position:fixed;bottom:16px;inset-inline-end:16px;z-index:2300;display:none;align-items:center;gap:8px;background:#26806F;color:#fff;border:0;border-radius:999px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+#nsv.on{display:flex}
+#nsv .c{background:#fff;color:#26806F;border-radius:99px;min-width:22px;height:22px;display:inline-grid;place-items:center;font-size:12px;padding:0 5px;box-sizing:border-box}
+#nsv[disabled]{opacity:.6;cursor:wait}
 #nsn button{border:0;border-radius:999px;padding:6px 14px;font:inherit;font-weight:600;cursor:pointer;background:#c0993f;color:#fff}
 #nsn .x{background:none;font-size:20px;line-height:1;padding:0 6px;color:#fff}
 </style>
@@ -1659,7 +1663,7 @@ document.addEventListener('change', e => {      // changing the ID also moves th
 "use strict";
 /* Notification bell + push subscription. Needs Scripts.html (S, t, HL, DAYS, esc, ic) and the bridge in the page. Everything here is silent: no progress bar, no error popups. */
 Object.assign(AR, {
-  'Notifications': 'الإشعارات', 'Mark all read': 'تعليم الكل كمقروء', 'No notifications yet': 'لا توجد إشعارات بعد',
+  'Notifications': 'الإشعارات', 'Save & notify': 'حفظ وإرسال الإشعارات', 'Notification sent': 'تم إرسال الإشعار', 'Sending...': 'جارٍ الإرسال...', 'Mark all read': 'تعليم الكل كمقروء', 'No notifications yet': 'لا توجد إشعارات بعد',
   'edited': 'عدّل', 'moved': 'نقل', 'swapped': 'بدّل', 'undid': 'تراجع عن', 'imported': 'استورد', 'changed the timetable': 'غيّر الجدول',
   'more': 'أخرى', 'Timetable updated': 'تم تعديل الجدول', 'Refresh': 'تحديث', 'Turn on notifications': 'تفعيل الإشعارات', 'Notifications are on': 'الإشعارات مفعّلة', 'Turn off': 'إيقاف',
   'Notifications are blocked in this browser. Allow them in the site settings.': 'الإشعارات محظورة في المتصفح. اسمح بها من إعدادات الموقع.',
@@ -1667,7 +1671,7 @@ Object.assign(AR, {
   'This browser cannot receive notifications.': 'المتصفح ده مش بيدعم الإشعارات.',
   'Get a message when a timetable you can see is changed.': 'يوصلك إشعار لما يتغير جدول تقدر تشوفه.'
 });
-const NF = { items: [], seen: 0, started: false, timer: 0, lastNew: 0, subscribed: false };
+const NF = { items: [], seen: 0, started: false, timer: 0, lastNew: 0, subscribed: false, drafts: 0 };
 try { NF.seen = +localStorage.getItem('nseen') || 0 } catch (e) { }
 const NQ = (fn, ...a) => new Promise((ok, no) => { try { google.script.run.withSuccessHandler(ok).withFailureHandler(no)[fn](...a) } catch (e) { no(e) } });
 const nUnread = () => NF.items.filter(n => !n.mine && +n.id > NF.seen).length;
@@ -1711,10 +1715,24 @@ function nSnack(msg) {
   s.innerHTML = '<span>' + esc(msg) + '</span><button data-nf="reload">' + t('Refresh') + '</button><button class="x" data-nf="snackx" aria-label="close">×</button>';
   s.classList.add('on');
 }
-async function nPoll() {
-  if (document.hidden) return;
+function nDraftBtn() {
+  const b = $('#nsv'); if (!b) return;
+  b.classList.toggle('on', NF.drafts > 0 && !!(S && S.canEdit));
+  if (!b.disabled) b.innerHTML = '<span class="c">' + NF.drafts + '</span>' + esc(t('Save & notify'));
+}
+async function nPublish() {
+  const b = $('#nsv'); if (!b || b.disabled) return;
+  b.disabled = true; b.textContent = t('Sending...');
+  try { await NQ('api_publish'); NQ('api_flushPush').catch(() => { }); NF.drafts = 0; b.disabled = false; b.classList.remove('on'); nSnack0(t('Notification sent')); nPoll(true) }
+  catch (e) { b.disabled = false; nDraftBtn() }
+}
+function nSnack0(msg) { const s = $('#nsn'); if (!s) return; s.innerHTML = '<span>' + esc(msg) + '</span><button class="x" data-nf="snackx" aria-label="close">×</button>'; s.classList.add('on'); setTimeout(() => s.classList.remove('on'), 3000) }
+window.nPoll = nPoll;
+async function nPoll(force) {
+  if (document.hidden && force !== true) return;
   let r; try { r = await NQ('api_notifs') } catch (e) { return }
   if (!r || !r.items) return;
+  NF.drafts = r.drafts || 0; nDraftBtn();
   const first = !NF.started; NF.started = true;
   if (first && !NF.seen) { NF.items = r.items; NF.seen = r.items.reduce((a, n) => Math.max(a, +n.id), 0); try { localStorage.setItem('nseen', String(NF.seen)) } catch (e) { } }
   const fresh = r.items.filter(n => !n.mine && +n.id > Math.max(NF.seen, NF.lastNew));
@@ -1749,7 +1767,8 @@ document.addEventListener('click', async e => {
   const a = e.target.closest && e.target.closest('[data-nf]');
   if (a) {
     const k = a.dataset.nf;
-    if (k == 'close') nToggle(false);
+    if (k == 'save') nPublish();
+    else if (k == 'close') nToggle(false);
     else if (k == 'read') nSeenAll(), nPanel();
     else if (k == 'on') { await nSub(true); nPanel() }
     else if (k == 'off') { await nUnsub(); nPanel() }
@@ -1763,7 +1782,7 @@ function nStart() {
   if (NF.timer || typeof S === 'undefined' || !S || !S.role || S.register) return;
   const seg = document.querySelector('header .seg'); if (!seg || $('#nb')) return;
   seg.insertAdjacentHTML('beforebegin', '<button id="nb" title="' + esc(t('Notifications')) + '"><svg class="ic" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="n"></span></button>');
-  document.body.insertAdjacentHTML('beforeend', '<div id="np"></div><div id="nsn"></div>');
+  document.body.insertAdjacentHTML('beforeend', '<div id="np"></div><div id="nsn"></div><button id="nsv" data-nf="save"></button>');
   NF.timer = setInterval(nPoll, 90000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) nPoll() });
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'push') nPoll() });
