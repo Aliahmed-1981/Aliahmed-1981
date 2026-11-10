@@ -328,7 +328,7 @@ const TYPES = { 1: 'Teacher double-booked', 2: 'Teacher unavailable / locked', 3
 function enH(l, mode) {
   const cf = PRINT ? [] : (I.cf[l.id] || []), sev = cf.some(x => x.sev == 'error') ? 'e' : cf.length ? 'w' : '', col = subjCol(l.s);
   const badge = sev ? `<a class="cb ${sev}" data-cf="${esc(cf[0].id)}" title="${esc(cf.map(cmsg).join('\n'))}">!</a>` : '';
-  const tch = l.t.length ? l.t.map(id => `<i>${esc(short(tname(id)))}</i>`).join('') : `<i class="un">${t('Teacher unassigned')}</i>`;
+  const tch = PRINT && PP.noT && mode != 'o' ? '' : l.t.length ? l.t.map(id => `<i>${esc(short(tname(id)))}</i>`).join('') : `<i class="un">${t('Teacher unassigned')}</i>`;
   const body = mode == 'o' ? `<b>${esc(l.c)}</b><i>${subjIco(l.s)}${esc(l.s)}</i>` : `<b>${subjIco(l.s)}${esc(l.s)}</b>${tch}`;
   return `<div class="en ${sev == 'e' ? 'bad' : sev == 'w' ? 'wn' : ''}" ${PRINT ? '' : 'draggable="true"'} data-id="${l.id}" data-c="${l.c}" data-d="${l.d}" data-p="${l.p}" style="--sc:${col.c};--sb:${col.b}">${badge}${body}${l.g ? `<small>${esc(l.g)}</small>` : ''}${l.l ? `<small class="lk">${ic('lock')}</small>` : ''}</div>`;
 }
@@ -341,12 +341,23 @@ const dayTh = (d, g, rs) => `<th class="dy" rowspan="${rs}">${dayName(d)}<small>
 const abNote = g => isG12(g) ? `<div class="abn"><b>${t('A Days')}</b>: ${DAYS.filter((_, d) => I.days.includes(d) && !AB_B.includes(d)).map(t).join(', ')} &nbsp;|&nbsp; <b>${t('B Days')}</b>: ${AB_B.map(d => t(DAYS[d])).join(', ')}</div>` : '';
 const colgroup = (lead, W) => '<colgroup>' + lead.map(c => `<col class="${c}">`).join('') + '<col>'.repeat(W) + '</colgroup>';
 
+/* print only: two lessons right after each other (same subject, teachers and group) share ONE box. sig(z) = what makes two neighbouring slots "the same lesson" ('' = empty) */
+function printMerge(sl, sig) {
+  if (!PRINT) return sl;
+  const out = [];
+  sl.forEach(z => {
+    const p = out[out.length - 1], g = z.x.brk ? '' : sig(z);
+    if (p && g && p.g === g && !p.x.brk && !z.x.brk) { p.sp += z.sp; return }
+    out.push({ ...z, g });
+  });
+  return out;
+}
 function classTab(c) {
   const g = stageOf(c), W = gW(g); let h = `<table class="tt">${colgroup(['cd'], W)}`;
   I.days.forEach(d => {
     const sl = slotsOf(g, d, W); if (!sl.length) return;
     h += `<tr class="h">${dayTh(d, g, 2)}${sl.map(hCell).join('')}</tr><tr class="ct">` +
-      sl.map(z => z.x.brk ? `<td class="bk" colspan="${z.sp}">${t('BREAK')}</td>` : `<td class="${PRINT ? '' : 'sel'}" colspan="${z.sp}" data-c="${c}" data-d="${d}" data-p="${z.k}">${cellEntries(c, d, z.k)}</td>`).join('') + '</tr>';
+      printMerge(sl, z => cellL(c, d, z.k).map(l => l.s + '|' + l.t.join(',') + '|' + (l.g || '')).sort().join(';')).map(z => z.x.brk ? `<td class="bk" colspan="${z.sp}">${t('BREAK')}</td>` : `<td class="${PRINT ? '' : 'sel'}" colspan="${z.sp}" data-c="${c}" data-d="${d}" data-p="${z.k}">${cellEntries(c, d, z.k)}</td>`).join('') + '</tr>';
   });
   return h + '</table>' + abNote(g);
 }
@@ -360,7 +371,7 @@ function ownerTab(match) {
     use.forEach((g, i) => {
       const sl = slotsOf(g, d, W); if (!sl.length) return;
       h += `<tr class="h">${i == 0 ? dayTh(d, use.length == 1 && isG12(g) ? g : '', use.length * 2) : ''}<th class="lv" rowspan="2">${esc(g.replace(/^G(\d+)-G(\d+)$/, 'G$1–G$2'))}</th>${sl.map(hCell).join('')}</tr><tr class="ct">` +
-        sl.map(z => z.x.brk ? `<td class="bk" colspan="${z.sp}">${t('BREAK')}</td>` : `<td colspan="${z.sp}">${ls.filter(l => l.d == d && stageOf(l.c) == g && l.p == z.k).map(l => enH(l, 'o')).join('')}</td>`).join('') + '</tr>';
+        printMerge(sl, z => ls.filter(l => l.d == d && stageOf(l.c) == g && l.p == z.k).map(l => l.c + '|' + l.s + '|' + (l.g || '')).sort().join(';')).map(z => z.x.brk ? `<td class="bk" colspan="${z.sp}">${t('BREAK')}</td>` : `<td colspan="${z.sp}">${ls.filter(l => l.d == d && stageOf(l.c) == g && l.p == z.k).map(l => enH(l, 'o')).join('')}</td>`).join('') + '</tr>';
     });
   });
   return h + '</table>';
@@ -502,7 +513,7 @@ ${sel('type', 'All types', Object.keys(TYPES).map(n => [n, t(TYPES[n])]))}${sel(
 }
 
 /* ===================== 4. REPORTS & PRINT (same projections as the views, never with conflict badges) ===================== */
-let PP = { k: 'class', gr: null, ex: new Set(), stage: '' };
+let PP = { k: 'class', gr: null, ex: new Set(), stage: '', noT: false };
 const fmtD = x => x.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const weekTxt = () => { const s = new Date(S.week.sun + 'T00:00:00'), e = new Date(s); e.setDate(s.getDate() + Math.max(...I.days)); return s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' – ' + fmtD(e) };
 function sheet(title, sub, body) {
@@ -541,10 +552,11 @@ function rReports() {
   const tl = teachersWithLessons(), rl = roomsWithLessons(), st = stages(); if (!PP.stage) PP.stage = st[0];
   const kinds = [['class', 'book', 'Class timetables'], ['teacher', 'user', 'Teacher timetables'], ['room', 'room', 'Room timetables'], ['master', 'grid', 'Master grid'], ['conf', 'alert', 'Conflicts report']];
   let items = '';
-  if (PP.k == 'class') items = `<p>${grades.map(g => `<label class="tag"><input type="checkbox" data-pg="${g}"${PP.gr.has(g) ? ' checked' : ''}> G${g}</label>`).join('')}</p>` + I.classes.filter(c => PP.gr.has(parseInt(c.slice(1)))).map(c => `<label class="tag"><input type="checkbox" data-pe="${c}"${PP.ex.has(c) ? '' : ' checked'}> ${c}</label>`).join('');
+  if (PP.k == 'class' || PP.k == 'master') items = `<p><label class="tag"><input type="checkbox" data-pnt${PP.noT ? ' checked' : ''}> ${t('Print without teacher names')}</label></p>` + (PP.k == 'master' ? '' : '') ;
+  if (PP.k == 'class') items += `<p>${grades.map(g => `<label class="tag"><input type="checkbox" data-pg="${g}"${PP.gr.has(g) ? ' checked' : ''}> G${g}</label>`).join('')}</p>` + I.classes.filter(c => PP.gr.has(parseInt(c.slice(1)))).map(c => `<label class="tag"><input type="checkbox" data-pe="${c}"${PP.ex.has(c) ? '' : ' checked'}> ${c}</label>`).join('');
   if (PP.k == 'teacher') items = `<p class="msg">${t('Only teachers with lessons are listed.')}</p>` + tl.map(x => `<label class="tag"><input type="checkbox" data-pe="${x}"${PP.ex.has(x) ? '' : ' checked'}> ${esc(tname(x))}</label>`).join('');
   if (PP.k == 'room') items = rl.length ? rl.map(x => `<label class="tag"><input type="checkbox" data-pe="${x}"${PP.ex.has(x) ? '' : ' checked'}> ${esc(x)}</label>`).join('') : `<div class="empty">${t('No rooms are used yet.')}</div>`;
-  if (PP.k == 'master') items = `<select data-ppst>${opts(st.map(x => [x, x]), PP.stage)}</select>`;
+  if (PP.k == 'master') items += `<select data-ppst>${opts(st.map(x => [x, x]), PP.stage)}</select>`;
   const wl = S.workload.slice().sort((a, b) => b[1] - a[1]);
   return `<div class="bar"><div class="seg">${kinds.map(([k, i, l]) => `<button data-pk="${k}" class="${PP.k == k ? 'on' : ''}">${ic(i)} ${t(l)}</button>`).join('')}</div><button class="b pri" data-a="doprint">${ic('print')} ${t('Print / PDF')}</button></div>
 <div class="card">${items}</div>
@@ -562,7 +574,7 @@ function doPrint() {
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
 const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
-const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
+const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
 const subjIco2 = v => !v ? '' : /^data:image\//.test(v) ? `<img class="si" src="${esc(v)}" alt="">` : `<span class="si">${esc(v)}</span>`;
@@ -599,7 +611,7 @@ function sClasses() {
   return `<div class="card"><p class="msg">${t('A class uses the schedule of its stage. Give one class its own schedule name to give it its own periods.')}</p>${edTable('Classes', [[0, 'Class', 'text'], [1, 'Schedule', 'select', () => schedNames().map(x => [x, x])]], { title: 'Classes' })}</div>
 <div class="card"><h3>${t('Rooms')}</h3>${edTable('Rooms', [[0, 'Room ID', 'text'], [1, 'Name', 'text']], { title: 'Rooms' })}</div>`;
 }
-const sSubjects = () => `<div class="card"><p class="msg">${t('Renaming a subject updates every lesson, assignment and requirement.')}</p>${edTable('Subjects', [[0, 'Subject', 'text'], [1, 'Color', 'color'], [3, 'Picture', 'icon']], { title: 'Subjects' })}</div>`;
+const sSubjects = () => `<div class="card"><p class="msg">${t('Renaming a subject updates every lesson, assignment and requirement.')}</p>${edTable('Subjects', [[0, 'Subject', 'text'], [1, 'Color', 'color'], [3, 'Picture', 'icon'], [4, 'Max per day', 'select', () => [1, 2, 3, 4].map(n => [String(n), String(n)])], [5, 'Same class, same day', 'select', () => [['consec', t('Together (double period)')], ['sep', t('Separate (never next to each other)')]]], [6, 'Placement', 'select', () => [['before', t('Before the break')], ['after', t('After the break')]]], [7, 'Priority', 'select', () => [['5', '5 - ' + t('Highest')], ['4', '4'], ['3', '3 - ' + t('Normal')], ['2', '2'], ['1', '1 - ' + t('Lowest')]]]], { title: 'Subjects' })}<p class="msg">${t('Subject rules help the auto distribution and the move assistant. A blank cell means no rule. A double period = two lessons right after each other, never across the break. When rules clash, the subject with the higher priority wins.')}</p></div>`;
 const sTeachers = () => `<div class="card">${edTable('Teachers', [[0, 'Teacher ID', 'text'], [1, 'Name', 'text'], [2, 'Max per day', 'num'], [3, 'Max per week', 'num'], [4, 'Language', 'select', [['French', 'French'], ['German', 'German'], ['Arabic', 'Arabic'], ['English', 'English']]]], { title: 'Teachers' })}</div>
 <div class="card"><h3>${t('Unavailable and locked times')}</h3>${edTable('Blocked', [[0, 'Teacher', 'select', teacherOpts], [1, 'Day', 'select', dayOpts], [2, 'Start', 'time'], [3, 'End', 'time'], [4, 'Note', 'text'], [5, 'Kind', 'select', [['unavailable', t('unavailable')], ['locked', t('locked')]]]], { title: 'Unavailable times' })}</div>`;
 const sAssign = () => `<div class="bar" style="position:static"><label>${t('Class')}</label><select data-af><option value="">${t('All')}</option>${opts(I.classes.map(c => [c, c]), AF)}</select></div><div class="card">${edTable('Assignments', [[0, 'Class', 'select', () => I.classes.map(c => [c, c])], [1, 'Subject', 'select', () => S.subj.map(r => [r[0], r[0]])], [2, 'Teacher', 'select', teacherOpts], [4, 'Primary', 'select', [['Yes', 'Yes'], ['', '']]], [5, 'Active', 'select', [['Yes', 'Yes'], ['No', 'No']]]], { filter: r => !AF || r[0] == AF, title: 'Assignments' })}</div>`;
@@ -622,7 +634,7 @@ async function saveTbl(n) {
   let rows = ed(n).filter(r => String(r[n == 'Shared' ? 1 : 0]).trim());
   if (n == 'Subjects') {                                         // rename first so lessons follow the new name
     for (const r of rows) if (r[2] && lc(r[2]) != lc(r[0]) && String(r[0]).trim()) S = await srv('api_renameSubject', r[2], r[0]);
-    rows = rows.map(r => [r[0], r[1], r[3] || '']);
+    rows = rows.map(r => [r[0], r[1], r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '']);
   }
   if (n == 'Assignments') rows = rows.map(r => { r = r.slice(); r[3] = I.tn[r[2]] || r[3]; return r });
   S = await srv('api_saveTable', n, rows); ED = {}; index(); toast(t('Saved')); render();
@@ -673,7 +685,7 @@ function exportXlsx() {
 }
 
 /* ===================== 6. APP: render, events, init ===================== */
-const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', ''], Teachers: () => ['', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
+const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', '', '', '', '', ''], Teachers: () => ['', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
 const TABS = [['tt', 'Timetables', 'grid'], ['cf', 'Conflicts', 'alert'], ['rp', 'Reports & Print', 'print'], ['st', 'Settings', 'gear']];
 function render() {
   const k = S.conflicts.counts;
@@ -730,6 +742,7 @@ document.addEventListener('change', e => {
   if (D.cfs) { CF[D.cfs] = el.value; CF.focus = ''; return render() }
   if ('cfi' in D) { CF.ign = el.checked; return render() }
   if (D.pg) { const g = +D.pg; el.checked ? PP.gr.add(g) : PP.gr.delete(g); return render() }
+  if ('pnt' in D) { PP.noT = el.checked; return }
   if (D.pe) { el.checked ? PP.ex.delete(D.pe) : PP.ex.add(D.pe); return }
   if ('ppst' in D) { PP.stage = el.value; return }
   if (D.xk) { XI.sel[D.xk] = el.checked; return }
@@ -749,7 +762,7 @@ document.addEventListener('drop', async e => {
   const td = e.target.closest && e.target.closest('td.sel[data-c]'); if (!td || !DRAG) return; e.preventDefault();
   const id = DRAG; DRAG = ''; $$('.over').forEach(x => x.classList.remove('over'));
   const l = I.byId[id]; if (!l || (l.c == td.dataset.c && l.d == td.dataset.d && l.p == td.dataset.p)) return;
-  try { const r = await srv('api_moveEntry', id, td.dataset.c, +td.dataset.d, +td.dataset.p); S.lessons = r.lessons; S.conflicts = r.conflicts; index(); toast(t('Moved')); render() } catch (x) { render() }
+  try { if (await mvGuard('api_moveEntry', [id, td.dataset.c, +td.dataset.d, +td.dataset.p]) != 'go') return render(); const r = await srv('api_moveEntry', id, td.dataset.c, +td.dataset.d, +td.dataset.p); S.lessons = r.lessons; S.conflicts = r.conflicts; index(); toast(t('Moved')); render() } catch (x) { render() }
 });
 document.addEventListener('dragend', () => { DRAG = ''; $$('.over').forEach(x => x.classList.remove('over')) });
 $('#cc').onclick = () => goConflicts('');
@@ -988,6 +1001,7 @@ document.addEventListener('drop', async e => {
   if (NS) tid = '';
   else if (!BM.whole && !tid && here.length > 1) { tid = await pickLesson(here); if (!tid) return }
   try {
+    if (await mvGuard('api_swap', [id, BM.whole ? '' : tid, c, d, p, BM.whole, NS]) != 'go') return render();
     const r = await srv('api_swap', id, BM.whole ? '' : tid, c, d, p, BM.whole, NS);
     S.lessons = r.lessons; S.conflicts = r.conflicts; index(); toast(t(here.length && !NS ? 'Swapped' : 'Moved')); render();
   } catch (x) { render() }
@@ -1242,9 +1256,9 @@ UX.lessonUndo = (cells, title) => {
 };
 UX.cellsOf = ls => { const m = {}; ls.forEach(l => m[l.c + '|' + l.d + '|' + l.p] = [l.c, l.d, l.p]); return Object.values(m) };
 UX.copy = x => JSON.parse(JSON.stringify(x));
-UX.COLS = { Schedules: 7, Classes: 2, Subjects: 3, Teachers: 5, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
+UX.COLS = { Schedules: 7, Classes: 2, Subjects: 7, Teachers: 5, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
 UX.LABEL = { Schedules: 'Time slots', Classes: 'Classes', Subjects: 'Subjects', Teachers: 'Teachers', Assignments: 'Assignments', WeeklyReq: 'Weekly requirements', Blocked: 'Unavailable times', Shared: 'Shared lessons', Rooms: 'Rooms', Access: 'Access' };
-UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '', r[2] || '']) : SRC[n]().map(r => r.slice());
+UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '', r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']) : SRC[n]().map(r => r.slice());
 UX.keys = (n, rows) => rows.map(r => { const o = []; for (let i = 0; i < UX.COLS[n]; i++) o.push(String(r[i] == null ? '' : r[i]).trim()); return JSON.stringify(o) });
 UX.diff = (n, oldRows, newRows) => {
   const cnt = {}; UX.keys(n, oldRows).forEach(k => cnt[k] = (cnt[k] || 0) + 1);
@@ -1314,7 +1328,7 @@ srv = async function (fn, ...a) {
 const _uxSaveTbl = saveTbl, _uxSaveGeneral = saveGeneral, _uxAct = act;
 saveTbl = async function (n) {
   const old = UX.stateOf(n), edited = ed(n);
-  const rows = edited.filter(r => String(r[n == 'Shared' ? 1 : 0]).trim()).map(r => n == 'Subjects' ? [r[0], r[1], r[3] || ''] : r);
+  const rows = edited.filter(r => String(r[n == 'Shared' ? 1 : 0]).trim()).map(r => n == 'Subjects' ? [r[0], r[1], r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || ''] : r);
   const d = UX.diff(n, old, rows);
   if (!d.any) { toast(t('No changes')); return }
   if (!(await UX.ask(t('Save changes?'), UX.diffHtml([[n, d]]), { yes: t('Save') }))) return;
@@ -1715,6 +1729,7 @@ function nSnack(msg) {
   s.innerHTML = '<span>' + esc(msg) + '</span><button data-nf="reload">' + t('Refresh') + '</button><button class="x" data-nf="snackx" aria-label="close">×</button>';
   s.classList.add('on');
 }
+function nIsOpen() { const p = $('#np'); return !!(p && p.classList.contains('on')) }
 function nDraftBtn() {
   const b = $('#nsv'); if (!b) return;
   b.classList.toggle('on', NF.drafts > 0 && !!(S && S.canEdit));
@@ -1738,8 +1753,8 @@ async function nPoll(force) {
   const fresh = r.items.filter(n => !n.mine && +n.id > Math.max(NF.seen, NF.lastNew));
   NF.items = r.items;
   if (fresh.length && !first) { NF.lastNew = Math.max(...fresh.map(n => +n.id)); nSnack(t('Timetable updated') + ' · ' + fresh[0].by) }
-  if ($('#np').classList.contains('on')) nSeenAll();
-  nBadge(); if ($('#np').classList.contains('on')) nPanel();
+  if (nIsOpen()) nSeenAll();
+  nBadge(); if (nIsOpen()) nPanel();
 }
 /* ---- push subscription ---- */
 const b64u = s => { const p = '='.repeat((4 - s.length % 4) % 4), b = (s + p).replace(/-/g, '+').replace(/_/g, '/'), r = atob(b); return Uint8Array.from([...r].map(c => c.charCodeAt(0))) };
@@ -1786,7 +1801,7 @@ function nStart() {
   NF.timer = setInterval(nPoll, 90000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) nPoll() });
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'push') nPoll() });
-  nPoll(); nSub(false).then(() => { if ($('#np').classList.contains('on')) nPanel() });
+  nPoll(); nSub(false).then(() => { if (nIsOpen()) nPanel() });
 }
 setInterval(nStart, 700);       // the header exists from the start; the role arrives with the first boot answer
 </script>
@@ -1828,7 +1843,7 @@ Object.assign(AR, {
   'Fill the empty places only': 'ملء الأماكن الفارغة فقط', 'Keeps every lesson that exists and adds only what is missing.': 'يُبقي كل الحصص الموجودة ويضيف الناقص فقط.',
   'Rebuild from scratch': 'بناء من الصفر', 'Removes the lessons of the chosen classes (locked lessons stay) and distributes everything again.': 'يحذف حصص الفصول المختارة (المقفولة تبقى) ويوزع كل شيء من جديد.',
   'Prefer the old positions': 'تفضيل الأماكن القديمة', 'Classes': 'الفصول', 'Select all': 'اختيار الكل', 'Select none': 'إلغاء الكل', 'Preview': 'معاينة', 'Apply': 'تطبيق', 'Discard': 'تجاهل',
-  'Planning...': 'جارٍ التوزيع...', 'Choose at least one class.': 'اختر فصلاً واحداً على الأقل.',
+  'Planning...': 'جارٍ التوزيع...', 'Rules broken': 'قواعد مكسورة', 'Some subject rules could not be kept for every lesson. The rest of the rules are kept.': 'تعذر الالتزام بقواعد بعض المواد في كل الحصص.', 'Choose at least one class.': 'اختر فصلاً واحداً على الأقل.',
   'To place': 'مطلوب توزيعه', 'Placed': 'تم توزيعه', 'Not placed': 'لم يتوزع', 'Will be removed': 'سيُحذف', 'Needed per week': 'المطلوب أسبوعياً', 'Kept': 'موجود', 'New': 'جديد',
   'No free period left in the class': 'لا توجد حصة فارغة في الفصل', 'The teacher has no free time': 'المدرس ليس لديه وقت فارغ', 'The teacher reached the maximum load': 'المدرس وصل للحد الأقصى',
   'Skipped (needs groups, do it by hand)': 'تم تخطيها (تحتاج مجموعات، افعلها يدوياً)', 'No teacher assigned, placed without a teacher': 'بلا مدرس معيّن، وُزعت بدون مدرس',
@@ -1879,7 +1894,7 @@ function auResult() {
   const st = p.stats, rep = p.report, view = AU.view && rep.some(r => r.c == AU.view) ? AU.view : (rep.find(r => r.unplaced.length) || rep[0] || {}).c;
   AU.view = view;
   let h = '<div class="card au"><div class="sum"><div><b>' + st.placed + '</b>' + t('Placed') + '</div><div class="' + (st.unplaced ? 'bad' : '') + '"><b>' + st.unplaced + '</b>' + t('Not placed') + '</div>' +
-    (st.removed ? '<div><b>' + st.removed + '</b>' + t('Will be removed') + '</div>' : '') + '<div><b>' + st.classes + '</b>' + t('Classes') + '</div></div>';
+    (st.rulesBroken ? '<div class="bad"><b>' + st.rulesBroken + '</b>' + t('Rules broken') + '</div>' : '') + (st.removed ? '<div><b>' + st.removed + '</b>' + t('Will be removed') + '</div>' : '') + '<div><b>' + st.classes + '</b>' + t('Classes') + '</div></div>';
   if (!st.placed && !st.removed && !st.unplaced) h += '<p class="msg">' + t('Nothing to add: every class already has its weekly lessons.') + '</p>';
   if (p.skipped.length) h += '<div class="note">' + t('Skipped (needs groups, do it by hand)') + ': ' + p.skipped.map(x => esc(x.c + ' ' + x.s + ' ×' + x.n)).join(' · ') + '</div>';
   if (p.noTeacher.length) h += '<div class="note">' + t('No teacher assigned, placed without a teacher') + ': ' + p.noTeacher.map(x => esc(x.c + ' ' + x.s)).join(' · ') + '</div>';
@@ -1929,6 +1944,98 @@ UX_PRE.api_autoApply = a => {
   const rm = new Set(a[0]), cells = UX.cellsOf(S.lessons.filter(l => rm.has(l.id))), seen = new Set(cells.map(c => c.join('|')));
   a[1].forEach(r => { const k = r[1] + '|' + (+r[2]) + '|' + (+r[3]); if (!seen.has(k)) { seen.add(k); cells.push([r[1], +r[2], +r[3]]) } });
   return UX.lessonUndo(cells, t('Auto-distributed'));
+};
+</script>
+
+<style>
+.mvd{text-align:start;font-size:14px;line-height:1.5}
+.mvd h4{margin:12px 0 4px;font-size:14px}
+.mvd ul{margin:4px 0 0;padding-inline-start:20px}
+.mvd li{margin:3px 0}
+.mvd .ar{color:var(--mut,#667)}
+.mvd .bad{color:var(--bad)}
+.mvd .main{background:var(--hl);border-radius:10px;padding:8px 12px}
+</style>
+<script>
+"use strict";
+/* Move assistant. Before a lesson is moved / swapped the server (api_moveCheck, Move.gs) says what it would take:
+   ok = just do it | soft = possible but breaks subject rules | plan = other lessons must move too | break = a hard rule stands in the way.
+   The person approves (Apply / Move anyway) or rejects (Cancel). Needs Scripts.html + Ux.html. */
+Object.assign(AR, {
+  'Checking...': 'جارٍ الفحص...', 'to': 'إلى', 'max': 'الحد الأقصى',
+  'To put this lesson there, other lessons must move too': 'لتثبيت هذه الحصة في المكان الجديد يجب تحريك حصص أخرى',
+  'This move breaks some rules': 'هذا النقل يكسر بعض القواعد', 'This move cannot be done without breaking a hard rule': 'لا يمكن هذا النقل بدون كسر قيد أساسي',
+  'The move you asked for': 'النقل المطلوب', 'These lessons must move too': 'هذه الحصص يجب أن تتحرك أيضاً', 'Rules that will be broken': 'القواعد التي سيتم كسرها', 'What stands in the way': 'ما الذي يمنع',
+  'Apply the rearrangement': 'تنفيذ إعادة الترتيب', 'Only move this lesson': 'انقل هذه الحصة فقط', 'Move anyway': 'انقل رغم ذلك', 'Rearranged': 'تمت إعادة الترتيب',
+  'lessons on': 'حصص يوم', 'lessons next to each other on': 'حصص متتالية يوم', 'lessons not together on': 'حصص غير متصلة يوم', 'is after the break on': 'بعد الاستراحة يوم', 'is before the break on': 'قبل الاستراحة يوم',
+  'should be before the break': 'المفروض قبل الاستراحة', 'should be after the break': 'المفروض بعد الاستراحة', 'should be separate': 'المفروض منفصلة', 'should be together': 'المفروض متصلة',
+  'is unavailable at': 'غير متاح في', 'would be over his maximum load': 'سيتجاوز حده الأقصى للحصص', 'that period does not exist for the class': 'هذه الحصة غير موجودة في جدول الفصل',
+  'A locked lesson is in that cell': 'توجد حصة مقفولة في هذه الخانة', 'has a lesson that cannot be moved at that time': 'لديه حصة لا يمكن تحريكها في هذا الوقت', 'No place was found for': 'لم يوجد مكان بديل لـ',
+  'Both moves are needed at once': 'النقلتان مطلوبتان معاً',
+  'Max per day': 'الحد الأقصى في اليوم', 'Same class, same day': 'نفس الفصل في اليوم الواحد', 'Placement': 'التوقيت', 'Priority': 'الأولوية',
+  'Together (double period)': 'متصلة (حصتان متتاليتان)', 'Separate (never next to each other)': 'منفصلة (ليست متتالية)', 'Before the break': 'قبل الاستراحة', 'After the break': 'بعد الاستراحة',
+  'Highest': 'الأعلى', 'Normal': 'عادية', 'Lowest': 'الأدنى', 'Print without teacher names': 'الطباعة بدون أسماء المدرسين',
+  'Subject rules help the auto distribution and the move assistant. A blank cell means no rule. A double period = two lessons right after each other, never across the break. When rules clash, the subject with the higher priority wins.': 'قواعد المواد يستخدمها التوزيع التلقائي ومساعد النقل. الخانة الفارغة تعني بلا قيد. الحصة المزدوجة = حصتان متتاليتان لا يفصلهما الاستراحة. عند تعارض القواعد تفوز المادة ذات الأولوية الأعلى.'
+});
+const mvP = (c, d, p) => {
+  const sch = (S.cls.find(r => r[0] == c) || [])[1], r = S.sch.find(x => x[0] == sch && +x[1] == +d && +x[2] == +p);
+  return r ? r[3] : 'P' + p;
+};
+const mvAt = (c, d, p) => esc(c) + ' · ' + esc(dayName(+d)) + ' ' + esc(mvP(c, d, p));
+const mvL = l => '<b>' + esc(l.s) + '</b> (' + mvAt(l.c, l.d, l.p) + ')' + (l.t && l.t.length ? ' · ' + l.t.map(x => esc(tname(x))).join(', ') : '');
+function mvSoft(v) {
+  const dy = esc(dayName(+v.d)), h = '<b>' + esc(v.c) + ' · ' + esc(v.s) + '</b>: ';
+  if (v.kind == 'max') return h + v.n + ' ' + t('lessons on') + ' ' + dy + ' (' + t('max') + ' ' + v.max + ')';
+  if (v.kind == 'sep') return h + t('lessons next to each other on') + ' ' + dy + ' (' + t('should be separate') + ')';
+  if (v.kind == 'consec') return h + t('lessons not together on') + ' ' + dy + ' (' + t('should be together') + ')';
+  if (v.kind == 'before') return h + t('is after the break on') + ' ' + dy + ' (' + t('should be before the break') + ')';
+  return h + t('is before the break on') + ' ' + dy + ' (' + t('should be after the break') + ')';
+}
+function mvBreak(b) {
+  const me = b.lesson2 || b.lesson;
+  switch (b.kind) {
+    case 'blocked': return '<b>' + esc(tname(b.t)) + '</b> ' + t('is unavailable at') + ' ' + mvAt(b.lesson.c, b.lesson.d, b.lesson.p);
+    case 'limit': return '<b>' + esc(tname(b.t)) + '</b> ' + t('would be over his maximum load');
+    case 'noslot': return t('that period does not exist for the class') + ': ' + mvAt(b.lesson.c, b.lesson.d, b.lesson.p);
+    case 'frozen-class': return t('A locked lesson is in that cell') + ': ' + mvL(b.lesson);
+    case 'frozen-teacher': return '<b>' + esc(tname(b.lesson.t[0] || '')) + '</b> ' + t('has a lesson that cannot be moved at that time') + ': ' + mvL(b.lesson);
+    case 'no-room': return t('No place was found for') + ' ' + mvL(b.lesson);
+    default: return t('Both moves are needed at once');
+  }
+}
+/** resolves 'go' (do the plain move), 'done' (a rearrangement was written, state is updated) or 'cancel' */
+async function mvGuard(fn, args) {
+  let r;
+  UX.label = t('Checking...');
+  try { r = await _uxSrv('api_moveCheck', fn, args) } catch (e) { return 'go' }
+  if (!r || r.status == 'ok') return 'go';
+  const st = r.status, moves = r.moves || [], intent = moves.filter(m => m.intent), extra = moves.filter(m => !m.intent), soft = r.soft || [], br = r.breaks || [];
+  let h = '<div class="mvd">';
+  if (intent.length) h += '<h4>' + t('The move you asked for') + '</h4><div class="main">' + intent.map(m => mvL({ s: m.s, c: m.from.c, d: m.from.d, p: m.from.p, t: m.t }) + ' <span class="ar">' + t('to') + '</span> ' + mvAt(m.c, m.d, m.p)).join('<br>') + '</div>';
+  if (extra.length) h += '<h4>' + t('These lessons must move too') + '</h4><ul>' + extra.map(m => '<li>' + mvL({ s: m.s, c: m.from.c, d: m.from.d, p: m.from.p, t: m.t }) + ' <span class="ar">' + t('to') + '</span> ' + mvAt(m.c, m.d, m.p) + '</li>').join('') + '</ul>';
+  if (br.length) h += '<h4 class="bad">' + t('What stands in the way') + '</h4><ul>' + br.map(b => '<li>' + mvBreak(b) + '</li>').join('') + '</ul>';
+  if (soft.length) h += '<h4 class="bad">' + t('Rules that will be broken') + '</h4><ul>' + soft.map(v => '<li>' + mvSoft(v) + '</li>').join('') + '</ul>';
+  h += '</div>';
+  const plan = st == 'plan';
+  const res = await Swal.fire({
+    icon: 'warning', title: t(plan ? 'To put this lesson there, other lessons must move too' : st == 'soft' ? 'This move breaks some rules' : 'This move cannot be done without breaking a hard rule'), html: h, width: 640,
+    showConfirmButton: true, confirmButtonText: t(plan ? 'Apply the rearrangement' : 'Move anyway'), confirmButtonColor: plan ? '#26806F' : '#d1291f',
+    showDenyButton: plan, denyButtonText: t('Only move this lesson'), denyButtonColor: '#d1291f',
+    showCancelButton: true, cancelButtonText: t('Cancel'), cancelButtonColor: '#5c6f77', heightAuto: false, returnFocus: false, focusCancel: !plan
+  });
+  if (res.isDenied) return 'go';
+  if (!res.isConfirmed) return 'cancel';
+  if (!plan) return 'go';
+  const out = await srv('api_applyMoves', moves.map(m => ({ id: m.id, c: m.c, d: m.d, p: m.p })));
+  S.lessons = out.lessons; S.conflicts = out.conflicts; index(); toast(t('Rearranged'));
+  return 'done';
+}
+/* the rearrangement is one step in the Undo list (no extra question: the dialog above was the approval) */
+UX_CONFIRM.api_applyMoves = () => true;
+UX_PRE.api_applyMoves = a => {
+  const cells = [];
+  (a[0] || []).forEach(m => { const l = I.byId[m.id]; if (l) cells.push([l.c, l.d, l.p]); cells.push([m.c, +m.d, +m.p]) });
+  return UX.lessonUndo(cells, t('Rearranged'));
 };
 </script>
 
