@@ -561,7 +561,7 @@ function doPrint() {
 
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
-const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
+const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
 const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
@@ -615,7 +615,7 @@ ${XI ? `<h4>${esc(XI.name)}</h4><table class="ed"><tr><th></th><th>${t('What')}<
 <div class="card"><h3>${t('Change log')}</h3><button class="b" data-a="log">${t('Show last 150 changes')}</button>${LOGR ? `<div class="sc" style="max-height:340px"><table class="ed"><tr><th>${t('Time')}</th><th>${t('Class')}</th><th>${t('Day')}</th><th>${t('Slot')}</th><th>${t('Old')}</th><th>${t('New')}</th><th>${t('User')}</th></tr>${LOGR.map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table></div>` : ''}</div>`;
 }
 function rSettings() {
-  const body = { general: sGeneral, slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, shared: sShared, access: sAccess, io: sIO }[SUB]();
+  const body = { general: sGeneral, slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, auto: () => sAuto(), shared: sShared, access: sAccess, io: sIO }[SUB]();
   return `<nav class="sub">${SUBS.map(([k, l, i]) => `<button class="pill${k == SUB ? ' on' : ''}" data-sub="${k}">${ic(i)} ${t(l)}</button>`).join('')}</nav>${body}`;
 }
 async function saveTbl(n) {
@@ -1789,6 +1789,147 @@ function nStart() {
   nPoll(); nSub(false).then(() => { if ($('#np').classList.contains('on')) nPanel() });
 }
 setInterval(nStart, 700);       // the header exists from the start; the role arrives with the first boot answer
+</script>
+
+<style>
+.au .mode{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
+.au .mode label{flex:1;min-width:230px;border:1px solid var(--ln);border-radius:12px;padding:10px 12px;cursor:pointer;display:block;background:var(--sf)}
+.au .mode label.on{border-color:var(--teal);background:var(--hl)}
+.au .mode small{display:block;color:var(--mut,#667);margin-top:3px}
+.au .grp{margin:6px 0}
+.au .grp b{display:inline-block;min-width:44px}
+.au .chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ln);border-radius:999px;padding:4px 10px;margin:2px;cursor:pointer;font-size:13px;background:var(--sf)}
+.au .chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.au .chip input{display:none}
+.au .act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.au .sum{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.au .sum div{border:1px solid var(--ln);border-radius:12px;padding:8px 14px;background:var(--sf);text-align:center}
+.au .sum b{display:block;font-size:20px}
+.au .sum .bad b{color:var(--bad)}
+.au table.rs{width:100%;border-collapse:collapse;font-size:13px}
+.au table.rs th,.au table.rs td{border-bottom:1px solid var(--ln);padding:6px 8px;text-align:start;vertical-align:top}
+.au table.rs tr[data-auc]{cursor:pointer}
+.au table.rs tr.on{background:var(--hl)}
+.au .why{color:var(--bad);font-size:12px}
+.au .note{background:rgba(192,153,63,.14);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:13px}
+.au .gw{overflow:auto;margin-top:10px}
+.au table.gr{border-collapse:collapse;font-size:12px;min-width:560px}
+.au table.gr th,.au table.gr td{border:1px solid var(--ln);padding:4px 6px;text-align:center;min-width:92px}
+.au table.gr td.new{background:rgba(38,128,111,.16)}
+.au table.gr td.brk{background:var(--hl);color:var(--mut,#667)}
+.au table.gr small{display:block;color:var(--mut,#667)}
+</style>
+<script>
+"use strict";
+/* Auto distribution of lessons (Settings > Auto schedule). Needs Scripts.html + Ux.html. Two steps: preview (nothing is saved), then Apply (Undo is offered). */
+Object.assign(AR, {
+  'Auto schedule': 'التوزيع التلقائي', 'Auto distribution of lessons': 'التوزيع التلقائي للحصص',
+  'Builds the timetable from the data you already entered: weekly requirements, assignments, teachers unavailable times and limits, schedules and locked lessons. Nothing is saved until you press Apply, and Undo brings the old timetable back.': 'يبني الجدول من البيانات المدخلة بالفعل: المتطلبات الأسبوعية، التكليفات، أوقات المدرسين غير المتاحة وحدودهم، التوقيتات، والحصص المقفولة. لا يُحفظ شيء قبل الضغط على تطبيق، ويمكنك التراجع بـ Undo.',
+  'Fill the empty places only': 'ملء الأماكن الفارغة فقط', 'Keeps every lesson that exists and adds only what is missing.': 'يُبقي كل الحصص الموجودة ويضيف الناقص فقط.',
+  'Rebuild from scratch': 'بناء من الصفر', 'Removes the lessons of the chosen classes (locked lessons stay) and distributes everything again.': 'يحذف حصص الفصول المختارة (المقفولة تبقى) ويوزع كل شيء من جديد.',
+  'Prefer the old positions': 'تفضيل الأماكن القديمة', 'Classes': 'الفصول', 'Select all': 'اختيار الكل', 'Select none': 'إلغاء الكل', 'Preview': 'معاينة', 'Apply': 'تطبيق', 'Discard': 'تجاهل',
+  'Planning...': 'جارٍ التوزيع...', 'Choose at least one class.': 'اختر فصلاً واحداً على الأقل.',
+  'To place': 'مطلوب توزيعه', 'Placed': 'تم توزيعه', 'Not placed': 'لم يتوزع', 'Will be removed': 'سيُحذف', 'Needed per week': 'المطلوب أسبوعياً', 'Kept': 'موجود', 'New': 'جديد',
+  'No free period left in the class': 'لا توجد حصة فارغة في الفصل', 'The teacher has no free time': 'المدرس ليس لديه وقت فارغ', 'The teacher reached the maximum load': 'المدرس وصل للحد الأقصى',
+  'Skipped (needs groups, do it by hand)': 'تم تخطيها (تحتاج مجموعات، افعلها يدوياً)', 'No teacher assigned, placed without a teacher': 'بلا مدرس معيّن، وُزعت بدون مدرس',
+  'Click a class to see its timetable. New lessons are green.': 'اضغط على فصل لرؤية جدوله. الحصص الجديدة باللون الأخضر.',
+  'Apply the auto distribution?': 'تطبيق التوزيع التلقائي؟', 'Auto-distributed': 'تم التوزيع التلقائي', 'lessons will be added': 'حصة ستضاف', 'lessons will be removed first': 'حصة ستحذف أولاً', 'Lessons not placed stay as warnings in Conflicts.': 'الحصص التي لم تتوزع تظهر كتحذيرات في التعارضات.',
+  'Nothing to add: every class already has its weekly lessons.': 'لا يوجد ما يضاف: كل فصل لديه حصصه الأسبوعية.', 'Break': 'استراحة', 'lessons': 'حصة', 'seconds': 'ثانية'
+});
+const AU = { mode: 'fill', sel: null, prefer: true, plan: null, view: '' };
+const auNat = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
+const auGrade = c => 'G' + (parseInt(String(c).slice(1), 10) || 0);
+function auClasses() { return S.cls.map(r => r[0]).sort(auNat) }
+function auSel() { if (!AU.sel) AU.sel = new Set(auClasses()); return AU.sel }
+const AU_WHY = { 'class-full': 'No free period left in the class', 'teacher-busy': 'The teacher has no free time', 'teacher-limit': 'The teacher reached the maximum load' };
+
+function sAuto() {
+  const cl = auClasses(), sel = auSel(), grades = [...new Set(cl.map(auGrade))].sort(auNat);
+  const chips = grades.map(g => '<div class="grp"><b>' + esc(g) + '</b> <button class="b" type="button" data-au="grade" data-g="' + g + '">' + t('Select all') + ' / ' + t('Select none') + '</button><br>' +
+    cl.filter(c => auGrade(c) == g).map(c => '<label class="chip' + (sel.has(c) ? ' on' : '') + '"><input type="checkbox" data-au="cls" data-c="' + esc(c) + '"' + (sel.has(c) ? ' checked' : '') + '>' + esc(c) + '</label>').join('') + '</div>').join('');
+  const m = (v, h, d) => '<label class="' + (AU.mode == v ? 'on' : '') + '"><input type="radio" name="aum" data-au="mode" value="' + v + '"' + (AU.mode == v ? ' checked' : '') + '> <b>' + t(h) + '</b><small>' + t(d) + '</small></label>';
+  return '<div class="card au"><h3>' + t('Auto distribution of lessons') + '</h3><p class="msg">' + t('Builds the timetable from the data you already entered: weekly requirements, assignments, teachers unavailable times and limits, schedules and locked lessons. Nothing is saved until you press Apply, and Undo brings the old timetable back.') + '</p>' +
+    '<div class="mode">' + m('fill', 'Fill the empty places only', 'Keeps every lesson that exists and adds only what is missing.') + m('rebuild', 'Rebuild from scratch', 'Removes the lessons of the chosen classes (locked lessons stay) and distributes everything again.') + '</div>' +
+    (AU.mode == 'rebuild' ? '<p><label><input type="checkbox" data-au="prefer"' + (AU.prefer ? ' checked' : '') + '> ' + t('Prefer the old positions') + '</label></p>' : '') +
+    '<h4>' + t('Classes') + ' <button class="b" type="button" data-au="all">' + t('Select all') + '</button> <button class="b" type="button" data-au="none">' + t('Select none') + '</button></h4>' + chips +
+    '<div class="act"><button class="b pri" type="button" data-au="plan">' + t('Preview') + '</button></div></div>' + auResult();
+}
+
+function auGridRows() {                                  // lessons as they would be after Apply
+  const p = AU.plan, rm = new Set(p.remove), out = S.lessons.filter(l => !rm.has(l.id)).map(l => ({ c: l.c, d: l.d, p: l.p, s: l.s, t: l.t || [], n: 0 }));
+  p.add.forEach(r => out.push({ c: r[1], d: +r[2], p: +r[3], s: r[4], t: r[5] ? String(r[5]).split(',') : [], n: 1 }));
+  return out;
+}
+function auGrid(c) {
+  const sch = (S.cls.find(r => r[0] == c) || [])[1], rows = S.sch.filter(r => r[0] == sch), days = (S.set.days || [0, 1, 2, 3, 4]).map(Number).filter(d => rows.some(r => +r[1] == d));
+  const slots = [...new Set(rows.map(r => +r[2]))].sort((a, b) => a - b), L = auGridRows().filter(x => x.c == c);
+  const sl = (d, p) => rows.find(r => +r[1] == d && +r[2] == p);
+  return '<div class="gw"><table class="gr"><tr><th></th>' + days.map(d => '<th>' + esc(dayName(d)) + '</th>').join('') + '</tr>' + slots.map(p => {
+    const first = rows.find(r => +r[2] == p);
+    return '<tr><th>' + esc(first ? first[3] : p) + '<small>' + esc(first ? first[4] + '-' + first[5] : '') + '</small></th>' + days.map(d => {
+      const s = sl(d, p); if (!s) return '<td></td>';
+      if (/^y/i.test(s[6])) return '<td class="brk">' + t('Break') + '</td>';
+      const es = L.filter(x => x.d == d && x.p == p);
+      return '<td class="' + (es.some(x => x.n) ? 'new' : '') + '">' + es.map(x => esc(x.s) + '<small>' + esc(x.t.map(z => tname(z)).join(', ')) + '</small>').join('<hr>') + '</td>';
+    }).join('') + '</tr>';
+  }).join('') + '</table></div>';
+}
+function auResult() {
+  const p = AU.plan; if (!p) return '';
+  const st = p.stats, rep = p.report, view = AU.view && rep.some(r => r.c == AU.view) ? AU.view : (rep.find(r => r.unplaced.length) || rep[0] || {}).c;
+  AU.view = view;
+  let h = '<div class="card au"><div class="sum"><div><b>' + st.placed + '</b>' + t('Placed') + '</div><div class="' + (st.unplaced ? 'bad' : '') + '"><b>' + st.unplaced + '</b>' + t('Not placed') + '</div>' +
+    (st.removed ? '<div><b>' + st.removed + '</b>' + t('Will be removed') + '</div>' : '') + '<div><b>' + st.classes + '</b>' + t('Classes') + '</div></div>';
+  if (!st.placed && !st.removed && !st.unplaced) h += '<p class="msg">' + t('Nothing to add: every class already has its weekly lessons.') + '</p>';
+  if (p.skipped.length) h += '<div class="note">' + t('Skipped (needs groups, do it by hand)') + ': ' + p.skipped.map(x => esc(x.c + ' ' + x.s + ' ×' + x.n)).join(' · ') + '</div>';
+  if (p.noTeacher.length) h += '<div class="note">' + t('No teacher assigned, placed without a teacher') + ': ' + p.noTeacher.map(x => esc(x.c + ' ' + x.s)).join(' · ') + '</div>';
+  h += '<table class="rs"><tr><th>' + t('Class') + '</th><th>' + t('Needed per week') + '</th><th>' + t('Kept') + '</th><th>' + t('New') + '</th><th>' + t('Not placed') + '</th></tr>' +
+    rep.map(r => '<tr data-auc="' + esc(r.c) + '" class="' + (r.c == view ? 'on' : '') + '"><td><b>' + esc(r.c) + '</b></td><td>' + r.want + (r.want > r.capacity ? ' ⚠' : '') + '</td><td>' + r.kept + '</td><td>' + r.add + '</td><td>' +
+      (r.unplaced.length ? r.unplaced.map(u => '<div class="why">' + esc(u.s) + ' ×' + u.n + ' - ' + t(AU_WHY[u.why] || '') + '</div>').join('') : '✓') + '</td></tr>').join('') + '</table>';
+  if (view) h += '<p class="msg">' + t('Click a class to see its timetable. New lessons are green.') + ' <b>' + esc(view) + '</b></p>' + auGrid(view);
+  h += '<div class="act"><button class="b pri" type="button" data-au="apply"' + (p.add.length || p.remove.length ? '' : ' disabled') + '>' + t('Apply') + '</button><button class="b" type="button" data-au="discard">' + t('Discard') + '</button></div></div>';
+  return h;
+}
+
+document.addEventListener('change', e => {
+  const a = e.target.closest && e.target.closest('[data-au]'); if (!a) return;
+  const k = a.dataset.au;
+  if (k == 'cls') { a.checked ? auSel().add(a.dataset.c) : auSel().delete(a.dataset.c); AU.plan = null; render() }
+  else if (k == 'mode') { AU.mode = a.value; AU.plan = null; render() }
+  else if (k == 'prefer') { AU.prefer = a.checked; AU.plan = null }
+});
+document.addEventListener('click', async e => {
+  const row = e.target.closest && e.target.closest('[data-auc]');
+  if (row && AU.plan) { AU.view = row.dataset.auc; return render() }
+  const a = e.target.closest && e.target.closest('[data-au]'); if (!a || a.matches('input')) return;
+  const k = a.dataset.au, sel = auSel();
+  if (k == 'all') { auClasses().forEach(c => sel.add(c)); AU.plan = null; return render() }
+  if (k == 'none') { sel.clear(); AU.plan = null; return render() }
+  if (k == 'grade') { const cs = auClasses().filter(c => auGrade(c) == a.dataset.g), on = cs.every(c => sel.has(c)); cs.forEach(c => on ? sel.delete(c) : sel.add(c)); AU.plan = null; return render() }
+  if (k == 'discard') { AU.plan = null; return render() }
+  if (k == 'plan') {
+    if (!sel.size) return toast(t('Choose at least one class.'), 1);
+    UX.label = t('Planning...');
+    try { AU.plan = await _uxSrv('api_autoPlan', { mode: AU.mode, classes: [...sel], prefer: AU.prefer, seconds: 20 }); AU.view = ''; render() } catch (x) { }
+    return;
+  }
+  if (k == 'apply' && AU.plan) {
+    try {
+      const r = await srv('api_autoApply', AU.plan.remove, AU.plan.add);
+      S.lessons = r.lessons; S.conflicts = r.conflicts; AU.plan = null; index(); render();
+    } catch (x) { }
+  }
+});
+/* confirm + Undo for the Apply step (hooks into the tables of Ux.html) */
+UX_CONFIRM.api_autoApply = a => {
+  const st = AU.plan && AU.plan.stats || {};
+  return UX.ask(t('Apply the auto distribution?'), '<b>' + a[1].length + '</b> ' + t('lessons will be added') + (a[0].length ? '<br><b>' + a[0].length + '</b> ' + t('lessons will be removed first') : '') + '<br><small>' + esc(t('Lessons not placed stay as warnings in Conflicts.')) + '</small>', { yes: t('Apply'), danger: a[0].length > 0 });
+};
+UX_PRE.api_autoApply = a => {
+  const rm = new Set(a[0]), cells = UX.cellsOf(S.lessons.filter(l => rm.has(l.id))), seen = new Set(cells.map(c => c.join('|')));
+  a[1].forEach(r => { const k = r[1] + '|' + (+r[2]) + '|' + (+r[3]); if (!seen.has(k)) { seen.add(k); cells.push([r[1], +r[2], +r[3]]) } });
+  return UX.lessonUndo(cells, t('Auto-distributed'));
+};
 </script>
 
 <style>
