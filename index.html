@@ -122,8 +122,8 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
 <script>
 /* Bridge: every google.script.run.<fn>(...) call made by the screens is sent to the Apps Script API as JSON, together with the personal token. The server decides what this person may see or change. */
 (function () {
-  var QUIET = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1, api_pushSub: 1, api_pushUnsub: 1, api_flushPush: 1, api_publish: 1, api_register: 1 };   // reads and self-service calls: no push flush after them
-  var RETRY = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1 };                                                                            // safe to repeat
+  var QUIET = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1, api_pushSub: 1, api_pushUnsub: 1, api_flushPush: 1, api_publish: 1, api_register: 1, api_absBoot: 1 };   // reads and self-service calls: no push flush after them
+  var RETRY = { api_boot: 1, api_log: 1, api_backup: 1, api_users: 1, api_notifs: 1, api_absBoot: 1 };                                                                            // safe to repeat
   var ar = function () { return typeof HL !== 'undefined' && HL == 'ar' };
   function post(fn, args) {
     var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, to = ctl && setTimeout(function () { ctl.abort() }, 80000);
@@ -573,7 +573,7 @@ function doPrint() {
 
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
-const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
+const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['subs', 'Substitutes', 'users'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
 const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
@@ -627,7 +627,7 @@ ${XI ? `<h4>${esc(XI.name)}</h4><table class="ed"><tr><th></th><th>${t('What')}<
 <div class="card"><h3>${t('Change log')}</h3><button class="b" data-a="log">${t('Show last 150 changes')}</button>${LOGR ? `<div class="sc" style="max-height:340px"><table class="ed"><tr><th>${t('Time')}</th><th>${t('Class')}</th><th>${t('Day')}</th><th>${t('Slot')}</th><th>${t('Old')}</th><th>${t('New')}</th><th>${t('User')}</th></tr>${LOGR.map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table></div>` : ''}</div>`;
 }
 function rSettings() {
-  const body = { general: sGeneral, slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, auto: () => sAuto(), shared: sShared, access: sAccess, io: sIO }[SUB]();
+  const body = { general: sGeneral, slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, auto: () => sAuto(), subs: () => sSubs(), shared: sShared, access: sAccess, io: sIO }[SUB]();
   return `<nav class="sub">${SUBS.map(([k, l, i]) => `<button class="pill${k == SUB ? ' on' : ''}" data-sub="${k}">${ic(i)} ${t(l)}</button>`).join('')}</nav>${body}`;
 }
 async function saveTbl(n) {
@@ -685,7 +685,7 @@ function exportXlsx() {
 }
 
 /* ===================== 6. APP: render, events, init ===================== */
-const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', '', '', '', '', ''], Teachers: () => ['', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
+const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', '', '', '', '', ''], Teachers: () => ['', '', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
 const TABS = [['tt', 'Timetables', 'grid'], ['cf', 'Conflicts', 'alert'], ['rp', 'Reports & Print', 'print'], ['st', 'Settings', 'gear']];
 function render() {
   const k = S.conflicts.counts;
@@ -1256,7 +1256,7 @@ UX.lessonUndo = (cells, title) => {
 };
 UX.cellsOf = ls => { const m = {}; ls.forEach(l => m[l.c + '|' + l.d + '|' + l.p] = [l.c, l.d, l.p]); return Object.values(m) };
 UX.copy = x => JSON.parse(JSON.stringify(x));
-UX.COLS = { Schedules: 7, Classes: 2, Subjects: 7, Teachers: 5, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
+UX.COLS = { Schedules: 7, Classes: 2, Subjects: 7, Teachers: 6, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
 UX.LABEL = { Schedules: 'Time slots', Classes: 'Classes', Subjects: 'Subjects', Teachers: 'Teachers', Assignments: 'Assignments', WeeklyReq: 'Weekly requirements', Blocked: 'Unavailable times', Shared: 'Shared lessons', Rooms: 'Rooms', Access: 'Access' };
 UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '', r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']) : SRC[n]().map(r => r.slice());
 UX.keys = (n, rows) => rows.map(r => { const o = []; for (let i = 0; i < UX.COLS[n]; i++) o.push(String(r[i] == null ? '' : r[i]).trim()); return JSON.stringify(o) });
@@ -1419,7 +1419,7 @@ const thN = v => String(v == null ? '' : v);
 
 /* rows that will be saved: blank rows dropped, teacher names copied into the assignment rows */
 function thRows() {
-  const T = ed('Teachers').filter(r => thN(r[0]).trim()).map(r => [thN(r[0]).trim(), thN(r[1]), thN(r[2]), thN(r[3]), thN(r[4])]);
+  const T = ed('Teachers').filter(r => thN(r[0]).trim()).map(r => [thN(r[0]).trim(), thN(r[1]), thN(r[2]), thN(r[3]), thN(r[4]), thN(r[5])]);
   const nm = {}; T.forEach(r => nm[r[0]] = r[1]);
   const pad = (r, n) => { const x = r.slice(0, n).map(thN); while (x.length < n) x.push(''); return x };
   const A = ed('Assignments').filter(r => thN(r[0]).trim() && thN(r[1]).trim() && thN(r[2]).trim()).map(r => { const x = pad(r, 7); if (nm[x[2]]) x[3] = nm[x[2]]; return x });
@@ -1465,6 +1465,7 @@ function thRow(r, i) {
     <input data-thf="${i}|0" value="${esc(tid)}" style="width:92px" title="${t('Teacher ID')}"><input data-thf="${i}|1" value="${esc(r[1])}" style="width:230px" placeholder="${t('Name')}" title="${t('Name')}">
     <input data-thf="${i}|2" value="${esc(r[2])}" inputmode="numeric" style="width:58px" placeholder="${t('Max per day')}" title="${t('Max per day')}"><input data-thf="${i}|3" value="${esc(r[3])}" inputmode="numeric" style="width:58px" placeholder="${t('Max per week')}" title="${t('Max per week')}">
     <select data-thf="${i}|4" title="${t('Language')}">${opts(thLangs.concat(thLangs.includes(r[4]) ? [] : [r[4]]).map(x => [x, x]), r[4])}</select>
+    <input data-thf="${i}|5" value="${esc(r[5] || '')}" style="width:120px" placeholder="${t('Department')}" title="${t('Department')}">
     <span class="tg">${mine.length} ${t('classes and subjects')} · ${grp.length} ${t('unavailable times')}</span>
     <button class="b dng" data-th="del" data-tid="${esc(tid)}" style="margin-inline-start:auto">${ic('trash')}</button></div>${body}</div>`;
 }
@@ -1582,7 +1583,7 @@ function thNewTeacher() {
       if (T.some(r => lc(r[0]) == lc(id))) { Swal.showValidationMessage(t('This ID is already used.')); return false }
       return { id, nm };
     }
-  }).then(r => { if (r.isConfirmed) { T.push([r.value.id, r.value.nm, '', '', '']); TH.open.add(r.value.id); TH.q = ''; render() } });
+  }).then(r => { if (r.isConfirmed) { T.push([r.value.id, r.value.nm, '', '', '', '']); TH.open.add(r.value.id); TH.q = ''; render() } });
 }
 async function thSave() {
   const { T, A, B } = thRows(), ids = T.map(r => r[0]), dup = ids.find((x, i) => ids.indexOf(x) !== i);
@@ -1634,7 +1635,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {      // changing the ID also moves the teacher's classes and times to the new ID
   const el = e.target; if (!el.dataset.thf || TAB !== 'st') return;
   const [i, c] = el.dataset.thf.split('|').map(Number), T = ed('Teachers'); if (!T[i]) return;
-  if (c != 0) { T[i][c] = el.value; const st = $('#thst'); if (st) st.innerHTML = thStatus(); return }
+  if (c != 0) { T[i][c] = el.value; return }          // the status bar was already refreshed by the input event; replacing it here would eat the click on Save (blur happens before click)
   const old = T[i][0], nw = el.value.trim();
   if (!nw || T.some((r, k) => k != i && lc(r[0]) == lc(nw))) { toast(t(nw ? 'This ID is already used.' : 'Enter an ID and a name.'), 1); return render() }
   if (nw == old) return;
@@ -1702,9 +1703,17 @@ function nLine(c) {
   const o = c.o.join(' / ') || '—', n = c.n.join(' / ') || '—';
   return '<div class="l"><b>' + esc(c.c) + '</b> · ' + esc(t(DAYS[c.d])) + ' · ' + (HL == 'ar' ? 'ح' : 'P') + c.p + ': ' + esc(o) + ' → ' + esc(n) + '</div>';
 }
+const nEvK = { request: 'requested an absence', approved: 'absence approved', rejected: 'absence rejected', cancelled: 'absence cancelled', cover: 'substitute lesson', uncover: 'substitute lesson removed' };
+function nEv(n) {                                  // absence / substitute events: only the items the server allowed this person to see
+  const e = n.ev, it = e.items || [];
+  let h = '<div class="it' + (!n.mine && +n.id > NF.seen ? ' new' : '') + '"><div class="m">' + esc(n.time) + ' · ' + esc(n.by) + ' · ' + esc(t(nEvK[e.k] || 'absence')) + '</div>';
+  if (e.k == 'cover' || e.k == 'uncover') h += it.slice(0, 4).map(c => '<div class="l"><b>' + esc(c.c) + '</b> · ' + esc(e.date) + ' · ' + (HL == 'ar' ? 'ح' : 'P') + c.p + ' ' + esc(c.s) + ': ' + esc(c.absentName || '') + (e.k == 'cover' ? ' → <b>' + esc(c.subName || '') + '</b>' : '') + '</div>').join('') + (it.length > 4 ? '<div class="l">+' + (it.length - 4) + ' ' + t('more') + '</div>' : '');
+  else h += '<div class="l"><b>' + esc(e.name || '') + '</b> · ' + esc(e.date) + ' · ' + it.length + ' ' + t(it.length == 1 ? 'lesson' : 'lessons') + (e.note ? ' · ' + esc(e.note) : '') + '</div>';
+  return h + '</div>';
+}
 function nPanel() {
   const p = $('#np'); if (!p) return;
-  const ls = NF.items.length ? NF.items.map(n => '<div class="it' + (!n.mine && +n.id > NF.seen ? ' new' : '') + '"><div class="m">' + esc(n.time) + ' · ' + esc(n.by) + ' ' + esc(nKind(n.kind)) + '</div>' +
+  const ls = NF.items.length ? NF.items.map(n => n.ev ? nEv(n) : '<div class="it' + (!n.mine && +n.id > NF.seen ? ' new' : '') + '"><div class="m">' + esc(n.time) + ' · ' + esc(n.by) + ' ' + esc(nKind(n.kind)) + '</div>' +
     n.ch.slice(0, 4).map(nLine).join('') + (n.ch.length > 4 || n.more ? '<div class="l">+' + (n.ch.length - 4 + n.more) + ' ' + t('more') + '</div>' : '') + '</div>').join('') : '<div class="em">' + t('No notifications yet') + '</div>';
   let ft = '';
   const canPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && window.CFG && CFG.VAPID_PUBLIC;
@@ -2036,6 +2045,207 @@ UX_PRE.api_applyMoves = a => {
   const cells = [];
   (a[0] || []).forEach(m => { const l = I.byId[m.id]; if (l) cells.push([l.c, l.d, l.p]); cells.push([m.c, +m.d, +m.p]) });
   return UX.lessonUndo(cells, t('Rearranged'));
+};
+</script>
+
+<style>
+.abx .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:8px 0}
+.abx .row label{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.abx .les{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.abx .les label{flex-direction:row;align-items:center;gap:5px;border:1px solid var(--ln);border-radius:999px;padding:4px 10px;background:var(--sf);cursor:pointer}
+.abx .les label.on{background:var(--hl);border-color:var(--teal)}
+.abx .it{border:1px solid var(--ln);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--sf)}
+.abx .it .hd{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.abx .it small{color:var(--mut,#667)}
+.abx table.cv{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.abx table.cv th,.abx table.cv td{border-bottom:1px solid var(--ln);padding:6px 8px;text-align:start;vertical-align:middle}
+.abx select{max-width:260px}
+.abx .st-pending{color:#a06a00}.abx .st-approved{color:#1a7a52}.abx .st-rejected,.abx .st-cancelled{color:var(--bad)}
+.abx .open{color:var(--bad)}
+.abx h4{margin:14px 0 4px}
+</style>
+<script>
+"use strict";
+/* Teacher absence + substitute lessons. Tab "Absence". Everything is decided by the server (Absence.gs): this file only shows what it returns. Needs Scripts.html, Ux.html, Notif.html. */
+Object.assign(AR, {
+  'Absence': 'الغياب', 'Report an absence': 'إبلاغ عن غياب', 'Teacher': 'المدرس', 'Date': 'التاريخ', 'Until (optional)': 'حتى تاريخ (اختياري)', 'Reason': 'السبب',
+  'Whole day': 'اليوم كامل', 'Selected lessons': 'حصص محددة', 'Send the request': 'إرسال الطلب', 'No lessons on this day': 'لا توجد حصص في هذا اليوم',
+  'A range of dates is always the whole day.': 'عند اختيار فترة يكون الغياب لليوم كامل.',
+  'Absence requests waiting for you': 'طلبات غياب في انتظار قرارك', 'Approve': 'موافقة', 'Reject': 'رفض', 'Note (optional)': 'ملاحظة (اختياري)', 'Reject this request?': 'رفض هذا الطلب؟',
+  'Approve this request?': 'الموافقة على هذا الطلب؟', 'The covers are created and you can choose the substitutes.': 'سيتم إنشاء حصص الاحتياطي وتختار المدرسين البدلاء.',
+  'Substitute lessons': 'حصص الاحتياطي', 'Substitute': 'المدرس الاحتياطي', 'Absent teacher': 'المدرس الغائب', 'Period': 'الحصة', 'Class': 'الفصل', 'Subject': 'المادة', 'Signature': 'التوقيع',
+  'not assigned': 'غير معيّن', 'Auto-assign all': 'تعيين تلقائي للكل', 'Print substitute sheet': 'طباعة شيت الاحتياطي', 'Substitute sheet': 'شيت الاحتياطي',
+  'My absence requests': 'طلبات غيابي', 'My substitute lessons': 'حصص الاحتياطي المكلّف بها', 'Cancel the request': 'إلغاء الطلب', 'Cancel this absence?': 'إلغاء هذا الغياب؟',
+  'pending': 'بانتظار الموافقة', 'approved': 'تمت الموافقة', 'rejected': 'مرفوض', 'cancelled': 'ملغي', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Request sent': 'تم إرسال الطلب',
+  'Approved': 'تمت الموافقة', 'Rejected': 'تم الرفض', 'Cancelled': 'تم الإلغاء', 'Assigned': 'تم التعيين', 'Auto-assigned': 'تم التعيين التلقائي', 'could not be assigned': 'تعذر تعيينها',
+  'same department': 'نفس القسم', 'same stage': 'نفس المرحلة', 'same subject': 'نفس المادة', 'same class': 'نفس الفصل', 'covers': 'احتياطي', 'Refresh': 'تحديث',
+  'Show past': 'عرض السابق', 'Choose a valid date.': 'اختر تاريخاً صحيحاً.', 'Choose at least one lesson.': 'اختر حصة واحدة على الأقل.', 'Substitutes': 'الاحتياطي', 'Who covers an absent teacher': 'من يغطي المدرس الغائب',
+  'The best substitute is chosen by these rules, in this order. Only teachers who are free at that time are offered (no lesson, not unavailable, not absent, not covering another class).': 'يتم اختيار أفضل مدرس احتياطي بهذه القواعد بالترتيب. لا يُعرض إلا المدرسون المتاحون في هذا الوقت (ليس لديهم حصة ولا وقت غير متاح ولا غياب ولا احتياطي آخر).',
+  'Same department as the absent teacher': 'نفس قسم المدرس الغائب', 'Teaches the same stage as the class': 'يدرّس نفس مرحلة الفصل', 'Teaches the same subject': 'يدرّس نفس المادة', 'Teaches this class': 'يدرّس هذا الفصل', 'Fewest substitute lessons so far': 'أقل عدد احتياطي حتى الآن',
+  'Respect the maximum periods per day (substitute lessons count)': 'مراعاة الحد الأقصى للحصص في اليوم (الاحتياطي يُحسب)', 'Save the order': 'حفظ الترتيب', 'Up': 'أعلى', 'Down': 'أسفل', 'Department': 'القسم',
+  'No substitute is free': 'لا يوجد مدرس متاح', 'lessons': 'حصص', 'lesson': 'حصة',
+  'requested an absence': 'أرسل طلب غياب', 'absence approved': 'تمت الموافقة على غياب', 'absence rejected': 'تم رفض غياب', 'absence cancelled': 'تم إلغاء غياب', 'substitute lesson': 'حصة احتياطي', 'substitute lesson removed': 'تم إلغاء حصة احتياطي'
+});
+const ABX = { ver: 0, data: null, loading: false, tid: '', date: '', to: '', reason: '', whole: true, sel: new Set(), past: false };
+const ABX_CRIT = [['dept', 'Same department as the absent teacher'], ['stage', 'Teaches the same stage as the class'], ['subject', 'Teaches the same subject'], ['class', 'Teaches this class'], ['load', 'Fewest substitute lessons so far']];
+const abxName = id => (ABX.data && ABX.data.names[id]) || tname(id);
+const abxMy = () => (S && S.myTids) || [];
+const abxAllowed = () => !!S && !S.register && (S.role == 'admin' || S.role == 'coordinator' || abxMy().length > 0);
+const abxDow = d => new Date(d + 'T00:00:00').getDay();
+const abxWhen = d => esc(dayName(abxDow(d))) + ' ' + esc(d);
+const abxP = l => esc(l.label || ('P' + l.p)) + (l.start ? ' <small>' + hhmm(l.start) + '-' + hhmm(l.end) + '</small>' : '');
+async function abxLoad(force) {
+  if (ABX.loading || (ABX.data && !force)) return;
+  ABX.loading = true; UX.label = t('Loading...'); const v0 = ABX.ver;
+  try { const r = await _uxSrv('api_absBoot'); if (ABX.ver == v0) ABX.data = r } catch (e) { ABX.data = ABX.data || { absences: [], covers: [], names: {}, prio: { order: [], max: true }, tids: [], today: '', approver: false } }
+  ABX.loading = false; ABX.at = Date.now(); if (TAB == 'ab') render();
+}
+function abxLessonsOf(tid, date) {           // the lessons of the teacher on that date, from what the browser already has
+  if (!date) return [];
+  const d = abxDow(date);
+  return S.lessons.filter(l => l.d == d && l.t.includes(tid) && l.sl && !l.sl.brk).sort((a, b) => a.sl.s - b.sl.s || natural(a.c, b.c));
+}
+function abxForm(D) {
+  const mine = abxMy(), admin = S.role == 'admin';
+  if (!admin && !mine.length) return '';
+  const tids = admin ? S.tch.map(r => r[0]).sort((a, b) => natural(tname(a), tname(b))) : mine;
+  if (!ABX.tid || !tids.includes(ABX.tid)) ABX.tid = tids[0] || '';
+  if (!ABX.date) ABX.date = D.today;
+  const ls = ABX.to ? [] : abxLessonsOf(ABX.tid, ABX.date);
+  const teacher = admin || tids.length > 1 ? '<label>' + t('Teacher') + '<select data-abf="tid">' + tids.map(x => '<option value="' + esc(x) + '"' + (x == ABX.tid ? ' selected' : '') + '>' + esc(tname(x)) + '</option>').join('') + '</select></label>' : '';
+  const pick = !ABX.to ? '<div class="row"><label style="flex-direction:row;gap:12px"><span><input type="radio" name="abw" data-abf="whole" value="1"' + (ABX.whole ? ' checked' : '') + '> ' + t('Whole day') + '</span><span><input type="radio" name="abw" data-abf="whole" value="0"' + (!ABX.whole ? ' checked' : '') + '> ' + t('Selected lessons') + '</span></label></div>' +
+    (ABX.whole ? '' : '<div class="les">' + (ls.length ? ls.map(l => { const k = l.c + ':' + l.p; return '<label class="' + (ABX.sel.has(k) ? 'on' : '') + '"><input type="checkbox" data-abf="les" value="' + esc(k) + '"' + (ABX.sel.has(k) ? ' checked' : '') + '>' + esc(l.sl.label) + ' · ' + esc(l.c) + ' · ' + esc(l.s) + '</label>' }).join('') : '<span class="msg">' + t('No lessons on this day') + '</span>') + '</div>') : '<p class="msg">' + t('A range of dates is always the whole day.') + '</p>';
+  return '<div class="card"><h3>' + t('Report an absence') + '</h3><div class="row">' + teacher +
+    '<label>' + t('Date') + '<input type="date" data-abf="date" value="' + esc(ABX.date) + '"' + (S.role == 'admin' ? '' : ' min="' + esc(D.today) + '"') + '></label>' +
+    '<label>' + t('Until (optional)') + '<input type="date" data-abf="to" value="' + esc(ABX.to) + '" min="' + esc(ABX.date) + '"></label>' +
+    '<label style="flex:1;min-width:200px">' + t('Reason') + '<input data-abf="reason" value="' + esc(ABX.reason) + '" maxlength="300"></label></div>' + pick +
+    '<div class="row"><button class="b pri" data-abx="send">' + ic('check') + ' ' + t('Send the request') + '</button></div></div>';
+}
+const abxLes = a => a.lessons.map(l => esc(l.c) + ' ' + esc(l.label || 'P' + l.p) + ' ' + esc(l.s)).join(' · ');
+const abxTag = s => '<b class="st-' + s + '">' + t(s) + '</b>';
+function abxInbox(D) {
+  if (!D.approver) return '';
+  const ps = D.absences.filter(a => a.status == 'pending' && a.date >= D.today).sort((a, b) => a.date < b.date ? -1 : 1);
+  return '<div class="card"><h3>' + t('Absence requests waiting for you') + ' (' + ps.length + ')</h3>' + (ps.length ? ps.map(a => '<div class="it"><div class="hd"><span><b>' + esc(abxName(a.t)) + '</b> · ' + abxWhen(a.date) + (a.whole ? ' · ' + t('Whole day') : '') + '</span><span><button class="b pri" data-abx="ok" data-id="' + a.id + '">' + t('Approve') + '</button> <button class="b dng" data-abx="no" data-id="' + a.id + '">' + t('Reject') + '</button></span></div>' +
+    '<small>' + abxLes(a) + (a.reason ? '<br>' + esc(a.reason) : '') + '</small></div>').join('') : '<p class="msg">' + t('Nothing here yet.') + '</p>') + '</div>';
+}
+const abxOpt = (c, sg) => {
+  const have = new Set(sg.map(s => s.t)), list = sg.slice();
+  if (c.sub && !have.has(c.sub)) list.unshift({ t: c.sub, name: abxName(c.sub), flags: {}, n: 0 });
+  const fl = s => [s.flags.dept ? t('same department') : '', s.flags.stage ? t('same stage') : '', s.flags.subject ? t('same subject') : '', s.flags.class ? t('same class') : ''].filter(Boolean).join(' · ');
+  return '<option value="">— ' + t('not assigned') + ' —</option>' + list.map(s => '<option value="' + esc(s.t) + '"' + (s.t == c.sub ? ' selected' : '') + '>' + esc(s.name) + (s.n ? ' (' + s.n + ' ' + t('covers') + ')' : '') + (fl(s) ? ' — ' + fl(s) : '') + '</option>').join('');
+};
+function abxCovers(D) {
+  if (!D.approver) return '';
+  const cs = D.covers.filter(c => D.past || c.date >= D.today), dates = [...new Set(cs.map(c => c.date))].sort();
+  let h = '<div class="card"><h3>' + t('Substitute lessons') + '</h3><label class="tag"><input type="checkbox" data-abf="past"' + (ABX.past ? ' checked' : '') + '> ' + t('Show past') + '</label> <button class="b" data-abx="refresh">' + t('Refresh') + '</button>';
+  if (!dates.length) return h + '<p class="msg">' + t('Nothing here yet.') + '</p></div>';
+  dates.forEach(d => {
+    const day = cs.filter(c => c.date == d).sort((a, b) => a.start - b.start || natural(a.c, b.c)), absIds = [...new Set(day.map(c => c.abs))];
+    h += '<h4>' + abxWhen(d) + ' <button class="b" data-abx="print" data-d="' + d + '">' + ic('print') + ' ' + t('Print substitute sheet') + '</button></h4>';
+    absIds.forEach(id => {
+      const rows = day.filter(c => c.abs == id), open = rows.filter(c => !c.sub).length;
+      h += '<div class="it"><div class="hd"><b>' + esc(abxName(rows[0].absent)) + '</b>' + (open && d >= D.today ? '<button class="b" data-abx="auto" data-id="' + id + '">⚡ ' + t('Auto-assign all') + '</button>' : '') + '</div><table class="cv"><tr><th>' + t('Period') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Substitute') + '</th></tr>' +
+        rows.map(c => '<tr><td>' + abxP(c) + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + (c.sugg ? '<select data-abs="' + c.id + '" class="' + (c.sub ? '' : 'open') + '">' + abxOpt(c, c.sugg) + '</select>' + (!c.sugg.length && !c.sub ? ' <small class="open">' + t('No substitute is free') + '</small>' : '') : (c.sub ? esc(abxName(c.sub)) : '—')) + '</td></tr>').join('') + '</table></div>';
+    });
+  });
+  return h + '</div>';
+}
+function abxMine(D) {
+  const mine = D.absences.filter(a => a.mine), cv = D.covers.filter(c => c.sub && abxMy().includes(c.sub) && (D.past || c.date >= D.today));
+  let h = '';
+  if (abxMy().length || mine.length) h += '<div class="card"><h3>' + t('My absence requests') + '</h3>' + (mine.length ? mine.slice().sort((a, b) => a.date < b.date ? 1 : -1).map(a => '<div class="it"><div class="hd"><span><b>' + abxWhen(a.date) + '</b> · ' + abxTag(a.status) + (a.whole ? ' · ' + t('Whole day') : '') + '</span>' + ((a.status == 'pending' || a.status == 'approved') && a.date >= D.today ? '<button class="b dng" data-abx="cancel" data-id="' + a.id + '">' + t('Cancel the request') + '</button>' : '') + '</div><small>' + abxLes(a) + (a.reason ? '<br>' + esc(a.reason) : '') + (a.note ? '<br>' + esc(a.note) : '') + '</small></div>').join('') : '<p class="msg">' + t('Nothing here yet.') + '</p>') + '</div>';
+  if (cv.length) h += '<div class="card"><h3>' + t('My substitute lessons') + '</h3><table class="cv"><tr><th>' + t('Date') + '</th><th>' + t('Period') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Absent teacher') + '</th></tr>' +
+    cv.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start - b.start).map(c => '<tr><td>' + abxWhen(c.date) + '</td><td>' + abxP(c) + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + esc(abxName(c.absent)) + '</td></tr>').join('') + '</table></div>';
+  return h;
+}
+function rAbsence() {
+  const D = ABX.data;
+  if (!D) { abxLoad(); return '<p class="msg">' + t('Loading...') + '</p>' }
+  D.past = ABX.past; if (Date.now() - (ABX.at || 0) > 20000) abxLoad(true);
+  return '<div class="abx">' + abxForm(D) + abxInbox(D) + abxCovers(D) + abxMine(D) + '</div>';
+}
+/* the printed sheet: class, substitute teacher, time, period and an empty box for the signature */
+function abxPrint(date) {
+  const D = ABX.data, rows = D.covers.filter(c => c.date == date).sort((a, b) => a.start - b.start || natural(a.c, b.c));
+  if (!rows.length) return;
+  const tr = rows.map((c, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(c.label || 'P' + c.p) + '</td><td>' + (c.start ? hhmm(c.start) + ' - ' + hhmm(c.end) : '') + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + esc(abxName(c.absent)) + '</td><td>' + (c.sub ? '<b>' + esc(abxName(c.sub)) + '</b>' : '—') + '</td><td style="height:44px"></td></tr>').join('');
+  printHtml(sheet(t('Substitute sheet') + ' – ' + dayName(abxDow(date)) + ' ' + date, '', '<table class="tt"><tr><th style="width:34px">#</th><th>' + t('Period') + '</th><th>' + t('Time') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Absent teacher') + '</th><th>' + t('Substitute') + '</th><th style="width:22%">' + t('Signature') + '</th></tr>' + tr + '</table>'));
+}
+async function abxSwalNote(title, html, yes, danger) {
+  if (!window.Swal) { const ok = confirm(title); return ok ? { note: '' } : null }
+  const r = await Swal.fire({ icon: danger ? 'warning' : 'question', title: title, html: html + '<input id="abx-note" class="swal2-input" placeholder="' + esc(t('Note (optional)')) + '" maxlength="300">', showCancelButton: true, confirmButtonText: yes, cancelButtonText: t('Cancel'), confirmButtonColor: danger ? '#d1291f' : '#26806F', cancelButtonColor: '#5c6f77', reverseButtons: true, heightAuto: false, returnFocus: false, preConfirm: () => document.getElementById('abx-note').value });
+  return r.isConfirmed ? { note: r.value || '' } : null;
+}
+async function abxDo(fn, ...a) { ABX.ver++; try { ABX.data = await srv(fn, ...a); ABX.at = Date.now(); return true } catch (e) { return false } }
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-abx]'); if (!b || TAB != 'ab') return;
+  const k = b.dataset.abx, id = b.dataset.id;
+  if (k == 'refresh') { await abxLoad(true); return }
+  if (k == 'print') return abxPrint(b.dataset.d);
+  if (k == 'send') {
+    const items = ABX.to || ABX.whole ? [] : [...ABX.sel];
+    if (!ABX.date) return toast(t('Choose a valid date.'), 1);
+    if (!ABX.to && !ABX.whole && !items.length) return toast(t('Choose at least one lesson.'), 1);
+    if (await abxDo('api_absReport', ABX.tid, ABX.date, items, ABX.reason, ABX.to)) { ABX.reason = ''; ABX.to = ''; ABX.sel = new Set(); UX.done(t('Request sent')); render() }
+    return;
+  }
+  if (k == 'ok') { const r = await abxSwalNote(t('Approve this request?'), '<p>' + esc(t('The covers are created and you can choose the substitutes.')) + '</p>', t('Approve')); if (r && await abxDo('api_absDecide', id, true, r.note)) { UX.done(t('Approved')); render() } return }
+  if (k == 'no') { const r = await abxSwalNote(t('Reject this request?'), '', t('Reject'), true); if (r && await abxDo('api_absDecide', id, false, r.note)) { UX.done(t('Rejected')); render() } return }
+  if (k == 'cancel') { if (await UX.ask(t('Cancel this absence?'), '', { yes: t('Cancel the request'), danger: true }) && await abxDo('api_absCancel', id)) { UX.done(t('Cancelled')); render() } return }
+  if (k == 'auto') { if (await abxDo('api_absAuto', id)) { const n = ABX.data.autoDone || 0, left = ABX.data.autoLeft || 0; UX.done(t('Auto-assigned') + ': ' + n + (left ? ' · ' + left + ' ' + t('could not be assigned') : '')); render() } return }
+});
+document.addEventListener('change', async e => {
+  const el = e.target; if (TAB != 'ab' || !el.dataset) return;
+  if (el.dataset.abs) { if (await abxDo('api_absAssign', el.dataset.abs, el.value)) UX.done(t('Assigned')); else await abxLoad(true); return render() }
+  const f = el.dataset.abf; if (!f || f == 'reason') return;
+  if (f == 'tid') { ABX.tid = el.value; ABX.sel = new Set() }
+  else if (f == 'date') { ABX.date = el.value; ABX.sel = new Set(); if (ABX.to && ABX.to <= ABX.date) ABX.to = '' }
+  else if (f == 'to') ABX.to = el.value;
+  else if (f == 'whole') ABX.whole = el.value == '1';
+  else if (f == 'les') { if (el.checked) ABX.sel.add(el.value); else ABX.sel.delete(el.value) }
+  else if (f == 'past') ABX.past = el.checked;
+  render();
+});
+document.addEventListener('input', e => { const el = e.target; if (el.dataset && el.dataset.abf == 'reason') ABX.reason = el.value });
+
+/* ---------- Settings > Substitutes (admin) ---------- */
+let ABS_ORD = null;
+function sSubs() {
+  const cur = ((S.set.subPrio || {}).order || []), on = ABS_ORD || cur.slice(), mx = (S.set.subPrio || {}).max !== false;
+  if (!ABS_ORD) ABS_ORD = on;
+  const rest = ABX_CRIT.map(x => x[0]).filter(k => !ABS_ORD.includes(k)), nm = Object.fromEntries(ABX_CRIT);
+  return '<div class="card abx"><h3>' + t('Who covers an absent teacher') + '</h3><p class="msg">' + t('The best substitute is chosen by these rules, in this order. Only teachers who are free at that time are offered (no lesson, not unavailable, not absent, not covering another class).') + '</p>' +
+    ABS_ORD.map((k, i) => '<div class="it"><div class="hd"><span><b>' + (i + 1) + '.</b> ' + t(nm[k]) + '</span><span><button class="b" data-abo="up" data-k="' + k + '"' + (i ? '' : ' disabled') + '>▲</button> <button class="b" data-abo="dn" data-k="' + k + '"' + (i < ABS_ORD.length - 1 ? '' : ' disabled') + '>▼</button> <button class="b dng" data-abo="off" data-k="' + k + '">×</button></span></div></div>').join('') +
+    (rest.length ? '<p>' + rest.map(k => '<button class="b" data-abo="on" data-k="' + k + '">+ ' + t(nm[k]) + '</button>').join(' ') + '</p>' : '') +
+    '<p><label><input type="checkbox" data-abo="max"' + (mx ? ' checked' : '') + '> ' + t('Respect the maximum periods per day (substitute lessons count)') + '</label></p>' +
+    '<p><button class="b pri" data-abo="save">' + ic('check') + ' ' + t('Save the order') + '</button></p></div>';
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('button[data-abo]'); if (!b || !ABS_ORD) return;
+  const k = b.dataset.k, i = ABS_ORD.indexOf(k), a = b.dataset.abo;
+  if (a == 'up' && i > 0) [ABS_ORD[i - 1], ABS_ORD[i]] = [ABS_ORD[i], ABS_ORD[i - 1]];
+  else if (a == 'dn' && i >= 0 && i < ABS_ORD.length - 1) [ABS_ORD[i + 1], ABS_ORD[i]] = [ABS_ORD[i], ABS_ORD[i + 1]];
+  else if (a == 'off') ABS_ORD = ABS_ORD.filter(x => x != k);
+  else if (a == 'on') ABS_ORD.push(k);
+  else if (a == 'save') {
+    const mx = !!($('[data-abo="max"]') || {}).checked;
+    try { S = await srv('api_saveSubPrio', { order: ABS_ORD, max: mx }); ABS_ORD = null; index(); UX.done(t('Saved')) } catch (x) { return }
+  }
+  render();
+});
+document.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.abo == 'max') { const s = S.set.subPrio = S.set.subPrio || {}; s.max = e.target.checked } });
+
+/* ---------- the tab ---------- */
+TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'rp') + 1, 1), 0, ['ab', 'Absence', 'user']);
+const _rAb = render;
+render = function () {
+  if (S && !S.register && S.role && !abxAllowed()) { const i = TABS.findIndex(x => x[0] == 'ab'); if (i >= 0) TABS.splice(i, 1); if (TAB == 'ab') TAB = 'tt' }
+  if (TAB != 'ab') return _rAb();
+  const sy = window.scrollY;
+  TAB = 'tt'; try { _rAb() } finally { TAB = 'ab' }
+  $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'ab'));
+  $('#v').innerHTML = rAbsence(); window.scrollTo(0, sy);
 };
 </script>
 
