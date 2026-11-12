@@ -302,7 +302,7 @@ const t = s => (HL == 'ar' && AR[s]) || s;
 function applyLang() {
   document.documentElement.lang = HL; document.documentElement.dir = HL == 'ar' ? 'rtl' : 'ltr'; document.body.dir = HL == 'ar' ? 'rtl' : 'ltr';
   $('#langt').textContent = HL == 'ar' ? 'English' : 'العربية';
-  $('#ttl').textContent = t('School Operations Platform'); $('#lgn').src = LOGO.n; $('#lgv').src = LOGO.v;
+  $('#ttl').textContent = t('School Operations Platform'); $('#lgn').src = ((typeof S !== 'undefined' && S && S.set && S.set.brand && S.set.brand.logo) || LOGO.n); $('#lgv').src = LOGO.v;
 }
 
 /* ===================== 2. VIEWS: timetable grids (class, teacher, room, master) ===================== */
@@ -518,10 +518,10 @@ const fmtD = x => x.toLocaleDateString('en-GB', { day: 'numeric', month: 'short'
 const weekTxt = () => { const s = new Date(S.week.sun + 'T00:00:00'), e = new Date(s); e.setDate(s.getDate() + Math.max(...I.days)); return s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' – ' + fmtD(e) };
 function sheet(title, sub, body) {
   const issued = fmtD(new Date(S.week.issued + 'T00:00:00'));
-  return `<div class="sheet"><div class="print-head"><div class="print-brand"><img src="${LOGO.n}" alt=""><div><b>${esc(S.set.school)}</b><small>${esc(S.set.division)}</small></div></div><div class="print-title"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<small>${t('Week')}: ${weekTxt()} · ${t('Issued')}: ${issued}</small></div></div>${body}<div class="print-foot"><span>${esc(S.set.school)} – ${esc(S.set.division)}</span><span>${t('Week')}: ${weekTxt()} · ${t('Issued')}: ${issued}</span></div></div>`;
+  return `<div class="sheet"><div class="print-head">${sxHead()}<div class="print-title"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<small>${t('Week')}: ${weekTxt()} · ${t('Issued')}: ${issued}</small></div></div>${body}<div class="print-foot"><span>${esc(S.set.school)} – ${esc(S.set.division)}</span><span>${t('Week')}: ${weekTxt()} · ${t('Issued')}: ${issued}</span></div></div>`;
 }
-function printHtml(h) {                     // every sheet is fitted to exactly ONE A4 landscape page: font first, then a final zoom if a wide table is still too big
-  const pa = $('#pa'); pa.innerHTML = h; const o = pa.style.cssText, W = 1062, H = 712;
+function printHtml(h, por) {                     // every sheet is fitted to exactly ONE A4 landscape page: font first, then a final zoom if a wide table is still too big
+  const pa = $('#pa'); pa.innerHTML = (por ? '<style>@page{size:A4 portrait;margin:7mm 8mm 9mm 8mm}</style>' : '') + h; const o = pa.style.cssText, W = por ? 718 : 1062, H = por ? 1030 : 712;
   pa.style.cssText = 'display:block;position:absolute;left:-99999px;top:0;width:' + W + 'px';
   pa.querySelectorAll('.sheet').forEach(s => {
     const fits = () => s.offsetHeight <= H && s.scrollWidth <= W + 1;
@@ -573,7 +573,7 @@ function doPrint() {
 
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
-const SUBS = [['general', 'General', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['subs', 'Substitutes', 'users'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
+const SUBS = [['general', 'General', 'gear'], ['academic', 'Academic year', 'book'], ['periods', 'Exam & custom periods', 'clock'], ['brand', 'School branding', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['subs', 'Substitutes', 'users'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
 const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
@@ -627,7 +627,7 @@ ${XI ? `<h4>${esc(XI.name)}</h4><table class="ed"><tr><th></th><th>${t('What')}<
 <div class="card"><h3>${t('Change log')}</h3><button class="b" data-a="log">${t('Show last 150 changes')}</button>${LOGR ? `<div class="sc" style="max-height:340px"><table class="ed"><tr><th>${t('Time')}</th><th>${t('Class')}</th><th>${t('Day')}</th><th>${t('Slot')}</th><th>${t('Old')}</th><th>${t('New')}</th><th>${t('User')}</th></tr>${LOGR.map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table></div>` : ''}</div>`;
 }
 function rSettings() {
-  const body = { general: sGeneral, slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, auto: () => sAuto(), subs: () => sSubs(), shared: sShared, access: sAccess, io: sIO }[SUB]();
+  const body = { general: sGeneral, academic: () => sAcademic(), periods: () => sPeriods(), brand: () => sBrand(), slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, auto: () => sAuto(), subs: () => sSubs(), shared: sShared, access: sAccess, io: sIO }[SUB]();
   return `<nav class="sub">${SUBS.map(([k, l, i]) => `<button class="pill${k == SUB ? ' on' : ''}" data-sub="${k}">${ic(i)} ${t(l)}</button>`).join('')}</nav>${body}`;
 }
 async function saveTbl(n) {
@@ -2246,6 +2246,650 @@ render = function () {
   TAB = 'tt'; try { _rAb() } finally { TAB = 'ab' }
   $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'ab'));
   $('#v').innerHTML = rAbsence(); window.scrollTo(0, sy);
+};
+</script>
+
+<script>
+"use strict";
+/* XL: a small, dependency-free reader/writer for .xlsx (a zip of XML files) and a CSV reader. Works offline, no CDN.
+   read(file) -> [{name, rows:[[cell,...],...]}]   dates come back as 'yyyy-mm-dd', times as 'HH:MM'
+   save(fileName, [{name, rows, bold:[rowIndexes], widths:[chars]}]) downloads an .xlsx
+   The old binary .xls format cannot be read here: read() throws 'XLS' and the caller asks for .xlsx / CSV or loads SheetJS from a CDN. */
+const XL = (() => {
+  const td = new TextDecoder(), te = new TextEncoder();
+  async function inflate(u8) { const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(u8); w.close(); return new Uint8Array(await new Response(ds.readable).arrayBuffer()) }
+  function unzip(buf) {
+    const u = new Uint8Array(buf), dv = new DataView(buf); let e = u.length - 22;
+    while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+    if (e < 0) throw new Error('ZIP');
+    const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const out = {};
+    for (let i = 0; i < n; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('ZIP');
+      const method = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true), name = td.decode(u.subarray(p + 46, p + 46 + nl));
+      const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+      out[name] = async () => { const d = u.subarray(start, start + cs); return td.decode(method === 0 ? d : await inflate(d)) };
+      p += 46 + nl + el + cl;
+    }
+    return out;
+  }
+  const xml = s => new DOMParser().parseFromString(s, 'application/xml');
+  const colIdx = r => { let n = 0; const m = /^[A-Z]+/.exec(r)[0]; for (const ch of m) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1 };
+  const pad2 = n => String(n).padStart(2, '0');
+  function serial(n) {
+    const days = Math.floor(n), fr = n - days, mins = Math.round(fr * 1440);
+    const d = days > 0 ? new Date(Date.UTC(1899, 11, 30) + days * 86400000).toISOString().slice(0, 10) : '', t = mins ? pad2(Math.floor(mins / 60) % 24) + ':' + pad2(mins % 60) : '';
+    return d && t ? d + ' ' + t : d || t || '00:00';
+  }
+  async function readXlsx(buf) {
+    const z = unzip(buf); if (!z['xl/workbook.xml']) throw new Error('ZIP');
+    const wb = xml(await z['xl/workbook.xml']()), rels = z['xl/_rels/workbook.xml.rels'] ? xml(await z['xl/_rels/workbook.xml.rels']()) : null;
+    const target = {}; if (rels) [...rels.getElementsByTagName('Relationship')].forEach(r => { let t = r.getAttribute('Target'); t = t.replace(/^[/]/, ''); target[r.getAttribute('Id')] = t.startsWith('xl/') ? t : 'xl/' + t });
+    const shared = []; if (z['xl/sharedStrings.xml']) [...xml(await z['xl/sharedStrings.xml']()).getElementsByTagName('si')].forEach(si => { let s = ''; [...si.getElementsByTagName('t')].forEach(t => { if (!t.closest('rPh')) s += t.textContent }); shared.push(s) });
+    const dateXf = []; if (z['xl/styles.xml']) {
+      const st = xml(await z['xl/styles.xml']()), custom = {}; [...st.getElementsByTagName('numFmt')].forEach(f => { custom[f.getAttribute('numFmtId')] = f.getAttribute('formatCode') });
+      const xfs = st.getElementsByTagName('cellXfs')[0]; if (xfs) [...xfs.getElementsByTagName('xf')].forEach(x => { const id = x.getAttribute('numFmtId'), c = custom[id]; dateXf.push((+id >= 14 && +id <= 22) || (+id >= 45 && +id <= 47) || (c && /[dmyhs]/i.test(c.replace(/"[^"]*"|\[[^\]]*\]|\\./g, '')))) });
+    }
+    const out = [];
+    for (const s of [...wb.getElementsByTagName('sheet')]) {
+      const path = target[s.getAttribute('r:id')] || target[[...s.attributes].find(a => /:id$/.test(a.name) && a.name !== 'sheetId')?.value]; if (!path || !z[path]) continue;
+      const rows = []; let rn = 0;
+      [...xml(await z[path]()).getElementsByTagName('row')].forEach(row => {
+        rn = row.getAttribute('r') ? +row.getAttribute('r') - 1 : rn; const arr = rows[rn] = [];
+        [...row.getElementsByTagName('c')].forEach(c => {
+          const t = c.getAttribute('t'), v = c.getElementsByTagName('v')[0], i = c.getAttribute('r') ? colIdx(c.getAttribute('r')) : arr.length; let val = '';
+          if (t === 'inlineStr') val = [...c.getElementsByTagName('t')].map(x => x.textContent).join('');
+          else if (v) { const raw = v.textContent; if (t === 's') val = shared[+raw] ?? ''; else if (t === 'str') val = raw; else if (t === 'b') val = raw === '1'; else if (t === 'e') val = ''; else { const n = parseFloat(raw); val = dateXf[+c.getAttribute('s')] ? serial(n) : n } }
+          arr[i] = val;
+        });
+        rn++;
+      });
+      const dense = []; for (let i = 0; i < rows.length; i++) if (rows[i]) { const r = []; for (let j = 0; j < rows[i].length; j++) r.push(rows[i][j] ?? ''); dense.push(r) } else if (dense.length) dense.push([]);
+      while (dense.length && dense[dense.length - 1].every(x => x === '')) dense.pop();
+      out.push({ name: s.getAttribute('name'), rows: dense });
+    }
+    return out;
+  }
+  function parseCsv(text) {
+    text = text.replace(/^﻿/, ''); const sep = (text.split('\n')[0].match(/;/g) || []).length > (text.split('\n')[0].match(/,/g) || []).length ? ';' : ',', rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++ } else q = false } else cur += ch }
+      else if (ch === '"') q = true; else if (ch === sep) { row.push(cur); cur = '' } else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = '' } else cur += ch;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row) }
+    return rows.filter(r => r.some(x => x !== ''));
+  }
+  async function read(file) {
+    const name = (file.name || '').toLowerCase(), buf = await file.arrayBuffer(), u = new Uint8Array(buf.slice(0, 4));
+    if (/\.(csv|txt)$/.test(name)) return [{ name: 'CSV', rows: parseCsv(td.decode(buf)) }];
+    if (u[0] === 0xD0 && u[1] === 0xCF) throw new Error('XLS');          // the old binary format
+    return readXlsx(buf);
+  }
+  /* ---- writer ---- */
+  const crcT = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0 } return t })();
+  const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = crcT[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0 };
+  function zip(files) {
+    const parts = [], cd = []; let off = 0;
+    const w16 = (a, v) => a.push(v & 255, v >> 8 & 255), w32 = (a, v) => a.push(v & 255, v >> 8 & 255, v >> 16 & 255, v >> 24 & 255);
+    for (const [name, text] of files) {
+      const nb = te.encode(name), d = te.encode(text), crc = crc32(d), h = [];
+      w32(h, 0x04034b50); w16(h, 20); w16(h, 0x0800); w16(h, 0); w16(h, 0); w16(h, 0x21); w32(h, crc); w32(h, d.length); w32(h, d.length); w16(h, nb.length); w16(h, 0);
+      parts.push(new Uint8Array(h), nb, d);
+      const c = []; w32(c, 0x02014b50); w16(c, 20); w16(c, 20); w16(c, 0x0800); w16(c, 0); w16(c, 0); w16(c, 0x21); w32(c, crc); w32(c, d.length); w32(c, d.length); w16(c, nb.length); w16(c, 0); w16(c, 0); w16(c, 0); w16(c, 0); w32(c, 0); w32(c, off);
+      cd.push(new Uint8Array(c), nb); off += h.length + nb.length + d.length;
+    }
+    let cdl = 0; cd.forEach(x => cdl += x.length); const e = []; w32(e, 0x06054b50); w16(e, 0); w16(e, 0); w16(e, files.length); w16(e, files.length); w32(e, cdl); w32(e, off); w16(e, 0);
+    return new Blob([...parts, ...cd, new Uint8Array(e)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+  const colName = i => { let s = ''; for (i++; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + (i - 1) % 26) + s; return s };
+  function build(sheets) {
+    const files = [['[Content_Types].xml', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http:\x2f\x2fschemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' + sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>'],
+    ['_rels/.rels', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http:\x2f\x2fschemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheets.map((s, i) => `<sheet name="${esc(String(s.name || 'Sheet' + (i + 1)).replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http:\x2f\x2fschemas.openxmlformats.org/package/2006/relationships">' + sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') + `<Relationship Id="rId${sheets.length + 1}" Type="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+    ['xl/styles.xml', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>']];
+    sheets.forEach((s, i) => {
+      const bold = new Set(s.bold || []), w = s.widths || [];
+      const rows = s.rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => v === '' || v == null ? '' : typeof v === 'number' && isFinite(v) ? `<c r="${colName(ci)}${ri + 1}"${bold.has(ri) ? ' s="1"' : ''}><v>${v}</v></c>` : `<c r="${colName(ci)}${ri + 1}" t="inlineStr"${bold.has(ri) ? ' s="1"' : ''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`).join('') + '</row>').join('');
+      const cols = w.length ? '<cols>' + w.map((x, k) => `<col min="${k + 1}" max="${k + 1}" width="${x}" customWidth="1"/>`).join('') + '</cols>' : '';
+      files.push([`xl/worksheets/sheet${i + 1}.xml`, `<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main">${cols}<sheetData>${rows}</sheetData></worksheet>`]);
+    });
+    return zip(files);
+  }
+  function save(fileName, sheets) {
+    sheets.forEach(s => { if (!s.widths) { const w = []; s.rows.forEach(r => r.forEach((v, i) => { w[i] = Math.min(60, Math.max(w[i] || 8, String(v ?? '').length + 2)) })); s.widths = w } });
+    const blob = build(sheets), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName.replace(/[\\/:*?"<>|]/g, '_') + '.xlsx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 4000);
+    return blob;
+  }
+  return { read, readXlsx, parseCsv, build, save, serial };
+})();
+</script>
+
+<style>
+.sx .r{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:6px 0}
+.sx .r label{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}
+.sx .li{display:grid;grid-template-columns:minmax(120px,2fr) repeat(3,minmax(110px,1fr)) auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--ln)}
+.sx .li.p5{grid-template-columns:minmax(120px,2fr) minmax(110px,1fr) repeat(2,minmax(110px,1fr)) minmax(90px,1fr) auto}
+.sx .li input,.sx .li select{width:100%;min-width:0}
+.sx .lg{max-height:120px;max-width:260px;border:1px dashed var(--ln);padding:6px;background:#fff;border-radius:8px}
+@media(max-width:760px){.sx .li,.sx .li.p5{grid-template-columns:1fr 1fr}}
+</style>
+<script>
+"use strict";
+/* Settings > Academic year, Exam & custom periods, School branding (all stored as JSON settings, Custom.gs). Admin only. */
+Object.assign(AR, {
+  'Academic year': 'السنة الدراسية', 'Exam & custom periods': 'فترات الامتحانات والفترات الخاصة', 'School branding': 'هوية المدرسة', 'Year name': 'اسم السنة', 'Year start': 'بداية السنة', 'Year end': 'نهاية السنة',
+  'First semester': 'الفصل الدراسي الأول', 'Second semester': 'الفصل الدراسي الثاني', 'From': 'من', 'Until': 'إلى', 'Terms and quarters': 'الأتراب والأرباع', 'Holidays and official breaks': 'الإجازات والعطلات الرسمية',
+  'Add': 'إضافة', 'Name': 'الاسم', 'Type': 'النوع', 'Term': 'ترم', 'Quarter': 'ربع', 'Other': 'أخرى', 'Move up': 'أعلى', 'Move down': 'أسفل', 'Delete': 'حذف',
+  'Exam periods': 'فترات الامتحانات', 'Custom periods': 'فترات خاصة', 'Add exam period': 'إضافة فترة امتحانات', 'Add custom period': 'إضافة فترة خاصة', 'Active': 'نشطة', 'Archived': 'مؤرشفة',
+  'Description': 'الوصف', 'Status': 'الحالة', 'Academic year ': 'السنة الدراسية ', 'Save': 'حفظ', 'Saved': 'تم الحفظ', 'Year': 'السنة',
+  'School name (Arabic)': 'اسم المدرسة (عربي)', 'School name (English)': 'اسم المدرسة (إنجليزي)', 'Address': 'العنوان', 'Contact details': 'بيانات التواصل', 'Logo': 'الشعار', 'Upload a logo': 'رفع شعار',
+  'Use the built-in logo': 'استخدام الشعار الأصلي', 'Logo height on printouts': 'ارتفاع الشعار في الطباعة', 'Logo position': 'مكان الشعار', 'Start of the page': 'بداية الصفحة', 'End of the page': 'نهاية الصفحة',
+  'PNG, JPG or SVG. The image is reduced automatically. It appears in the app and on every printout and Excel file.': 'PNG أو JPG أو SVG. يتم تصغير الصورة تلقائياً. تظهر في البرنامج وفي كل طباعة وملف Excel.',
+  'Preview': 'معاينة', 'First Term Examination': 'امتحان الترم الأول', 'Second Term Examination': 'امتحان الترم الثاني', 'Mid-Year Examination': 'امتحان منتصف العام', 'Final Examination': 'الامتحان النهائي',
+  'First Quarter Examination': 'امتحان الربع الأول', 'Second Quarter Examination': 'امتحان الربع الثاني', 'Third Quarter Examination': 'امتحان الربع الثالث', 'Fourth Quarter Examination': 'امتحان الربع الرابع', 'Special / Retake Examination': 'امتحان خاص / إعادة',
+  'Summer Exams': 'امتحانات الصيف', 'Placement Tests': 'اختبارات تحديد المستوى', 'Mock Exams': 'امتحانات تجريبية', 'Assessment Week': 'أسبوع التقييم', 'Special Testing Session': 'جلسة اختبار خاصة', 'Custom period': 'فترة خاصة',
+  'Nothing here yet.': 'لا يوجد شيء بعد.', 'Choose an image.': 'اختر صورة.', 'The image could not be read.': 'تعذرت قراءة الصورة.'
+});
+const SX = { ac: null, pe: null, br: null, ver: 0 };
+const sxClone = o => JSON.parse(JSON.stringify(o));
+const sxEmptyAc = () => ({ name: (S.set && S.set.year) || '', start: '', end: '', sem1: { s: '', e: '' }, sem2: { s: '', e: '' }, periods: [], holidays: [] });
+function sxInit() {
+  if (SX.ac && SX.ver === S.set) return; SX.ver = S.set;
+  const a = S.set.academic ? sxClone(S.set.academic) : sxEmptyAc(); a.sem1 = a.sem1 || { s: '', e: '' }; a.sem2 = a.sem2 || { s: '', e: '' }; a.periods = a.periods || []; a.holidays = a.holidays || [];
+  SX.ac = a; SX.pe = sxClone(S.set.examPeriods || []); SX.br = Object.assign({ logo: '', logoH: 56, align: 'start', nameAr: '', nameEn: '', address: '', contact: '' }, S.set.brand || {});
+}
+function sxSet(path, v) { const p = path.split('.'); let o = SX; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; o[p[p.length - 1]] = v }
+const sxIn = (path, v, type, ph) => `<input data-sx="${path}" type="${type || 'text'}" value="${esc(v == null ? '' : v)}"${ph ? ` placeholder="${esc(ph)}"` : ''}>`;
+const sxMv = (list, i, n) => `<button class="b" data-sxa="up" data-l="${list}" data-i="${i}" title="${t('Move up')}"${i ? '' : ' disabled'}>▲</button><button class="b" data-sxa="dn" data-l="${list}" data-i="${i}" title="${t('Move down')}"${i < n - 1 ? '' : ' disabled'}>▼</button><button class="b dng" data-sxa="del" data-l="${list}" data-i="${i}" title="${t('Delete')}">×</button>`;
+function sAcademic() {
+  sxInit(); const a = SX.ac;
+  return `<div class="card sx"><h3>${t('Academic year')}</h3>
+<div class="r"><label>${t('Year name')}${sxIn('ac.name', a.name)}</label><label>${t('Year start')}${sxIn('ac.start', a.start, 'date')}</label><label>${t('Year end')}${sxIn('ac.end', a.end, 'date')}</label></div>
+<div class="r"><b>${t('First semester')}</b><label>${t('From')}${sxIn('ac.sem1.s', a.sem1.s, 'date')}</label><label>${t('Until')}${sxIn('ac.sem1.e', a.sem1.e, 'date')}</label></div>
+<div class="r"><b>${t('Second semester')}</b><label>${t('From')}${sxIn('ac.sem2.s', a.sem2.s, 'date')}</label><label>${t('Until')}${sxIn('ac.sem2.e', a.sem2.e, 'date')}</label></div>
+<h4>${t('Terms and quarters')}</h4>${a.periods.length ? a.periods.map((p, i) => `<div class="li"><div>${sxIn('ac.periods.' + i + '.name', p.name, 'text', t('Name'))}</div><select data-sx="ac.periods.${i}.type">${['term', 'quarter', 'other'].map(k => `<option value="${k}"${p.type == k ? ' selected' : ''}>${t({ term: 'Term', quarter: 'Quarter', other: 'Other' }[k])}</option>`).join('')}</select>${sxIn('ac.periods.' + i + '.s', p.s, 'date')}${sxIn('ac.periods.' + i + '.e', p.e, 'date')}<span>${sxMv('ac.periods', i, a.periods.length)}</span></div>`).join('') : `<p class="msg">${t('Nothing here yet.')}</p>`}
+<p><button class="b" data-sxa="add" data-l="ac.periods">+ ${t('Add')}</button></p>
+<h4>${t('Holidays and official breaks')}</h4>${a.holidays.length ? a.holidays.map((p, i) => `<div class="li"><div>${sxIn('ac.holidays.' + i + '.name', p.name, 'text', t('Name'))}</div>${sxIn('ac.holidays.' + i + '.s', p.s, 'date')}${sxIn('ac.holidays.' + i + '.e', p.e, 'date')}<span></span><span>${sxMv('ac.holidays', i, a.holidays.length)}</span></div>`).join('') : `<p class="msg">${t('Nothing here yet.')}</p>`}
+<p><button class="b" data-sxa="add" data-l="ac.holidays">+ ${t('Add')}</button></p>
+<p><button class="b pri" data-sxa="save" data-k="academic">${ic('check')} ${t('Save')}</button></p></div>`;
+}
+const SX_EXAM = ['First Term Examination', 'Second Term Examination', 'Mid-Year Examination', 'Final Examination', 'First Quarter Examination', 'Second Quarter Examination', 'Third Quarter Examination', 'Fourth Quarter Examination', 'Special / Retake Examination'];
+const SX_CUSTOM = ['Summer Exams', 'Placement Tests', 'Mock Exams', 'Assessment Week', 'Special Testing Session'];
+function sxPeriods(kind) {
+  const list = SX.pe.map((p, i) => [p, i]).filter(x => x[0].kind == kind), names = kind == 'exam' ? SX_EXAM : SX_CUSTOM;
+  return `<div class="card sx"><h3>${t(kind == 'exam' ? 'Exam periods' : 'Custom periods')}</h3>${list.length ? list.map(([p, i]) => `<div class="li p5"><div>${sxIn('pe.' + i + '.name', p.name, 'text', t('Name'))}</div>${sxIn('pe.' + i + '.type', p.type, 'text', t('Type'))}${sxIn('pe.' + i + '.s', p.s, 'date')}${sxIn('pe.' + i + '.e', p.e, 'date')}<select data-sx="pe.${i}.status"><option value="active"${p.status != 'archived' ? ' selected' : ''}>${t('Active')}</option><option value="archived"${p.status == 'archived' ? ' selected' : ''}>${t('Archived')}</option></select><span>${sxMv('pe', i, SX.pe.length)}</span><div style="grid-column:1/-1">${sxIn('pe.' + i + '.desc', p.desc, 'text', t('Description'))}</div></div>`).join('') : `<p class="msg">${t('Nothing here yet.')}</p>`}
+<p><select id="sx-new-${kind}">${names.map(n => `<option value="${esc(n)}">${t(n)}</option>`).join('')}<option value="">${t('Custom period')}...</option></select> <button class="b" data-sxa="addp" data-kind="${kind}">+ ${t(kind == 'exam' ? 'Add exam period' : 'Add custom period')}</button></p></div>`;
+}
+function sPeriods() { sxInit(); return `<div class="sx">${sxPeriods('exam')}${sxPeriods('custom')}<p><button class="b pri" data-sxa="save" data-k="examPeriods">${ic('check')} ${t('Save')}</button></p></div>` }
+function sBrand() {
+  sxInit(); const b = SX.br;
+  return `<div class="card sx"><h3>${t('School branding')}</h3>
+<div class="r"><label style="flex:1">${t('School name (English)')}${sxIn('br.nameEn', b.nameEn)}</label><label style="flex:1">${t('School name (Arabic)')}${sxIn('br.nameAr', b.nameAr)}</label></div>
+<div class="r"><label style="flex:1">${t('Address')}${sxIn('br.address', b.address)}</label><label style="flex:1">${t('Contact details')}${sxIn('br.contact', b.contact)}</label></div>
+<div class="r"><div><b>${t('Logo')}</b><br><img class="lg" id="sx-logo" src="${esc(b.logo || LOGO.n)}" alt=""></div><div><input type="file" id="sx-file" accept="image/png,image/jpeg,image/svg+xml"> <button class="b" data-sxa="nologo">${t('Use the built-in logo')}</button><p class="msg">${t('PNG, JPG or SVG. The image is reduced automatically. It appears in the app and on every printout and Excel file.')}</p></div></div>
+<div class="r"><label>${t('Logo height on printouts')} (${b.logoH}px)<input type="range" min="20" max="120" data-sx="br.logoH" data-num="1" value="${b.logoH}"></label><label>${t('Logo position')}<select data-sx="br.align"><option value="start"${b.align != 'end' ? ' selected' : ''}>${t('Start of the page')}</option><option value="end"${b.align == 'end' ? ' selected' : ''}>${t('End of the page')}</option></select></label></div>
+<h4>${t('Preview')}</h4><div id="sx-prev" style="background:#fff;color:#1f3a68;border:1px solid var(--ln);border-radius:8px;padding:8px">${sxHead(b)}</div>
+<p><button class="b pri" data-sxa="save" data-k="brand">${ic('check')} ${t('Save')}</button></p></div>`;
+}
+/* the page header used by every printout: logo + names (also used by the exam sheets) */
+function sxHead(b) {
+  b = b || (S.set && S.set.brand) || {}; const nm = b.nameEn || S.set.school, ar = b.nameAr || S.set.division;
+  return `<div class="print-brand" style="display:flex;align-items:center;gap:10px;${b.align == 'end' ? 'flex-direction:row-reverse;' : ''}"><img src="${esc(b.logo || LOGO.n)}" alt="" style="max-height:${b.logoH || 48}px;max-width:240px"><div><b>${esc(nm)}</b><small>${esc(ar || '')}</small>${b.address || b.contact ? `<small>${esc([b.address, b.contact].filter(Boolean).join(' · '))}</small>` : ''}</div></div>`;
+}
+function sxLogoApply() { const b = (S && S.set && S.set.brand) || {}; if (b.logo) { const el = $('#lgn'); if (el) el.src = b.logo } }
+/* shrink an uploaded image until its data: URL fits in a sheet cell (under 45,000 characters) */
+async function sxReadLogo(file) {
+  if (!file) throw new Error(t('Choose an image.'));
+  const url = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(new Error(t('The image could not be read.'))); r.readAsDataURL(file) });
+  if (/^data:image\/svg\+xml/.test(url) && url.length < 40000) return url;
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error(t('The image could not be read.'))); i.src = url });
+  for (const [max, q, type] of [[220, 0, 'image/png'], [160, 0, 'image/png'], [220, .85, 'image/jpeg'], [160, .8, 'image/jpeg'], [110, .75, 'image/jpeg']]) {
+    const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    const g = c.getContext('2d'); if (type == 'image/jpeg') { g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height) } g.drawImage(img, 0, 0, c.width, c.height);
+    const out = c.toDataURL(type, q || undefined); if (out.length < 44000) return out;
+  }
+  throw new Error(t('The image could not be read.'));
+}
+document.addEventListener('input', e => {
+  const el = e.target, p = el.dataset && el.dataset.sx; if (!p || !SX.ac) return;
+  sxSet(p, el.dataset.num ? +el.value : el.value);
+  if (p.startsWith('br.')) { const pv = $('#sx-prev'); if (pv) pv.innerHTML = sxHead(SX.br); if (p == 'br.logoH') { const l = el.closest('label'); if (l) l.firstChild.textContent = t('Logo height on printouts') + ' (' + el.value + 'px)' } }
+});
+document.addEventListener('change', async e => {
+  const el = e.target; if (!el.dataset) return;
+  if (el.dataset.sx && el.tagName == 'SELECT') sxSet(el.dataset.sx, el.value);
+  if (el.id == 'sx-file') { try { SX.br.logo = await sxReadLogo(el.files[0]); render() } catch (x) { toast(String(x.message || x), 1) } }
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-sxa]'); if (!b || !SX.ac) return;
+  const a = b.dataset.sxa, L = b.dataset.l, i = +b.dataset.i;
+  const list = () => { const p = L.split('.'); let o = SX; p.forEach(k => o = o[k]); return o };
+  if (a == 'add') { list().push(L == 'ac.periods' ? { name: '', type: 'term', s: '', e: '' } : { name: '', s: '', e: '' }); render() }
+  else if (a == 'addp') { const kind = b.dataset.kind, v = $('#sx-new-' + kind).value; SX.pe.push({ id: '', name: v ? t(v) : '', kind: kind, type: '', s: '', e: '', year: SX.ac.name || '', desc: '', status: 'active' }); render() }
+  else if (a == 'del') { list().splice(i, 1); render() }
+  else if (a == 'up' && i > 0) { const l = list(); [l[i - 1], l[i]] = [l[i], l[i - 1]]; render() }
+  else if (a == 'dn') { const l = list(); if (i < l.length - 1) { [l[i + 1], l[i]] = [l[i], l[i + 1]]; render() } }
+  else if (a == 'nologo') { SX.br.logo = ''; render() }
+  else if (a == 'save') {
+    const k = b.dataset.k, val = k == 'academic' ? SX.ac : k == 'examPeriods' ? SX.pe : SX.br;
+    try { S = await srv('api_saveSettingsX', k, val); SX.ac = null; index(); sxLogoApply(); UX.done(t('Saved')); render() } catch (x) { }
+  }
+});
+</script>
+
+<style>
+.exu .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:8px 0}
+.exu .row label{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}
+.exu .grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 16px}
+.exu .grid2 label{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.exu .tl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.exu .tc{border:1px solid var(--ln);border-radius:12px;padding:12px;background:var(--sf);display:flex;flex-direction:column;gap:6px}
+.exu .tag2{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;background:var(--hl)}
+.exu .tag2.bad{background:#fde4e1;color:#b3261e}.exu .tag2.ok{background:#dff3e8;color:#1a7a52}
+.exu .tw{overflow-x:auto}
+.exu table.ex{width:100%;border-collapse:collapse;font-size:13px}
+.exu table.ex th,.exu table.ex td{border-bottom:1px solid var(--ln);padding:5px 7px;text-align:start;vertical-align:middle}
+.exu table.ex input,.exu table.ex select{width:100%;min-width:70px}
+.exu table.ex tr.err td{background:#fde4e1}.exu table.ex tr.dup td{background:#fff3cd}
+.exu .chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ln);border-radius:999px;padding:2px 10px;margin:2px;background:var(--sf);cursor:pointer;font-size:13px}
+.exu .chip.main{border-color:#26806f;background:#e3f1ee;color:#0f4a3f}.exu .chip.res{border-style:dashed;background:#fff8e1;color:#6b4e00}
+.exu .chip.sel{outline:2px solid #1f3a68}.exu .chip.bad{border-color:#d1291f;box-shadow:0 0 0 1px #d1291f}
+.exu .panel{position:sticky;top:0;z-index:5;border:2px solid #1f3a68;background:var(--sf);border-radius:12px;padding:10px 12px;margin:8px 0}
+.exu .ses{border:1px solid var(--ln);border-radius:12px;padding:8px 10px;margin:10px 0}
+.exu .ses h5{margin:0 0 4px;font-size:14px}
+.exu .lock{background:#fff3cd;border:1px solid #e0b100;border-radius:10px;padding:8px 12px;margin:8px 0}
+.exu .cf{border-inline-start:4px solid #d1291f;padding:6px 10px;margin:6px 0;background:var(--sf);border-radius:6px}
+.exu .cf.w{border-color:#e0b100}
+.exu .pv{background:#e8ecef;border-radius:10px;padding:10px;max-height:520px;overflow:auto;display:flex;flex-direction:column;gap:12px;align-items:center}
+.exu .pv .sheet,.exu .pv .pvs{box-shadow:0 1px 6px #0004}
+#pa .ivt,.pv .ivt{width:100%;border-collapse:collapse;font-size:1em;margin:0}
+#pa .ivt th,#pa .ivt td,.pv .ivt th,.pv .ivt td{border:1px solid #333;padding:5px 7px;text-align:center;color:#111}
+#pa .ivt th,.pv .ivt th{background:#e7edf5;color:#1f3a68}
+#pa .ivi,.pv .ivi{width:100%;border-collapse:collapse;margin:4px 0 8px;font-size:1em}
+#pa .ivi td,.pv .ivi td{border:1px solid #9aa8b8;padding:4px 8px;text-align:start;color:#111}
+#pa .ivi td.k,.pv .ivi td.k{background:#f1f4f8;font-weight:700;width:16%;color:#1f3a68}
+#pa .ivt td.sg,.pv .ivt td.sg{height:46px;width:26%}
+.pv .sheet{background:#fff;color:#111;font-size:11px;padding:10px}
+.pv .print-head{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #1f3a68;padding:0 0 6px;margin-bottom:6px;color:#1f3a68;gap:16px}
+.pv .print-title{text-align:end}.pv .print-title>b{display:block;font-size:1.7em;color:#1f3a68}.pv small{display:block;font-size:10px;color:#394b64}
+.pv .print-foot{display:flex;justify-content:space-between;border-top:1px solid #9aa8b8;margin-top:7px;padding-top:4px;font-size:.8em;color:#394b64}
+</style>
+<script>
+"use strict";
+/* Custom Timetables: exam schedules (Excel import), invigilator allocation, reserves, smart Replace, final lock, conflicts, signature sheets and reports.
+   Server: Custom.gs + Invig.gs (admin only). Needs XlsxLite.html and SetX.html. */
+Object.assign(AR, {
+  'Custom Timetables': 'الجداول المخصصة', 'New timetable': 'جدول جديد', 'Open': 'فتح', 'Edit': 'تعديل', 'Back to the list': 'العودة للقائمة', 'Timetable name': 'اسم الجدول', 'Timetable type': 'نوع الجدول',
+  'Examination': 'امتحانات', 'Term examination': 'امتحانات ترم', 'Semester schedule': 'جدول فصل دراسي', 'Quarterly examination': 'امتحانات ربع سنوية', 'Special examination': 'امتحانات خاصة', 'Other custom timetable': 'جدول مخصص آخر',
+  'Draft': 'مسودة', 'Published': 'منشور', 'Archived': 'مؤرشف', 'Examination period': 'فترة الامتحانات', 'Start date': 'تاريخ البداية', 'End date': 'تاريخ النهاية', 'Notes': 'ملاحظات', 'exam rows': 'صفوف امتحان', 'duties': 'مهمة مراقبة',
+  'Final lock': 'القفل النهائي', 'Locked (final)': 'مقفول (نهائي)', 'Lock the final allocation': 'قفل التوزيع النهائي', 'Unlock': 'فك القفل', 'Exams': 'الامتحانات', 'Rules & allocation': 'القواعد والتوزيع', 'Assignments': 'التوزيع', 'Conflicts': 'التعارضات', 'Reports': 'التقارير',
+  'Import from Excel': 'استيراد من Excel', 'Choose a file (XLSX, CSV)': 'اختر ملفاً (XLSX أو CSV)', 'First row is the header': 'الصف الأول عناوين', 'Sheet': 'الورقة', 'Match the columns': 'اربط الأعمدة', 'not used': 'غير مستخدم', 'Preview': 'معاينة',
+  'Date': 'التاريخ', 'Session': 'الفترة', 'Start': 'البداية', 'End': 'النهاية', 'Time range (08:00-10:00)': 'الوقت (08:00-10:00)', 'Subject': 'المادة', 'Room / committee': 'القاعة / اللجنة', 'Students': 'عدد الطلاب', 'Grade / class': 'الصف / الفصل',
+  'Check again': 'فحص مرة أخرى', 'Import': 'استيراد', 'rows will be imported': 'صفوف سيتم استيرادها', 'rows have errors': 'صفوف بها أخطاء', 'rows already exist (skipped)': 'صفوف موجودة مسبقاً (سيتم تخطيها)', 'Imported': 'تم الاستيراد',
+  'Save exam rows': 'حفظ صفوف الامتحانات', 'Add a row': 'إضافة صف', 'This format is not supported here. Save the file as .xlsx or CSV and try again.': 'هذه الصيغة غير مدعومة هنا. احفظ الملف بصيغة xlsx أو CSV وأعد المحاولة.',
+  'The file could not be read.': 'تعذرت قراءة الملف.', 'Exam schedule': 'جدول الامتحانات', 'Allocation mode': 'نمط التوزيع', 'Automatic': 'تلقائي', 'Semi-automatic': 'شبه تلقائي', 'Manual': 'يدوي',
+  'Main invigilators per room': 'عدد المراقبين الأساسيين لكل لجنة', 'Reserve invigilators per session': 'عدد الاحتياطي لكل فترة', 'Max duties per teacher (0 = no limit)': 'أقصى عدد مهام للمدرس (0 = بلا حد)', 'Max duties per day (0 = no limit)': 'أقصى مهام في اليوم (0 = بلا حد)',
+  'Max consecutive sessions (0 = no limit)': 'أقصى فترات متتالية (0 = بلا حد)', 'Minimum rest between duties (minutes)': 'أقل راحة بين المهام (دقائق)', 'Weighted distribution (use the weights below)': 'توزيع بالأوزان (حسب الأوزان بالأسفل)',
+  'Do not assign a teacher to the exam of his own subject': 'عدم تعيين المدرس في امتحان مادته', 'Do not assign a teacher to the exam of his own classes': 'عدم تعيين المدرس في امتحان فصوله',
+  'Allow a teacher in several rooms of the same session': 'السماح بأكثر من لجنة في نفس الفترة', 'Skip teachers with an approved absence that day': 'استبعاد المدرس الغائب (غياب معتمد) في هذا اليوم', 'When a main invigilator is replaced, a reserve of that session takes the room first': 'عند استبدال مراقب أساسي يدخل احتياطي نفس الفترة أولاً',
+  'Teachers': 'المدرسون', 'Exclude': 'استبعاد', 'Priority': 'أولوية', 'Weight': 'الوزن', 'Unavailable dates (yyyy-mm-dd, comma separated)': 'تواريخ عدم التوفر (yyyy-mm-dd مفصولة بفاصلة)', 'Save the rules': 'حفظ القواعد',
+  'Generate the allocation': 'توزيع المراقبين', 'Recalculate only unlocked': 'إعادة حساب غير المقفول فقط', 'Fill the gaps only': 'ملء الناقص فقط', 'Approve and save': 'اعتماد وحفظ', 'Discard': 'تجاهل', 'Suggested allocation': 'التوزيع المقترح',
+  'The mode is Manual: assign teachers yourself in the Assignments tab.': 'النمط يدوي: عيّن المدرسين بنفسك من تبويب التوزيع.', 'Generated': 'تم التوزيع', 'could not be filled': 'تعذر ملؤها', 'Not enough free teachers for': 'لا يوجد مدرسون متاحون كفاية لـ',
+  'Main': 'أساسي', 'Reserve': 'احتياطي', 'Main invigilators': 'المراقبون الأساسيون', 'Reserve invigilators': 'المراقبون الاحتياطيون', 'Add': 'إضافة', 'Add a teacher': 'أضف مدرساً', 'All dates': 'كل التواريخ', 'All teachers': 'كل المدرسين',
+  'Search': 'بحث', 'Room': 'القاعة', 'Selected': 'المحدد', 'Replace with': 'استبدال بـ', 'Replace': 'استبدال', 'Swap with': 'تبديل مع', 'Swap': 'تبديل', 'Promote to main in': 'ترقية لأساسي في', 'Promote': 'ترقية', 'Lock': 'قفل', 'Remove': 'حذف', 'Clear': 'إلغاء التحديد',
+  'A teacher cannot come': 'مدرس لا يستطيع الحضور', 'Smart replace: only this teacher is replaced, nobody else is moved.': 'استبدال ذكي: يُستبدل هذا المدرس فقط ولا يتحرك أي مراقب آخر.', 'Teacher': 'المدرس', 'Replaced': 'تم الاستبدال', 'taken by a reserve': 'دخل احتياطي مكانه', 'best free teacher': 'أنسب مدرس متاح', 'No replacement found for': 'لم يوجد بديل لـ',
+  'Workload': 'عبء العمل', 'Total': 'الإجمالي', 'Days': 'الأيام', 'Code': 'الكود', 'Name': 'الاسم',
+  'The final allocation is locked. Nothing changes by mistake.': 'التوزيع النهائي مقفول، لا يتغير شيء بالخطأ.', 'Edit a locked timetable?': 'تعديل جدول مقفول؟', 'The final allocation is locked. Only the administrator can change it. Continue?': 'التوزيع النهائي مقفول. المسؤول فقط يستطيع تغييره. هل تتابع؟', 'Edit anyway': 'عدّل رغم ذلك',
+  'Lock the final allocation?': 'قفل التوزيع النهائي؟', 'No change can be made until you unlock it.': 'لن يمكن تغيير أي شيء حتى تفك القفل.', 'Unlock the allocation?': 'فك قفل التوزيع؟',
+  'This creates conflicts': 'هذا يسبب تعارضات', 'Suggested instead': 'البدائل المقترحة', 'Save anyway': 'احفظ رغم ذلك', 'No conflicts.': 'لا توجد تعارضات.', 'Use': 'استخدم',
+  'excluded': 'مستبعد من المراقبة', 'unavailable': 'غير متاح أو غائب في هذا التاريخ', 'overlap': 'مُعيّن في لجنتين في نفس الوقت', 'both': 'أساسي واحتياطي في نفس الفترة', 'rest': 'راحة أقل من الحد بين مهمتين', 'maxDay': 'تجاوز الحد اليومي للمهام', 'maxTotal': 'تجاوز الحد الكلي للمهام',
+  'ownSubject': 'يراقب امتحان مادته', 'ownClass': 'يراقب امتحان فصوله', 'consec': 'تجاوز عدد الفترات المتتالية', 'understaffed': 'عدد المراقبين ناقص', 'noReserve': 'الاحتياطي ناقص', 'orphan': 'الامتحان محذوف',
+  'Report': 'التقرير', 'Signature sheets (per room)': 'شيتات الحضور والتوقيع (لكل لجنة)', 'Daily invigilation schedule': 'جدول المراقبة اليومي', 'Teacher schedules': 'جداول المراقبة للمدرسين', 'Main invigilators list': 'قائمة المراقبين الأساسيين',
+  'Reserve invigilators list': 'قائمة المراقبين الاحتياطيين', 'Teacher workload summary': 'ملخص عبء المدرسين', 'Room assignment sheets': 'شيتات توزيع اللجان', 'Unassigned teachers': 'مدرسون بلا مراقبة', 'Allocation conflicts': 'تعارضات التوزيع',
+  'Portrait': 'رأسي', 'Landscape': 'أفقي', 'Print / PDF': 'طباعة / PDF', 'Excel': 'Excel', 'Print preview': 'معاينة الطباعة', 'Nothing to print for this selection.': 'لا يوجد ما يُطبع لهذا الاختيار.', 'Examination Period': 'فترة الامتحانات', 'Academic Year': 'السنة الدراسية', 'Day': 'اليوم', 'Time': 'الوقت',
+  'No.': 'م', 'Invigilator Name': 'اسم المراقب', 'Teacher Code': 'كود المدرس', 'Assignment Type': 'نوع المهمة', 'Main Invigilator': 'مراقب أساسي', 'Reserve ': 'احتياطي', 'Signature': 'التوقيع', 'Invigilator Attendance & Signature Sheet': 'كشف حضور وتوقيع المراقبين',
+  'Details': 'التفاصيل', 'Duties': 'المهام', 'Issued': 'تاريخ الإصدار', 'Session ': 'الفترة ', 'more sheets': 'صفحات أخرى', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Delete this timetable with its exams and assignments?': 'حذف هذا الجدول مع امتحاناته وتوزيعه؟', 'Delete': 'حذف', 'Save': 'حفظ', 'Cancel': 'إلغاء'
+});
+const EX = { id: null, sub: 'exams', D: null, loading: false, form: null, imp: null, sel: null, ses: null, rules: null, prev: null, res: null, filt: { date: '', teacher: '', q: '' }, rep: { k: 'sig', date: '', key: '', teacher: '', por: true }, rp: null };
+const EX_TYPES = [['exam', 'Examination'], ['term', 'Term examination'], ['semester', 'Semester schedule'], ['quarter', 'Quarterly examination'], ['special', 'Special examination'], ['other', 'Other custom timetable']];
+const exTt = () => EX.D && EX.D.timetables.find(x => x.id == EX.id);
+const exName = id => (EX.D && EX.D.names && EX.D.names[id]) || tname(id) || id;
+const exDay = d => dayName(new Date(d + 'T00:00:00').getDay());
+const exSesRows = () => (EX.D ? EX.D.sessions.filter(s => s.tt == EX.id) : []);
+const exAs = () => (EX.D && EX.D.assigns ? EX.D.assigns.filter(a => a.tt == EX.id) : []);
+const exConfs = () => (EX.D && EX.D.conflicts) || [];
+const exKey = s => s.date + '|' + s.start + '|' + s.end;
+function exSessions() {          // [{key,date,start,end,name,rows:[exam rows]}] in time order
+  const m = {}, out = [];
+  exSesRows().slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start < b.start ? -1 : a.start > b.start ? 1 : natural(a.room, b.room)).forEach(s => {
+    const k = exKey(s); if (!m[k]) { m[k] = { key: k, date: s.date, start: s.start, end: s.end, name: s.session, rows: [] }; out.push(m[k]) } m[k].rows.push(s);
+  });
+  const per = {}; out.forEach(s => { per[s.date] = (per[s.date] || 0) + 1; if (!s.name) s.name = t('Session ') + per[s.date] });
+  return out;
+}
+async function exLoad(force) {
+  if (EX.loading || (EX.D && !force)) return; EX.loading = true; UX.label = t('Loading...');
+  try { EX.D = await _uxSrv('api_ivBoot', EX.id || '') } catch (e) { EX.D = EX.D || { timetables: [], sessions: [], assigns: [], conflicts: [], names: {} } }
+  EX.loading = false; if (TAB == 'ct') render();
+}
+function exSet(D) { EX.D = Object.assign({}, EX.D, D); EX.loading = false }
+/* every write goes through here: a finally-locked timetable asks the administrator first; the server checks again */
+async function exCall(fn, ...a) {
+  const tt = exTt(); let ov = false;
+  if (tt && tt.locked == 'final' && fn != 'api_ivLock' && fn != 'api_ivBoot') {
+    if (!await UX.ask(t('Edit a locked timetable?'), t('The final allocation is locked. Only the administrator can change it. Continue?'), { yes: t('Edit anyway'), danger: true })) return null; ov = true;
+  }
+  const args = fn == 'api_ivGenerate' ? [EX.id, a[0], ov] : fn == 'api_ivSet' ? [EX.id, a[0], !!a[1], ov] : fn == 'api_ivReplace' ? [EX.id, a[0], a[1] || '', ov] : [EX.id, ...a];
+  try { const r = await srv(fn, ...args); return r } catch (e) { return null }
+}
+/* ---------------- list + form ---------------- */
+const exEmptyForm = () => ({ id: '', name: '', type: 'exam', year: (S.set.academic && S.set.academic.name) || S.set.year || '', period: '', start: '', end: '', desc: '', status: 'draft' });
+function exList() {
+  const D = EX.D, tl = D.timetables.slice().sort((a, b) => a.start < b.start ? 1 : -1);
+  const f = EX.form, per = (S.set.examPeriods || []).filter(p => p.status != 'archived');
+  const form = f ? `<div class="card"><h3>${t(f.id ? 'Edit' : 'New timetable')}</h3><div class="grid2">
+<label>${t('Timetable name')}<input data-exf="name" value="${esc(f.name)}"></label>
+<label>${t('Timetable type')}<select data-exf="type">${EX_TYPES.map(([k, l]) => `<option value="${k}"${f.type == k ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
+<label>${t('Academic Year')}<input data-exf="year" value="${esc(f.year)}"></label>
+<label>${t('Examination period')}<input data-exf="period" list="ex-pl" value="${esc(f.period)}"><datalist id="ex-pl">${per.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist></label>
+<label>${t('Start date')}<input type="date" data-exf="start" value="${esc(f.start)}"></label><label>${t('End date')}<input type="date" data-exf="end" value="${esc(f.end)}"></label>
+<label>${t('Status')}<select data-exf="status">${['draft', 'published', 'archived'].map(k => `<option value="${k}"${f.status == k ? ' selected' : ''}>${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[k])}</option>`).join('')}</select></label>
+<label style="grid-column:1/-1">${t('Notes')}<input data-exf="desc" value="${esc(f.desc)}"></label></div>
+<p><button class="b pri" data-exa="saveform">${ic('check')} ${t('Save')}</button> <button class="b" data-exa="cancelform">${t('Cancel')}</button></p></div>` : '';
+  return `<div class="card"><h3>${t('Custom Timetables')}</h3><p><button class="b pri" data-exa="new">+ ${t('New timetable')}</button></p>
+${tl.length ? `<div class="tl">${tl.map(x => `<div class="tc"><b>${esc(x.name)}</b><span>${t((EX_TYPES.find(y => y[0] == x.type) || ['', 'Other custom timetable'])[1])} · ${esc(x.year)}${x.period ? ' · ' + esc(x.period) : ''}</span><span>${esc(x.start)} → ${esc(x.end)}</span><span><span class="tag2 ${x.status == 'published' ? 'ok' : ''}">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[x.status] || x.status)}</span>${x.locked ? ` <span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</span><span class="msg">${D.sessions.filter(s => s.tt == x.id).length} ${t('exam rows')}</span><span><button class="b pri" data-exa="open" data-id="${x.id}">${t('Open')}</button> <button class="b" data-exa="edit" data-id="${x.id}">${t('Edit')}</button> <button class="b dng" data-exa="del" data-id="${x.id}">${t('Delete')}</button></span></div>`).join('')}</div>` : `<p class="msg">${t('Nothing here yet.')}</p>`}</div>${form}`;
+}
+/* ---------------- workspace ---------------- */
+function exWork() {
+  const tt = exTt(); if (!tt) { EX.id = null; return exList() }
+  const nc = exConfs().length, subs = [['exams', 'Exams'], ['rules', 'Rules & allocation'], ['assign', 'Assignments'], ['conf', 'Conflicts'], ['rep', 'Reports']];
+  const body = { exams: exExams, rules: exRules, assign: exAssign, conf: exConf, rep: exRep }[EX.sub]();
+  return `<div class="card"><div class="row" style="justify-content:space-between"><div><button class="b" data-exa="back">‹ ${t('Back to the list')}</button> <b style="font-size:17px">${esc(tt.name)}</b> <span class="tag2">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[tt.status])}</span> ${tt.locked ? `<span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</div>
+<div><button class="b ${tt.locked ? '' : 'pri'}" data-exa="lock">${ic('lock')} ${t(tt.locked ? 'Unlock' : 'Lock the final allocation')}</button></div></div>
+<nav class="sub">${subs.map(([k, l]) => `<button class="pill${k == EX.sub ? ' on' : ''}" data-exs="${k}">${t(l)}${k == 'conf' && nc ? ` <span class="tag2 bad">${nc}</span>` : ''}</button>`).join('')}</nav>${tt.locked ? `<div class="lock">${ic('lock')} ${t('The final allocation is locked. Nothing changes by mistake.')}</div>` : ''}</div>${body}`;
+}
+/* ---- exams: import + table ---- */
+const EX_FIELDS = [['date', 'Date', /date|تاريخ|يوم/i], ['session', 'Session', /session|period|فترة|جلسة/i], ['start', 'Start', /start|from|begin|بداية|بدء|^من$/i], ['end', 'End', /end|finish|until|^to$|نهاية|إلى|الى/i], ['time', 'Time range (08:00-10:00)', /time|وقت|ساعة/i], ['subject', 'Subject', /subject|course|مادة|المادة/i], ['room', 'Room / committee', /room|committee|hall|لجنة|قاعة|غرفة|اللجنة/i], ['students', 'Students', /student|count|number of|عدد|طلاب/i], ['grade', 'Grade / class', /grade|class|level|stage|صف|فصل|مرحلة/i]];
+const exDigits = s => String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+const exP2 = n => String(n).padStart(2, '0');
+function exNormDate(v) {
+  if (v === '' || v == null) return ''; if (typeof v == 'number') return v > 20000 ? XL.serial(v).slice(0, 10) : '';
+  let s = exDigits(v).trim(), m;
+  if ((m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/.exec(s))) return m[1] + '-' + exP2(m[2]) + '-' + exP2(m[3]);
+  if ((m = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/.exec(s))) return (m[3].length == 2 ? '20' + m[3] : m[3]) + '-' + exP2(m[2]) + '-' + exP2(m[1]);
+  if ((m = /^(\d{5})$/.exec(s))) return XL.serial(+m[1]).slice(0, 10);
+  const d = new Date(s); return isNaN(d) ? s : d.getFullYear() + '-' + exP2(d.getMonth() + 1) + '-' + exP2(d.getDate());
+}
+function exNormTime(v) {
+  if (v === '' || v == null) return ''; if (typeof v == 'number') { if (v < 1) { const m = Math.round(v * 1440); return exP2(Math.floor(m / 60) % 24) + ':' + exP2(m % 60) } return String(v) }
+  let s = exDigits(v).trim(); if (/^\d{4}-\d{2}-\d{2} /.test(s)) s = s.slice(11);
+  const m = /^(\d{1,2})\s*[:.]\s*(\d{2})(?:\s*[:.]\s*\d{2})?\s*([AaPpصم])?/.exec(s); if (!m) return s;
+  let h = +m[1]; const ap = (m[3] || '').toLowerCase(); if ((ap == 'p' || ap == 'م') && h < 12) h += 12; if ((ap == 'a' || ap == 'ص') && h == 12) h = 0;
+  return exP2(h) + ':' + m[2];
+}
+function exSplitTime(v) { const p = exDigits(v).split(/\s*(?:-|–|—|to|الى|إلى)\s*/); return p.length >= 2 ? [exNormTime(p[0]), exNormTime(p[1])] : ['', ''] }
+function exImpBuild() {
+  const I = EX.imp, sh = I.sheets[I.si], rows = sh.rows.slice(I.hdr ? 1 : 0), M = I.map;
+  I.rows = rows.filter(r => r.some(x => x !== '' && x != null)).map(r => {
+    const g = f => M[f] >= 0 ? r[M[f]] : '', o = { date: exNormDate(g('date')), session: String(g('session') ?? '').trim(), subject: String(g('subject') ?? '').trim(), room: String(g('room') ?? '').trim(), students: g('students') === '' ? '' : String(g('students')).replace(/\.0+$/, ''), grade: String(g('grade') ?? '').trim() };
+    if (M.time >= 0 && M.start < 0) { const [a, b] = exSplitTime(g('time')); o.start = a; o.end = b } else { o.start = exNormTime(g('start')); o.end = exNormTime(g('end')) }
+    return o;
+  });
+}
+async function exImpCheck() {
+  const I = EX.imp; if (!I.rows.length) { I.chk = { ok: 0, errors: [], dups: [] }; return }
+  try { I.chk = await srv('api_ctImportCheck', EX.id, I.rows) } catch (e) { I.chk = { ok: 0, errors: [], dups: [] } }
+}
+async function exImpFile(file) {
+  let sheets;
+  try { sheets = await XL.read(file) } catch (e) { return toast(t(String(e.message) == 'XLS' ? 'This format is not supported here. Save the file as .xlsx or CSV and try again.' : 'The file could not be read.'), 1) }
+  sheets = sheets.filter(s => s.rows.length); if (!sheets.length) return toast(t('The file could not be read.'), 1);
+  EX.imp = { name: file.name, sheets, si: 0, hdr: true, map: {}, rows: [], chk: null, step: 'map' }; exImpGuess(); render();
+}
+function exImpGuess() {
+  const I = EX.imp, sh = I.sheets[I.si], head = I.hdr ? sh.rows[0] || [] : [], used = {}; I.map = {};
+  EX_FIELDS.forEach(([f, , re]) => { let ix = -1; head.forEach((h, i) => { if (ix < 0 && !used[i] && re.test(String(h))) ix = i }); I.map[f] = ix; if (ix >= 0) used[ix] = 1 });
+  if (!I.hdr) ['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].forEach((f, i) => { I.map[f] = i < (sh.rows[0] || []).length ? i : -1 });
+}
+function exImport() {
+  const I = EX.imp, tt = exTt();
+  let h = `<div class="card"><h3>${ic('up')} ${t('Import from Excel')}</h3><div class="row"><input type="file" id="ex-file" accept=".xlsx,.csv,.xls,.txt"> <span class="msg">${t('Choose a file (XLSX, CSV)')}</span></div>`;
+  if (I) {
+    const sh = I.sheets[I.si], head = I.hdr ? sh.rows[0] || [] : [], ncol = Math.max(...sh.rows.slice(0, 20).map(r => r.length), 1), opt = ix => `<option value="-1">— ${t('not used')} —</option>` + Array.from({ length: ncol }, (_, i) => `<option value="${i}"${i == ix ? ' selected' : ''}>${esc((head[i] !== undefined && head[i] !== '' ? head[i] : 'Col ' + (i + 1)))}</option>`).join('');
+    h += `<div class="row">${I.sheets.length > 1 ? `<label>${t('Sheet')}<select data-exi="sheet">${I.sheets.map((s, i) => `<option value="${i}"${i == I.si ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : ''}<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-exi="hdr"${I.hdr ? ' checked' : ''}> ${t('First row is the header')}</label></div>
+<h4>${t('Match the columns')}</h4><div class="grid2">${EX_FIELDS.map(([f, l]) => `<label>${t(l)}<select data-exm="${f}">${opt(I.map[f])}</select></label>`).join('')}</div>
+<p><button class="b pri" data-exa="impprev">${t('Preview')}</button></p>`;
+    if (I.step == 'prev' && I.chk) {
+      const bad = {}, dup = {}; I.chk.errors.forEach(e => bad[e.i] = e.msg); I.chk.dups.forEach(i => dup[i] = 1);
+      h += `<p><span class="tag2 ok">${I.chk.ok} ${t('rows will be imported')}</span> ${I.chk.errors.length ? `<span class="tag2 bad">${I.chk.errors.length} ${t('rows have errors')}</span>` : ''} ${I.chk.dups.length ? `<span class="tag2">${I.chk.dups.length} ${t('rows already exist (skipped)')}</span>` : ''}</p>
+<div class="tw"><table class="ex"><tr><th>#</th>${['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].map(f => `<th>${t(EX_FIELDS.find(x => x[0] == f)[1])}</th>`).join('')}<th></th></tr>${I.rows.slice(0, 300).map((r, i) => `<tr class="${bad[i] ? 'err' : dup[i] ? 'dup' : ''}"><td>${i + 1}</td>${['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].map(f => `<td><input data-exr="${i}|${f}" value="${esc(r[f])}"></td>`).join('')}<td>${bad[i] ? esc(bad[i]) : dup[i] ? '=' : '✓'}</td></tr>`).join('')}</table></div>
+<p><button class="b" data-exa="impcheck">${t('Check again')}</button> <button class="b pri" data-exa="impgo"${I.chk.errors.length || !I.chk.ok ? ' disabled' : ''}>${t('Import')} (${I.chk.ok})</button></p>`;
+    }
+  }
+  return h + '</div>';
+}
+function exExams() {
+  if (!EX.ses) EX.ses = exSesRows().map(s => Object.assign({}, s));
+  const rows = EX.ses;
+  return exImport() + `<div class="card"><h3>${t('Exam schedule')} (${rows.length})</h3><div class="tw"><table class="ex"><tr><th>${t('Date')}</th><th>${t('Session')}</th><th>${t('Start')}</th><th>${t('End')}</th><th>${t('Subject')}</th><th>${t('Room / committee')}</th><th>${t('Students')}</th><th>${t('Grade / class')}</th><th></th></tr>${rows.map((r, i) => `<tr>${['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].map(f => `<td><input data-exs2="${i}|${f}" value="${esc(r[f])}"${f == 'date' ? ' type="date"' : ''}></td>`).join('')}<td><button class="b dng" data-exa="delrow" data-i="${i}">×</button></td></tr>`).join('')}</table></div>
+<p><button class="b" data-exa="addrow">+ ${t('Add a row')}</button> <button class="b pri" data-exa="saverows">${ic('check')} ${t('Save exam rows')}</button></p></div>`;
+}
+/* ---- rules ---- */
+function exRules() {
+  const tt = exTt(); if (!EX.rules) EX.rules = JSON.parse(JSON.stringify(tt.rules)); const R = EX.rules;
+  const num = (k, l) => `<label>${t(l)}<input type="number" min="0" data-exr2="${k}" value="${R[k]}"></label>`, chk = (k, l) => `<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-exr2="${k}"${R[k] ? ' checked' : ''}> ${t(l)}</label>`;
+  const T = Object.keys(EX.D.names).sort((a, b) => natural(exName(a), exName(b)));
+  const man = R.mode == 'manual';
+  return `<div class="card"><h3>${t('Rules & allocation')}</h3>
+<div class="row"><b>${t('Allocation mode')}</b>${[['auto', 'Automatic'], ['semi', 'Semi-automatic'], ['manual', 'Manual']].map(([k, l]) => `<label style="flex-direction:row;align-items:center;gap:5px"><input type="radio" name="exmode" data-exr2="mode" value="${k}"${R.mode == k ? ' checked' : ''}> ${t(l)}</label>`).join('')}</div>
+<div class="grid2">${num('mainPerRoom', 'Main invigilators per room')}${num('reservePerSession', 'Reserve invigilators per session')}${num('maxTotal', 'Max duties per teacher (0 = no limit)')}${num('maxDay', 'Max duties per day (0 = no limit)')}${num('maxConsec', 'Max consecutive sessions (0 = no limit)')}${num('minRest', 'Minimum rest between duties (minutes)')}</div>
+<div style="display:grid;gap:4px;margin:8px 0">${chk('weighted', 'Weighted distribution (use the weights below)')}${chk('avoidOwnSubject', 'Do not assign a teacher to the exam of his own subject')}${chk('avoidOwnClass', 'Do not assign a teacher to the exam of his own classes')}${chk('sameSessionMulti', 'Allow a teacher in several rooms of the same session')}${chk('useAbsences', 'Skip teachers with an approved absence that day')}${chk('promoteReserve', 'When a main invigilator is replaced, a reserve of that session takes the room first')}</div>
+<h4>${t('Teachers')}</h4><div class="tw"><table class="ex"><tr><th>${t('Name')}</th><th>${t('Code')}</th><th>${t('Exclude')}</th><th>${t('Priority')}</th><th>${t('Weight')}</th><th>${t('Unavailable dates (yyyy-mm-dd, comma separated)')}</th></tr>${T.map(id => `<tr><td>${esc(exName(id))}</td><td>${esc(id)}</td><td><input type="checkbox" data-exr3="ex|${esc(id)}"${R.excluded.includes(id) ? ' checked' : ''}></td><td><input type="checkbox" data-exr3="pr|${esc(id)}"${R.priority.includes(id) ? ' checked' : ''}></td><td><input type="number" step="0.5" min="0.5" max="10" style="width:70px" data-exr3="w|${esc(id)}" value="${R.weights[id] || 1}"></td><td><input data-exr3="un|${esc(id)}" value="${esc((R.unavailable[id] || []).join(', '))}"></td></tr>`).join('')}</table></div>
+<p><button class="b" data-exa="saverules">${ic('check')} ${t('Save the rules')}</button> ${man ? `<span class="msg">${t('The mode is Manual: assign teachers yourself in the Assignments tab.')}</span>` : `<button class="b pri" data-exa="gen" data-keep="locked">${t('Generate the allocation')}</button> <button class="b" data-exa="gen" data-keep="all">${t('Fill the gaps only')}</button>`}</p></div>${exPrev()}`;
+}
+function exPrev() {
+  const p = EX.prev; if (!p) return '';
+  const by = {}; p.added.forEach(a => { const s = EX.D.sessions.find(x => x.id == a.slot); const k = a.date + ' · ' + (s ? s.room + ' · ' + s.subject : t('Reserve')); (by[k] = by[k] || []).push(exName(a.t) + (a.type == 'reserve' ? ' (' + t('Reserve') + ')' : '')) });
+  return `<div class="card"><h3>${t('Suggested allocation')} (${p.added.length})</h3>${Object.keys(by).sort().map(k => `<div><b>${esc(k)}</b>: ${esc(by[k].join(', '))}</div>`).join('')}${p.unfilled.length ? `<p class="msg">${p.unfilled.map(u => t('Not enough free teachers for') + ' ' + esc(u.key + (u.slot ? '' : ' (' + t('Reserve') + ')')) + ' ' + u.have + '/' + u.need).join('<br>')}</p>` : ''}<p><button class="b pri" data-exa="approve">${t('Approve and save')}</button> <button class="b" data-exa="discard">${t('Discard')}</button></p></div>`;
+}
+/* ---- assignments ---- */
+function exWork2() {            // per teacher: main/reserve counts, days
+  const w = {}; Object.keys(EX.D.names).forEach(id => w[id] = { id, main: 0, res: 0, days: new Set() });
+  exAs().forEach(a => { const x = w[a.t] || (w[a.t] = { id: a.t, main: 0, res: 0, days: new Set() }); a.type == 'main' ? x.main++ : x.res++; x.days.add(a.date) });
+  return Object.values(w).sort((a, b) => (b.main + b.res) - (a.main + a.res) || natural(exName(a.id), exName(b.id)));
+}
+const exCText = c => t(c.kind) + (c.have != null ? ` (${c.have}/${c.need})` : '');
+function exChip(a, bad) {
+  const on = EX.sel == a.id;
+  return `<button class="chip ${a.type == 'main' ? 'main' : 'res'}${on ? ' sel' : ''}${bad ? ' bad' : ''}" data-exa="sel" data-id="${a.id}" title="${esc(a.t)}">${esc(exName(a.t))}${a.locked ? ' 🔒' : ''}</button>`;
+}
+const exTOpts = () => Object.keys(EX.D.names).sort((a, b) => natural(exName(a), exName(b))).map(id => `<option value="${esc(id)}">${esc(exName(id))} (${esc(id)})</option>`).join('');
+function exPanel() {
+  const a = EX.sel && exAs().find(x => x.id == EX.sel); if (!a) { EX.sel = null; return '' }
+  const key = a.key, same = exAs().filter(x => x.key == key && x.id != a.id), ses = exSesRows().find(s => s.id == a.slot);
+  const rooms = exSesRows().filter(s => exKey(s) == key);
+  return `<div class="panel"><b>${esc(exName(a.t))}</b> (${esc(a.t)}) · ${t(a.type == 'main' ? 'Main' : 'Reserve')} · ${esc(a.date)} ${esc(a.key.split('|')[1])}${ses ? ' · ' + esc(ses.room) : ''}
+<div class="row"><label>${t('Replace with')}<select id="ex-rw">${exTOpts()}</select></label><button class="b" data-exa="rw">${t('Replace')}</button>
+<label>${t('Swap with')}<select id="ex-sw">${same.map(x => `<option value="${x.id}">${esc(exName(x.t))} · ${t(x.type == 'main' ? 'Main' : 'Reserve')}</option>`).join('')}</select></label><button class="b" data-exa="sw"${same.length ? '' : ' disabled'}>${t('Swap')}</button>
+${a.type == 'reserve' ? `<label>${t('Promote to main in')}<select id="ex-pm">${rooms.map(r => `<option value="${r.id}">${esc(r.room)}</option>`).join('')}</select></label><button class="b" data-exa="pm">${t('Promote')}</button>` : ''}
+<button class="b" data-exa="lk">${a.locked ? t('Unlock') : t('Lock')}</button><button class="b dng" data-exa="rm">${t('Remove')}</button><button class="b" data-exa="unsel">${t('Clear')}</button></div></div>`;
+}
+function exAssign() {
+  const A = exAs(), F = EX.filt, S2 = exSessions(), bad = new Set(exConfs().map(c => c.id).filter(Boolean)), dates = [...new Set(S2.map(s => s.date))];
+  const w = exWork2().filter(x => x.main + x.res > 0 || true);
+  const inA = A.filter(a => true), withDuty = [...new Set(A.map(a => a.t))].sort((a, b) => natural(exName(a), exName(b)));
+  let h = `<div class="card"><h3>${ic('user')} ${t('A teacher cannot come')}</h3><p class="msg">${t('Smart replace: only this teacher is replaced, nobody else is moved.')}</p><div class="row"><label>${t('Teacher')}<select id="ex-rt">${withDuty.map(id => `<option value="${esc(id)}">${esc(exName(id))} (${esc(id)})</option>`).join('')}</select></label><label>${t('Date')}<select id="ex-rd"><option value="">${t('All dates')}</option>${dates.map(d => `<option value="${d}">${d} ${esc(exDay(d))}</option>`).join('')}</select></label><button class="b pri" data-exa="rep"${withDuty.length ? '' : ' disabled'}>${t('Replace')}</button></div>${exRes()}</div>`;
+  h += `<div class="card"><div class="row"><label>${t('Date')}<select data-exfl="date"><option value="">${t('All dates')}</option>${dates.map(d => `<option value="${d}"${F.date == d ? ' selected' : ''}>${d} ${esc(exDay(d))}</option>`).join('')}</select></label><label>${t('Teacher')}<select data-exfl="teacher"><option value="">${t('All teachers')}</option>${withDuty.map(id => `<option value="${esc(id)}"${F.teacher == id ? ' selected' : ''}>${esc(exName(id))}</option>`).join('')}</select></label><label>${t('Search')}<input data-exfl="q" value="${esc(F.q)}"></label></div>${exPanel()}`;
+  const q = F.q.trim().toLowerCase(); let any = false;
+  dates.filter(d => !F.date || d == F.date).forEach(d => {
+    const day = S2.filter(s => s.date == d).map(s => {
+      const rooms = s.rows.filter(r => !q || (r.room + ' ' + r.subject).toLowerCase().includes(q)), res = A.filter(a => a.type == 'reserve' && a.key == s.key);
+      const mine = rooms.filter(r => !F.teacher || A.some(a => a.type == 'main' && a.slot == r.id && a.t == F.teacher));
+      if (F.teacher && !mine.length && !res.some(a => a.t == F.teacher)) return '';
+      any = true;
+      return `<div class="ses"><h5>${esc(s.name)} · ${esc(s.start)}-${esc(s.end)}</h5><div class="tw"><table class="ex"><tr><th>${t('Room')}</th><th>${t('Subject')}</th><th>${t('Students')}</th><th>${t('Main invigilators')}</th><th></th></tr>${(F.teacher ? mine : rooms).map(r => `<tr><td><b>${esc(r.room)}</b></td><td>${esc(r.subject)}</td><td>${esc(r.students)}</td><td>${A.filter(a => a.type == 'main' && a.slot == r.id).map(a => exChip(a, bad.has(a.id))).join('')}</td><td><select data-exadd="main|${r.id}|${s.key}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select></td></tr>`).join('')}
+<tr><td colspan="3"><b>${t('Reserve invigilators')}</b></td><td>${res.map(a => exChip(a, bad.has(a.id))).join('')}</td><td><select data-exadd="reserve||${s.key}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select></td></tr></table></div></div>`;
+    }).join('');
+    if (day) h += `<h4>${esc(d)} · ${esc(exDay(d))}</h4>${day}`;
+  });
+  if (!any) h += `<p class="msg">${t('Nothing here yet.')}</p>`;
+  h += `</div><div class="card"><h3>${t('Workload')}</h3><div class="tw"><table class="ex"><tr><th>${t('Name')}</th><th>${t('Code')}</th><th>${t('Main')}</th><th>${t('Reserve')}</th><th>${t('Total')}</th><th>${t('Days')}</th></tr>${exWork2().map(x => `<tr><td>${esc(exName(x.id))}</td><td>${esc(x.id)}</td><td>${x.main}</td><td>${x.res}</td><td><b>${x.main + x.res}</b></td><td>${[...x.days].sort().join(', ')}</td></tr>`).join('')}</table></div></div>`;
+  return h;
+}
+function exRes() {
+  const r = EX.res; if (!r) return '';
+  return `<div class="msg" style="margin-top:8px"><b>${t('Replaced')}:</b> ${r.replaced.map(x => `${esc(x.date)} ${esc(x.room || '')}: ${esc(exName(x.from))} → <b>${esc(exName(x.to))}</b> (${t(x.how == 'reserve' ? 'taken by a reserve' : 'best free teacher')})`).join('<br>') || '—'}${r.failed.length ? `<br><span class="bad">${r.failed.map(x => t('No replacement found for') + ' ' + esc(x.date + ' ' + (x.room || ''))).join('<br>')}</span>` : ''}</div>`;
+}
+/* ---- conflicts ---- */
+function exConf() {
+  const C = exConfs();
+  return `<div class="card"><h3>${t('Conflicts')} (${C.length})</h3>${C.length ? C.map(c => `<div class="cf${c.kind == 'understaffed' || c.kind == 'noReserve' ? ' w' : ''}"><b>${esc(c.t ? exName(c.t) : '')}</b> ${exCText(c)}<br><small>${esc(c.date || '')} ${esc(c.start || '')}${c.room ? ' · ' + esc(c.room) : ''}${c.subject ? ' · ' + esc(c.subject) : ''}</small>${(c.sugg || []).length ? `<br>${t('Suggested instead')}: ${c.sugg.map(s => `<button class="chip" data-exa="fix" data-id="${c.id}" data-slot="${c.slot}" data-key="${esc(c.key || '')}" data-type="${c.type}" data-t="${esc(s)}">${t('Use')} ${esc(exName(s))}</button>`).join('')}` : ''}</div>`).join('') : `<p class="msg">${t('No conflicts.')}</p>`}</div>`;
+}
+/* ---- reports ---- */
+const EX_REPS = [['sig', 'Signature sheets (per room)'], ['daily', 'Daily invigilation schedule'], ['teacher', 'Teacher schedules'], ['mains', 'Main invigilators list'], ['reserves', 'Reserve invigilators list'], ['workload', 'Teacher workload summary'], ['rooms', 'Room assignment sheets'], ['unassigned', 'Unassigned teachers'], ['conf', 'Allocation conflicts']];
+function exInfo(s, extra) {
+  const tt = exTt(); return [[t('Examination Period'), tt.period || tt.name], [t('Academic Year'), tt.year], [t('Date'), s.date], [t('Day'), exDay(s.date)], [t('Session'), s.name || ''], [t('Time'), s.start + ' - ' + s.end]].concat(extra || []);
+}
+function exGroups() {
+  const R = EX.rep, A = exAs(), S2 = exSessions().filter(s => (!R.date || s.date == R.date) && (!R.key || s.key == R.key)), G = [], tt = exTt();
+  const role = a => t(a.type == 'main' ? 'Main Invigilator' : 'Reserve ');
+  const inSes = (k, type, slot) => A.filter(a => a.key == k && a.type == type && (type == 'reserve' || a.slot == slot));
+  if (R.k == 'sig') S2.forEach(s => s.rows.forEach(r => {
+    const list = inSes(s.key, 'main', r.id).concat(inSes(s.key, 'reserve')); if (R.teacher && !list.some(a => a.t == R.teacher)) return;
+    G.push({ title: t('Invigilator Attendance & Signature Sheet'), info: exInfo(s, [[t('Subject'), r.subject], [t('Room'), r.room]]), sig: true, head: [t('No.'), t('Invigilator Name'), t('Teacher Code'), t('Assignment Type'), t('Signature')], rows: list.map((a, i) => [i + 1, exName(a.t), a.t, role(a), '']) });
+  }));
+  if (R.k == 'daily') [...new Set(S2.map(s => s.date))].forEach(d => G.push({ title: t('Daily invigilation schedule') + ' – ' + d + ' ' + exDay(d), head: [t('Session'), t('Time'), t('Subject'), t('Room'), t('Main invigilators'), t('Reserve invigilators')], rows: S2.filter(s => s.date == d).flatMap(s => s.rows.map(r => [s.name, s.start + ' - ' + s.end, r.subject, r.room, inSes(s.key, 'main', r.id).map(a => exName(a.t)).join(', '), inSes(s.key, 'reserve').map(a => exName(a.t)).join(', ')])) }));
+  if (R.k == 'teacher' || R.k == 'rooms') {
+    const owners = R.k == 'teacher' ? [...new Set(A.map(a => a.t))].filter(x => !R.teacher || x == R.teacher).sort((a, b) => natural(exName(a), exName(b))) : [...new Set(exSesRows().map(s => s.room))].sort(natural);
+    owners.forEach(o => {
+      if (R.k == 'teacher') { const rows = []; S2.forEach(s => { A.filter(a => a.t == o && a.key == s.key).forEach(a => { const r = s.rows.find(x => x.id == a.slot) || s.rows[0]; rows.push([s.date, exDay(s.date), s.start + ' - ' + s.end, s.name, r.subject, a.type == 'main' ? r.room : '', role(a)]) }) }); if (rows.length) G.push({ title: t('Teacher schedules') + ' – ' + exName(o) + ' (' + o + ')', head: [t('Date'), t('Day'), t('Time'), t('Session'), t('Subject'), t('Room'), t('Assignment Type')], rows }) }
+      else { const rows = []; S2.forEach(s => s.rows.filter(r => r.room == o).forEach(r => rows.push([s.date, exDay(s.date), s.start + ' - ' + s.end, r.subject, r.students, inSes(s.key, 'main', r.id).map(a => exName(a.t)).join(', '), inSes(s.key, 'reserve').map(a => exName(a.t)).join(', ')]))); if (rows.length) G.push({ title: t('Room assignment sheets') + ' – ' + o, head: [t('Date'), t('Day'), t('Time'), t('Subject'), t('Students'), t('Main invigilators'), t('Reserve invigilators')], rows }) }
+    });
+  }
+  if (R.k == 'mains' || R.k == 'reserves') {
+    const ty = R.k == 'mains' ? 'main' : 'reserve', by = {}; A.filter(a => a.type == ty && (!R.date || a.date == R.date)).forEach(a => { (by[a.t] = by[a.t] || []).push(a) });
+    G.push({ title: t(R.k == 'mains' ? 'Main invigilators list' : 'Reserve invigilators list'), head: [t('Name'), t('Code'), t('Duties'), t('Details')], rows: Object.keys(by).sort((a, b) => natural(exName(a), exName(b))).map(id => [exName(id), id, by[id].length, by[id].sort((x, y) => x.key < y.key ? -1 : 1).map(a => { const r = exSesRows().find(x => x.id == a.slot); return a.date + ' ' + a.key.split('|')[1] + (r ? ' ' + r.room : '') }).join(' · ')]) });
+  }
+  if (R.k == 'workload') G.push({ title: t('Teacher workload summary'), head: [t('Name'), t('Code'), t('Main'), t('Reserve'), t('Total'), t('Days')], rows: exWork2().map(x => [exName(x.id), x.id, x.main, x.res, x.main + x.res, [...x.days].sort().join(', ')]) });
+  if (R.k == 'unassigned') G.push({ title: t('Unassigned teachers'), head: [t('Name'), t('Code')], rows: exWork2().filter(x => !x.main && !x.res).map(x => [exName(x.id), x.id]) });
+  if (R.k == 'conf') G.push({ title: t('Allocation conflicts'), head: [t('Teacher'), t('Details'), t('Date'), t('Time'), t('Room'), t('Suggested instead')], rows: exConfs().map(c => [c.t ? exName(c.t) : '', exCText(c), c.date || '', c.start || '', c.room || '', (c.sugg || []).map(exName).join(', ')]) });
+  return G.filter(g => g.rows.length || g.sig);
+}
+function exSheetHtml(g, rows, n, N, por) {
+  const info = g.info ? `<table class="ivi">${g.info.map((_, i) => i).filter(i => i % 2 == 0).map(i => `<tr>${[g.info[i], g.info[i + 1]].filter(Boolean).map(([k, v]) => `<td class="k">${esc(k)}</td><td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table>` : '';
+  const body = `<table class="ivt"><tr>${g.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map((c, i) => `<td${g.sig && i == r.length - 1 ? ' class="sg"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;
+  const issued = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return `<div class="sheet"><div class="print-head">${sxHead()}<div class="print-title"><b>${esc(g.title)}</b>${N > 1 ? `<small>${n}/${N}</small>` : ''}</div></div>${info}${body}<div class="print-foot"><span>${esc((S.set.brand && S.set.brand.nameEn) || S.set.school)} – ${esc(exTt().name)}</span><span>${t('Issued')}: ${issued}</span></div></div>`;
+}
+function exSheets(G, por) {
+  const per = por ? 30 : 17, out = [];
+  G.forEach(g => { const pages = Math.max(1, Math.ceil(g.rows.length / per)); for (let p = 0; p < pages; p++) out.push(exSheetHtml(g, g.rows.slice(p * per, (p + 1) * per), p + 1, pages, por)) });
+  return out;
+}
+function exRep() {
+  const R = EX.rep, S2 = exSessions(), dates = [...new Set(S2.map(s => s.date))], withDuty = [...new Set(exAs().map(a => a.t))].sort((a, b) => natural(exName(a), exName(b)));
+  const G = exGroups(), sh = exSheets(G, R.k == 'sig' ? R.por : true);
+  EX.rp = { G, sh };
+  return `<div class="card"><h3>${t('Reports')}</h3><div class="row"><label>${t('Report')}<select data-exrp="k">${EX_REPS.map(([k, l]) => `<option value="${k}"${R.k == k ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
+<label>${t('Date')}<select data-exrp="date"><option value="">${t('All dates')}</option>${dates.map(d => `<option value="${d}"${R.date == d ? ' selected' : ''}>${d} ${esc(exDay(d))}</option>`).join('')}</select></label>
+<label>${t('Session')}<select data-exrp="key"><option value="">—</option>${S2.filter(s => !R.date || s.date == R.date).map(s => `<option value="${s.key}"${R.key == s.key ? ' selected' : ''}>${s.date} ${esc(s.name)} ${s.start}-${s.end}</option>`).join('')}</select></label>
+<label>${t('Teacher')}<select data-exrp="teacher"><option value="">${t('All teachers')}</option>${withDuty.map(id => `<option value="${esc(id)}"${R.teacher == id ? ' selected' : ''}>${esc(exName(id))}</option>`).join('')}</select></label>
+${R.k == 'sig' ? `<label>${t('Print preview')}<select data-exrp="por"><option value="1"${R.por ? ' selected' : ''}>${t('Portrait')}</option><option value="0"${!R.por ? ' selected' : ''}>${t('Landscape')}</option></select></label>` : ''}
+<button class="b pri" data-exa="print">${ic('print')} ${t('Print / PDF')}</button><button class="b" data-exa="xlsx">${ic('up')} ${t('Excel')}</button></div></div>
+<div class="card"><h3>${t('Print preview')} (${sh.length})</h3>${sh.length ? `<div class="pv" id="ex-pv">${sh.slice(0, 6).map(x => `<div class="pvs" style="width:${R.k == 'sig' && R.por ? 560 : 840}px">${x}</div>`).join('')}</div>${sh.length > 6 ? `<p class="msg">+${sh.length - 6} ${t('more sheets')}</p>` : ''}` : `<p class="msg">${t('Nothing to print for this selection.')}</p>`}</div>`;
+}
+function exXlsx() {
+  const G = EX.rp.G, tt = exTt(), nm = (S.set.brand && S.set.brand.nameEn) || S.set.school, rows = [[nm], [tt.name + (tt.period ? ' – ' + tt.period : '')], [t('Academic Year') + ': ' + tt.year], []], bold = [0, 1];
+  G.forEach(g => { bold.push(rows.length); rows.push([g.title]); (g.info || []).forEach(([k, v]) => rows.push([k, v])); bold.push(rows.length); rows.push(g.head); g.rows.forEach(r => rows.push(r)); rows.push([]) });
+  XL.save(nm + ' - ' + tt.name + ' - ' + (EX_REPS.find(x => x[0] == EX.rep.k) || ['', ''])[1], [{ name: 'Report', rows, bold }]);
+}
+/* ---------------- actions ---------------- */
+async function exOpen(id) { EX.id = id; EX.sub = 'exams'; EX.ses = null; EX.rules = null; EX.imp = null; EX.sel = null; EX.prev = null; EX.res = null; EX.D = null; EX.loading = false; await exLoad(true) }
+async function exConfirmIssues(r) {
+  const li = r.issues.map(c => `<li><b>${esc(c.t ? exName(c.t) : '')}</b>: ${esc(exCText(c))}${(c.sugg || []).length ? ' — ' + t('Suggested instead') + ': ' + c.sugg.map(x => esc(exName(x))).join(', ') : ''}</li>`).join('');
+  return UX.ask(t('This creates conflicts'), '<ul style="text-align:start">' + li + '</ul>', { yes: t('Save anyway'), danger: true });
+}
+async function exSetOp(op) {
+  let r = await exCall('api_ivSet', op, false); if (!r) return;
+  if (r.needConfirm) { if (!await exConfirmIssues(r)) return; r = await exCall('api_ivSet', op, true); if (!r) return }
+  exSet(r); EX.sel = null; render();
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-exa],[data-exs]'); if (!b || TAB != 'ct') return;
+  if (b.dataset.exs) { EX.sub = b.dataset.exs; EX.sel = null; return render() }
+  const a = b.dataset.exa, id = b.dataset.id, tt = exTt();
+  if (a == 'new') { EX.form = exEmptyForm(); return render() }
+  if (a == 'cancelform') { EX.form = null; return render() }
+  if (a == 'edit') { EX.form = Object.assign({}, EX.D.timetables.find(x => x.id == id)); return render() }
+  if (a == 'saveform') { try { exSet(await srv('api_ctSaveTimetable', EX.form)); EX.form = null; UX.done(t('Saved')); render() } catch (x) { } return }
+  if (a == 'del') { if (await UX.ask(t('Delete this timetable with its exams and assignments?'), '', { yes: t('Delete'), danger: true })) { try { exSet(await srv('api_ctDelete', id)); EX.D.assigns = []; render() } catch (x) { } } return }
+  if (a == 'open') { await exOpen(id); return }
+  if (a == 'back') { EX.id = null; EX.D = null; return render() }
+  if (a == 'lock') {
+    if (!await UX.ask(t(tt.locked ? 'Unlock the allocation?' : 'Lock the final allocation?'), tt.locked ? '' : t('No change can be made until you unlock it.'), { yes: t(tt.locked ? 'Unlock' : 'Lock the final allocation') })) return;
+    try { exSet(await srv('api_ivLock', EX.id, !tt.locked)); render() } catch (x) { } return;
+  }
+  if (a == 'impprev') { exImpBuild(); await exImpCheck(); EX.imp.step = 'prev'; return render() }
+  if (a == 'impcheck') { await exImpCheck(); return render() }
+  if (a == 'impgo') { try { const r = await srv('api_ctImport', EX.id, EX.imp.rows); exSet(r); EX.imp = null; EX.ses = null; UX.done(t('Imported') + ': ' + r.added); render() } catch (x) { } return }
+  if (a == 'addrow') { EX.ses.push({ id: '', date: tt.start || '', session: '', start: '', end: '', subject: '', room: '', students: '', grade: '' }); return render() }
+  if (a == 'delrow') { EX.ses.splice(+b.dataset.i, 1); return render() }
+  if (a == 'saverows') { try { exSet(await srv('api_ctSaveSessions', EX.id, EX.ses)); EX.ses = null; UX.done(t('Saved')); await exLoad(true); render() } catch (x) { } return }
+  if (a == 'saverules') { try { exSet(await srv('api_ivSaveRules', EX.id, EX.rules)); EX.rules = null; UX.done(t('Saved')); render() } catch (x) { } return }
+  if (a == 'gen') {
+    if (!await exSaveRulesFirst()) return;
+    const keep = b.dataset.keep, mode = exTt().rules.mode;
+    if (mode == 'semi') { const r = await exCall('api_ivGenerate', { apply: false, keep }); if (r) { EX.prev = { added: r.added, unfilled: r.unfilled, keep }; render() } return }
+    const r = await exCall('api_ivGenerate', { apply: true, keep }); if (!r) return; exSet(r); EX.prev = null; UX.done(t('Generated') + ': ' + r.added + (r.unfilled.length ? ' · ' + r.unfilled.length + ' ' + t('could not be filled') : '')); EX.sub = 'assign'; render(); return;
+  }
+  if (a == 'approve') { const r = await exCall('api_ivGenerate', { apply: true, keep: EX.prev.keep }); if (r) { exSet(r); EX.prev = null; UX.done(t('Generated') + ': ' + r.added); EX.sub = 'assign'; render() } return }
+  if (a == 'discard') { EX.prev = null; return render() }
+  if (a == 'sel') { EX.sel = EX.sel == id ? null : id; return render() }
+  if (a == 'unsel') { EX.sel = null; return render() }
+  if (a == 'rw') return exSetOp({ k: 'replace', id: EX.sel, t: $('#ex-rw').value });
+  if (a == 'sw') return exSetOp({ k: 'swap', id: EX.sel, id2: $('#ex-sw').value });
+  if (a == 'pm') return exSetOp({ k: 'promote', id: EX.sel, slot: $('#ex-pm').value });
+  if (a == 'rm') return exSetOp({ k: 'remove', id: EX.sel });
+  if (a == 'lk') { const x = exAs().find(y => y.id == EX.sel); return exSetOp({ k: 'lock', id: EX.sel, locked: !x.locked }) }
+  if (a == 'fix') { if (id) return exSetOp({ k: 'replace', id, t: b.dataset.t }); return exSetOp({ k: 'assign', slot: b.dataset.slot, key: b.dataset.key, t: b.dataset.t, type: b.dataset.type }) }
+  if (a == 'rep') { const r = await exCall('api_ivReplace', $('#ex-rt').value, $('#ex-rd').value); if (r) { EX.res = { replaced: r.replaced, failed: r.failed }; exSet(r); UX.done(t('Replaced') + ': ' + r.replaced.length); render() } return }
+  if (a == 'print') { if (!EX.rp.sh.length) return toast(t('Nothing to print for this selection.'), 1); const por = EX.rep.k == 'sig' ? EX.rep.por : false; return printHtml(EX.rp.sh.join(''), por) }
+  if (a == 'xlsx') { if (!EX.rp.G.length) return toast(t('Nothing to print for this selection.'), 1); return exXlsx() }
+});
+async function exSaveRulesFirst() {
+  if (!EX.rules) return true;
+  try { exSet(await srv('api_ivSaveRules', EX.id, EX.rules)); EX.rules = null; return true } catch (x) { return false }
+}
+document.addEventListener('change', async e => {
+  const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return;
+  if (d.exf) { EX.form[d.exf] = el.value; if (d.exf == 'period') { const p = (S.set.examPeriods || []).find(x => x.name == el.value); if (p) { if (p.s) EX.form.start = p.s; if (p.e) EX.form.end = p.e; if (p.year) EX.form.year = p.year; render() } } return }
+  if (el.id == 'ex-file') return exImpFile(el.files[0]);
+  if (d.exi == 'sheet') { EX.imp.si = +el.value; exImpGuess(); EX.imp.step = 'map'; return render() }
+  if (d.exi == 'hdr') { EX.imp.hdr = el.checked; exImpGuess(); EX.imp.step = 'map'; return render() }
+  if (d.exm) { EX.imp.map[d.exm] = +el.value; return }
+  if (d.exr) { const [i, f] = d.exr.split('|'); EX.imp.rows[+i][f] = el.value; return }
+  if (d.exs2) { const [i, f] = d.exs2.split('|'); EX.ses[+i][f] = el.value; return }
+  if (d.exr2) { const R = EX.rules, k = d.exr2; if (el.type == 'checkbox') R[k] = el.checked; else if (el.type == 'radio') { R[k] = el.value; render() } else R[k] = +el.value; return }
+  if (d.exr3) { const [k, id] = d.exr3.split('|'), R = EX.rules; const tog = (l, on) => { const i = l.indexOf(id); if (on && i < 0) l.push(id); if (!on && i >= 0) l.splice(i, 1) };
+    if (k == 'ex') tog(R.excluded, el.checked); else if (k == 'pr') tog(R.priority, el.checked); else if (k == 'w') { const w = parseFloat(el.value); if (w > 0 && w != 1) R.weights[id] = w; else delete R.weights[id] } else if (k == 'un') { const v = el.value.split(/[,\s]+/).filter(Boolean); if (v.length) R.unavailable[id] = v; else delete R.unavailable[id] } return }
+  if (d.exfl) { EX.filt[d.exfl] = el.value; return render() }
+  if (d.exrp) { const k = d.exrp; EX.rep[k] = k == 'por' ? el.value == '1' : el.value; if (k == 'date') EX.rep.key = ''; return render() }
+  if (d.exadd && el.value) { const [type, slot, key] = d.exadd.split('|'); return exSetOp({ k: 'assign', type, slot, key, t: el.value }) }
+});
+document.addEventListener('input', e => { const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return; if (d.exfl == 'q') { EX.filt.q = el.value; clearTimeout(EX.qt); EX.qt = setTimeout(render, 350) } });
+/* ---------------- the tab ---------------- */
+function rExam() { if (!EX.D) { exLoad(); return `<p class="msg">${t('Loading...')}</p>` } return `<div class="exu">${EX.id ? exWork() : exList()}</div>` }
+TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'st'), 1), 0, ['ct', 'Custom Timetables', 'grid']);
+const _rEx = render;
+render = function () {
+  if (S && S.role && S.role != 'admin') { const i = TABS.findIndex(x => x[0] == 'ct'); if (i >= 0) TABS.splice(i, 1); if (TAB == 'ct') TAB = 'tt' }
+  if (TAB != 'ct') return _rEx();
+  const sy = window.scrollY, fo = document.activeElement && document.activeElement.dataset ? Object.assign({}, document.activeElement.dataset) : null;
+  TAB = 'tt'; try { _rEx() } finally { TAB = 'ct' }
+  $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'ct'));
+  $('#v').innerHTML = rExam(); window.scrollTo(0, sy);
 };
 </script>
 
