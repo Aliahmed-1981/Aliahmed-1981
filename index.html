@@ -42,6 +42,7 @@ input[type=color]{width:42px;height:32px;border:1px solid var(--ln);border-radiu
 button.b{font:inherit;border:0;border-radius:10px;padding:7px 14px;cursor:pointer;background:var(--bg);color:var(--ink);border:1px solid var(--ln);display:inline-flex;gap:6px;align-items:center}
 button.b:hover{background:var(--hl)}button.pri{background:var(--teal);color:#fff;border-color:var(--teal)}button.dng{color:var(--bad)}
 .seg{display:inline-flex;border:1px solid var(--ln);border-radius:12px;overflow:hidden}.seg button{border:0;background:var(--sf);color:var(--ink);padding:7px 12px;cursor:pointer;font:inherit;display:inline-flex;gap:6px;align-items:center}.seg button.on{background:var(--navy);color:#fff}
+.pbox{display:flex;flex-direction:column;gap:8px;align-items:flex-start}.pdrop{width:100%;max-width:760px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 18px rgba(0,0,0,.08)}.pdrop input[type=search]{width:100%;box-sizing:border-box}.pdrop .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.plist{max-height:260px;overflow:auto;border-top:1px solid var(--ln);padding-top:6px}
 .tag{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;background:var(--bg);margin:2px}
 .tag.e{background:var(--bads);color:var(--bad)}.tag.w{background:var(--wns);color:var(--wn)}
 .empty{text-align:center;color:var(--mut);padding:40px 10px}
@@ -513,7 +514,7 @@ ${sel('type', 'All types', Object.keys(TYPES).map(n => [n, t(TYPES[n])]))}${sel(
 }
 
 /* ===================== 4. REPORTS & PRINT (same projections as the views, never with conflict badges) ===================== */
-let PP = { k: 'class', gr: null, ex: new Set(), stage: '', noT: false };
+let PP = { k: 'class', sel: {}, open: '', q: '', stage: '', noT: false };
 const fmtD = x => x.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const weekTxt = () => { const s = new Date(S.week.sun + 'T00:00:00'), e = new Date(s); e.setDate(s.getDate() + Math.max(...I.days)); return s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' – ' + fmtD(e) };
 function sheet(title, sub, body) {
@@ -547,15 +548,65 @@ function conflictsReport() {           // a separate, optional report: conflicts
   const rows = S.conflicts.list.filter(c => !c.ign).map(c => `<tr><td>${t(c.sev == 'error' ? 'Error' : 'Warning')}</td><td>${t(TYPES[c.type])}</td><td style="text-align:start">${esc(cmsg(c))}</td></tr>`).join('');
   return sheet(t('Conflicts report'), '', `<table class="tt"><tr><th>${t('Severity')}</th><th>${t('Type')}</th><th>${t('Details')}</th></tr>${rows}</table>`);
 }
+/* ---- print selection: one drop-down per kind (classes / teachers / rooms) with a search box, stage shortcuts and check boxes ---- */
+Object.assign(AR, { 'selected': 'محدد', 'Search by name': 'ابحث بالاسم', 'Select all': 'تحديد الكل', 'Clear': 'مسح', 'Shortcuts by stage': 'اختصارات حسب المرحلة', 'Shortcuts by grade': 'اختصارات حسب الصف', 'Choose': 'اختيار', 'Nothing matches your search.': 'لا توجد نتائج مطابقة.', 'Applies to the names shown below.': 'ينطبق على الأسماء الظاهرة بالأسفل.', 'Selected': 'المحدد', 'more': 'أخرى' });
+const ppPool = k => k == 'class' ? I.classes.slice() : k == 'teacher' ? teachersWithLessons() : roomsWithLessons();
+const ppLab = (k, x) => k == 'teacher' ? tname(x) : x;
+const ppSel = k => PP.sel[k] || (PP.sel[k] = new Set(ppPool(k)));
+function ppGroups(k) {                         // shortcuts: [label, [ids]]
+  const pool = ppPool(k), out = [];
+  if (k == 'class') {
+    stages().forEach(g => out.push([g, pool.filter(c => stageOf(c) == g)]));
+    [...new Set(pool.map(c => parseInt(c.slice(1))))].filter(n => !isNaN(n)).sort((a, b) => a - b).forEach(n => out.push(['G' + n, pool.filter(c => parseInt(c.slice(1)) == n), 1]));
+  } else if (k == 'teacher') {
+    stages().forEach(g => out.push([g, pool.filter(x => S.lessons.some(l => l.t.includes(x) && stageOf(l.c) == g))]));
+  }
+  return out.filter(x => x[1].length);
+}
+function ppList(k) {
+  const pool = ppPool(k), sel = ppSel(k), q = PP.q.trim().toLowerCase(), list = pool.filter(x => !q || ppLab(k, x).toLowerCase().includes(q) || String(x).toLowerCase().includes(q));
+  return list.length ? list.map(x => `<label class="tag"><input type="checkbox" data-ppx="${esc(x)}" data-ppk="${k}"${sel.has(x) ? ' checked' : ''}> ${esc(ppLab(k, x))}</label>`).join('') : `<div class="msg">${t('Nothing matches your search.')}</div>`;
+}
+function ppBox(k) {
+  const pool = ppPool(k), sel = ppSel(k), open = PP.open == k;
+  if (k == 'room' && !pool.length) return `<div class="empty">${t('No rooms are used yet.')}</div>`;
+  const names = pool.filter(x => sel.has(x)), sum = names.slice(0, 6).map(x => `<span class="tag">${esc(ppLab(k, x))}</span>`).join('') + (names.length > 6 ? `<span class="tag">+${names.length - 6} ${t('more')}</span>` : '');
+  let h = `<div id="ppbox" class="pbox"><button class="b" data-ppo="${k}">${t('Choose')}: <b data-ppcount>${sel.size}/${pool.length}</b> ${t('selected')} ${open ? '▴' : '▾'}</button>`;
+  if (k == 'teacher') h += `<p class="msg">${t('Only teachers with lessons are listed.')}</p>`;
+  if (open) {
+    const gs = ppGroups(k), stg = gs.filter(x => !x[2]), grd = gs.filter(x => x[2]);
+    const chip = x => { const all = x[1].every(i => sel.has(i)); return `<label class="tag"><input type="checkbox" data-ppg="${esc(x[0])}" data-ppk="${k}"${all ? ' checked' : ''}> ${esc(x[0])} <small>(${x[1].length})</small></label>` };
+    h += `<div class="pdrop"><input type="search" id="ppq" data-ppq placeholder="${esc(t('Search by name'))}" value="${esc(PP.q)}"><div class="row"><button class="b" data-pps="all">${t('Select all')}</button><button class="b" data-pps="none">${t('Clear')}</button><span class="msg">${t('Applies to the names shown below.')}</span></div>` +
+      (stg.length ? `<div><small>${t('Shortcuts by stage')}</small><br>${stg.map(chip).join('')}</div>` : '') + (grd.length ? `<div><small>${t('Shortcuts by grade')}</small><br>${grd.map(chip).join('')}</div>` : '') + `<div class="plist" id="pplist">${ppList(k)}</div></div>`;
+  } else h += `<div>${sum}</div>`;
+  return h + '</div>';
+}
+function ppRefresh() {                         // redraw the drop-down only, keep the scroll position and the search box
+  const box = document.getElementById('ppbox'); if (!box) return render();
+  const ls = box.querySelector('#pplist'), top = ls ? ls.scrollTop : 0, hadFocus = document.activeElement && document.activeElement.id == 'ppq';
+  const tmp = document.createElement('div'); tmp.innerHTML = ppBox(PP.k); box.replaceWith(tmp.firstElementChild);
+  const n = document.getElementById('pplist'); if (n) n.scrollTop = top;
+  if (hadFocus) { const q = document.getElementById('ppq'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length) } }
+}
+document.addEventListener('click', e => {
+  const T = e.target; if (!T.closest || TAB != 'rp' && !document.getElementById('ppbox')) return;
+  const o = T.closest('[data-ppo]'); if (o) { PP.open = PP.open == o.dataset.ppo ? '' : o.dataset.ppo; PP.q = ''; return ppRefresh() }
+  const b = T.closest('[data-pps]');
+  if (b) { const k = PP.k, sl = ppSel(k), q = PP.q.trim().toLowerCase(); ppPool(k).filter(x => !q || ppLab(k, x).toLowerCase().includes(q) || String(x).toLowerCase().includes(q)).forEach(x => b.dataset.pps == 'all' ? sl.add(x) : sl.delete(x)); return ppRefresh() }
+  if (PP.open && !T.closest('.pdrop')) { PP.open = ''; ppRefresh() }
+});
+document.addEventListener('change', e => {
+  const el = e.target; if (!el.dataset || !el.dataset.ppg) return;
+  const k = el.dataset.ppk, g = ppGroups(k).find(x => x[0] == el.dataset.ppg); if (!g) return;
+  const sl = ppSel(k); g[1].forEach(x => el.checked ? sl.add(x) : sl.delete(x)); ppRefresh();
+});
+document.addEventListener('input', e => { const el = e.target; if (el.dataset && 'ppq' in el.dataset) { PP.q = el.value; const l = document.getElementById('pplist'); if (l) l.innerHTML = ppList(PP.k) } });
 function rReports() {
-  const grades = [...new Set(I.classes.map(c => parseInt(c.slice(1))))].sort((a, b) => a - b); if (!PP.gr) PP.gr = new Set(grades);
-  const tl = teachersWithLessons(), rl = roomsWithLessons(), st = stages(); if (!PP.stage) PP.stage = st[0];
+  const st = stages(); if (!PP.stage) PP.stage = st[0];
   const kinds = [['class', 'book', 'Class timetables'], ['teacher', 'user', 'Teacher timetables'], ['room', 'room', 'Room timetables'], ['master', 'grid', 'Master grid'], ['conf', 'alert', 'Conflicts report']];
   let items = '';
   if (PP.k == 'class' || PP.k == 'master') items = `<p><label class="tag"><input type="checkbox" data-pnt${PP.noT ? ' checked' : ''}> ${t('Print without teacher names')}</label></p>` + (PP.k == 'master' ? '' : '') ;
-  if (PP.k == 'class') items += `<p>${grades.map(g => `<label class="tag"><input type="checkbox" data-pg="${g}"${PP.gr.has(g) ? ' checked' : ''}> G${g}</label>`).join('')}</p>` + I.classes.filter(c => PP.gr.has(parseInt(c.slice(1)))).map(c => `<label class="tag"><input type="checkbox" data-pe="${c}"${PP.ex.has(c) ? '' : ' checked'}> ${c}</label>`).join('');
-  if (PP.k == 'teacher') items = `<p class="msg">${t('Only teachers with lessons are listed.')}</p>` + tl.map(x => `<label class="tag"><input type="checkbox" data-pe="${x}"${PP.ex.has(x) ? '' : ' checked'}> ${esc(tname(x))}</label>`).join('');
-  if (PP.k == 'room') items = rl.length ? rl.map(x => `<label class="tag"><input type="checkbox" data-pe="${x}"${PP.ex.has(x) ? '' : ' checked'}> ${esc(x)}</label>`).join('') : `<div class="empty">${t('No rooms are used yet.')}</div>`;
+  if (PP.k == 'class' || PP.k == 'teacher' || PP.k == 'room') items += ppBox(PP.k);
   if (PP.k == 'master') items += `<select data-ppst>${opts(st.map(x => [x, x]), PP.stage)}</select>`;
   const wl = S.workload.slice().sort((a, b) => b[1] - a[1]);
   return `<div class="bar"><div class="seg">${kinds.map(([k, i, l]) => `<button data-pk="${k}" class="${PP.k == k ? 'on' : ''}">${ic(i)} ${t(l)}</button>`).join('')}</div><button class="b pri" data-a="doprint">${ic('print')} ${t('Print / PDF')}</button></div>
@@ -566,7 +617,7 @@ function doPrint() {
   const k = PP.k; if (k == 'conf') return printHtml(conflictsReport());
   let ids;
   if (k == 'master') ids = [PP.stage];
-  else { const pool = k == 'class' ? I.classes.filter(c => PP.gr.has(parseInt(c.slice(1)))) : k == 'teacher' ? teachersWithLessons() : roomsWithLessons(); ids = pool.filter(x => !PP.ex.has(x)) }
+  else { const sl = ppSel(k); ids = ppPool(k).filter(x => sl.has(x)) }
   if (!ids.length) return toast(t('Select at least one item to print.'), 1);
   printHtml(buildPrint(k, ids));
 }
@@ -741,9 +792,8 @@ document.addEventListener('change', e => {
   if ('af' in D) { AF = el.value; return render() }
   if (D.cfs) { CF[D.cfs] = el.value; CF.focus = ''; return render() }
   if ('cfi' in D) { CF.ign = el.checked; return render() }
-  if (D.pg) { const g = +D.pg; el.checked ? PP.gr.add(g) : PP.gr.delete(g); return render() }
   if ('pnt' in D) { PP.noT = el.checked; return }
-  if (D.pe) { el.checked ? PP.ex.delete(D.pe) : PP.ex.add(D.pe); return }
+  if (D.ppx) { const sl = ppSel(D.ppk); el.checked ? sl.add(D.ppx) : sl.delete(D.ppx); return ppRefresh() }
   if ('ppst' in D) { PP.stage = el.value; return }
   if (D.xk) { XI.sel[D.xk] = el.checked; return }
   if (el.id == 'xf' && el.files[0]) return xRead(el.files[0]);
