@@ -2254,7 +2254,7 @@ render = function () {
 /* XL: a small, dependency-free reader/writer for .xlsx (a zip of XML files) and a CSV reader. Works offline, no CDN.
    read(file) -> [{name, rows:[[cell,...],...]}]   dates come back as 'yyyy-mm-dd', times as 'HH:MM'
    save(fileName, [{name, rows, bold:[rowIndexes], widths:[chars]}]) downloads an .xlsx
-   The old binary .xls format cannot be read here: read() throws 'XLS' and the caller asks for .xlsx / CSV or loads SheetJS from a CDN. */
+   The old binary .xls format: SheetJS is loaded from cdnjs only when such a file is chosen (needs internet). Without it read() throws 'XLSOFF'. */
 const XL = (() => {
   const td = new TextDecoder(), te = new TextEncoder();
   async function inflate(u8) { const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(u8); w.close(); return new Uint8Array(await new Response(ds.readable).arrayBuffer()) }
@@ -2319,10 +2319,34 @@ const XL = (() => {
     if (cur !== '' || row.length) { row.push(cur); rows.push(row) }
     return rows.filter(r => r.some(x => x !== ''));
   }
+  function loadSheetJS() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https:' + '/' + '/cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; sc.onload = () => window.XLSX ? ok(window.XLSX) : no(new Error('XLSOFF')); sc.onerror = () => no(new Error('XLSOFF')); document.head.appendChild(sc) });
+  }
+  async function readXls(buf) {
+    const X = await loadSheetJS(), wb = X.read(buf, { type: 'array' });
+    return wb.SheetNames.map(name => {
+      const ws = wb.Sheets[name], rows = [];
+      if (ws['!ref']) {
+        const rg = X.utils.decode_range(ws['!ref']);
+        for (let R = rg.s.r; R <= rg.e.r; R++) {
+          const row = [];
+          for (let C = rg.s.c; C <= rg.e.c; C++) {
+            const c = ws[X.utils.encode_cell({ r: R, c: C })]; let v = '';
+            if (c) { if (c.t === 'n') v = c.z && X.SSF.is_date(c.z) ? serial(c.v) : c.v; else if (c.t === 'd') v = c.v.toISOString().slice(0, 10); else if (c.t === 'b') v = c.v; else if (c.t === 'e') v = ''; else v = c.v == null ? '' : String(c.v) }
+            row.push(v);
+          }
+          rows.push(row);
+        }
+      }
+      while (rows.length && rows[rows.length - 1].every(x => x === '')) rows.pop();
+      return { name, rows };
+    });
+  }
   async function read(file) {
     const name = (file.name || '').toLowerCase(), buf = await file.arrayBuffer(), u = new Uint8Array(buf.slice(0, 4));
     if (/\.(csv|txt)$/.test(name)) return [{ name: 'CSV', rows: parseCsv(td.decode(buf)) }];
-    if (u[0] === 0xD0 && u[1] === 0xCF) throw new Error('XLS');          // the old binary format
+    if (u[0] === 0xD0 && u[1] === 0xCF) return readXls(buf);          // the old binary format
     return readXlsx(buf);
   }
   /* ---- writer ---- */
@@ -2548,11 +2572,16 @@ Object.assign(AR, {
   'ownSubject': 'يراقب امتحان مادته', 'ownClass': 'يراقب امتحان فصوله', 'consec': 'تجاوز عدد الفترات المتتالية', 'understaffed': 'عدد المراقبين ناقص', 'noReserve': 'الاحتياطي ناقص', 'orphan': 'الامتحان محذوف',
   'Report': 'التقرير', 'Signature sheets (per room)': 'شيتات الحضور والتوقيع (لكل لجنة)', 'Daily invigilation schedule': 'جدول المراقبة اليومي', 'Teacher schedules': 'جداول المراقبة للمدرسين', 'Main invigilators list': 'قائمة المراقبين الأساسيين',
   'Reserve invigilators list': 'قائمة المراقبين الاحتياطيين', 'Teacher workload summary': 'ملخص عبء المدرسين', 'Room assignment sheets': 'شيتات توزيع اللجان', 'Unassigned teachers': 'مدرسون بلا مراقبة', 'Allocation conflicts': 'تعارضات التوزيع',
+  'The .xls reader could not be loaded. Check the internet connection, or save the file as .xlsx or CSV.': 'تعذر تحميل قارئ ملفات xls. تأكد من الإنترنت، أو احفظ الملف بصيغة xlsx أو CSV.',
+  'Backup': 'نسخ احتياطي', 'Back up now': 'نسخ احتياطي الآن', 'Download backup file': 'تنزيل ملف النسخة الاحتياطية', 'Restore from a file': 'استرجاع من ملف', 'Restore': 'استرجاع', 'Backups of this timetable': 'النسخ الاحتياطية لهذا الجدول',
+  'A backup is taken automatically before generating, replacing, importing, saving the exam rows, restoring and deleting. The newest 15 are kept.': 'تؤخذ نسخة احتياطية تلقائياً قبل التوزيع والاستبدال والاستيراد وحفظ صفوف الامتحانات والاسترجاع والحذف. تُحفظ أحدث 15 نسخة.',
+  'Restore this backup?': 'استرجاع هذه النسخة؟', 'The current state is backed up first, then replaced by this backup.': 'تُحفظ الحالة الحالية أولاً ثم تُستبدل بهذه النسخة.', 'Restored': 'تم الاسترجاع', 'Backup saved': 'تم حفظ النسخة', 'When': 'الوقت', 'By': 'بواسطة', 'Reason': 'السبب', 'Exam rows': 'صفوف الامتحانات', 'No backups yet.': 'لا توجد نسخ احتياطية بعد.',
+  'Recover a deleted timetable': 'استرجاع جدول محذوف', 'This file is not a timetable backup.': 'هذا الملف ليس نسخة احتياطية لجدول.', 'before generating': 'قبل التوزيع', 'before replacing': 'قبل الاستبدال', 'before import': 'قبل الاستيراد', 'before delete': 'قبل الحذف', 'before restore': 'قبل الاسترجاع', 'before saving the exam rows': 'قبل حفظ صفوف الامتحانات', 'manual backup': 'نسخة يدوية',
   'Portrait': 'رأسي', 'Landscape': 'أفقي', 'Print / PDF': 'طباعة / PDF', 'Excel': 'Excel', 'Print preview': 'معاينة الطباعة', 'Nothing to print for this selection.': 'لا يوجد ما يُطبع لهذا الاختيار.', 'Examination Period': 'فترة الامتحانات', 'Academic Year': 'السنة الدراسية', 'Day': 'اليوم', 'Time': 'الوقت',
   'No.': 'م', 'Invigilator Name': 'اسم المراقب', 'Teacher Code': 'كود المدرس', 'Assignment Type': 'نوع المهمة', 'Main Invigilator': 'مراقب أساسي', 'Reserve ': 'احتياطي', 'Signature': 'التوقيع', 'Invigilator Attendance & Signature Sheet': 'كشف حضور وتوقيع المراقبين',
   'Details': 'التفاصيل', 'Duties': 'المهام', 'Issued': 'تاريخ الإصدار', 'Session ': 'الفترة ', 'more sheets': 'صفحات أخرى', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Delete this timetable with its exams and assignments?': 'حذف هذا الجدول مع امتحاناته وتوزيعه؟', 'Delete': 'حذف', 'Save': 'حفظ', 'Cancel': 'إلغاء'
 });
-const EX = { id: null, sub: 'exams', D: null, loading: false, form: null, imp: null, sel: null, ses: null, rules: null, prev: null, res: null, filt: { date: '', teacher: '', q: '' }, rep: { k: 'sig', date: '', key: '', teacher: '', por: true }, rp: null };
+const EX = { bk: null, id: null, sub: 'exams', D: null, loading: false, form: null, imp: null, sel: null, ses: null, rules: null, prev: null, res: null, filt: { date: '', teacher: '', q: '' }, rep: { k: 'sig', date: '', key: '', teacher: '', por: true }, rp: null };
 const EX_TYPES = [['exam', 'Examination'], ['term', 'Term examination'], ['semester', 'Semester schedule'], ['quarter', 'Quarterly examination'], ['special', 'Special examination'], ['other', 'Other custom timetable']];
 const exTt = () => EX.D && EX.D.timetables.find(x => x.id == EX.id);
 const exName = id => (EX.D && EX.D.names && EX.D.names[id]) || tname(id) || id;
@@ -2599,13 +2628,13 @@ function exList() {
 <label style="grid-column:1/-1">${t('Notes')}<input data-exf="desc" value="${esc(f.desc)}"></label></div>
 <p><button class="b pri" data-exa="saveform">${ic('check')} ${t('Save')}</button> <button class="b" data-exa="cancelform">${t('Cancel')}</button></p></div>` : '';
   return `<div class="card"><h3>${t('Custom Timetables')}</h3><p><button class="b pri" data-exa="new">+ ${t('New timetable')}</button></p>
-${tl.length ? `<div class="tl">${tl.map(x => `<div class="tc"><b>${esc(x.name)}</b><span>${t((EX_TYPES.find(y => y[0] == x.type) || ['', 'Other custom timetable'])[1])} · ${esc(x.year)}${x.period ? ' · ' + esc(x.period) : ''}</span><span>${esc(x.start)} → ${esc(x.end)}</span><span><span class="tag2 ${x.status == 'published' ? 'ok' : ''}">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[x.status] || x.status)}</span>${x.locked ? ` <span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</span><span class="msg">${D.sessions.filter(s => s.tt == x.id).length} ${t('exam rows')}</span><span><button class="b pri" data-exa="open" data-id="${x.id}">${t('Open')}</button> <button class="b" data-exa="edit" data-id="${x.id}">${t('Edit')}</button> <button class="b dng" data-exa="del" data-id="${x.id}">${t('Delete')}</button></span></div>`).join('')}</div>` : `<p class="msg">${t('Nothing here yet.')}</p>`}</div>${form}`;
+${tl.length ? `<div class="tl">${tl.map(x => `<div class="tc"><b>${esc(x.name)}</b><span>${t((EX_TYPES.find(y => y[0] == x.type) || ['', 'Other custom timetable'])[1])} · ${esc(x.year)}${x.period ? ' · ' + esc(x.period) : ''}</span><span>${esc(x.start)} → ${esc(x.end)}</span><span><span class="tag2 ${x.status == 'published' ? 'ok' : ''}">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[x.status] || x.status)}</span>${x.locked ? ` <span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</span><span class="msg">${D.sessions.filter(s => s.tt == x.id).length} ${t('exam rows')}</span><span><button class="b pri" data-exa="open" data-id="${x.id}">${t('Open')}</button> <button class="b" data-exa="edit" data-id="${x.id}">${t('Edit')}</button> <button class="b dng" data-exa="del" data-id="${x.id}">${t('Delete')}</button></span></div>`).join('')}</div>` : `<p class="msg">${t('Nothing here yet.')}</p>`}</div>${form}${exBkGone()}`;
 }
 /* ---------------- workspace ---------------- */
 function exWork() {
   const tt = exTt(); if (!tt) { EX.id = null; return exList() }
-  const nc = exConfs().length, subs = [['exams', 'Exams'], ['rules', 'Rules & allocation'], ['assign', 'Assignments'], ['conf', 'Conflicts'], ['rep', 'Reports']];
-  const body = { exams: exExams, rules: exRules, assign: exAssign, conf: exConf, rep: exRep }[EX.sub]();
+  const nc = exConfs().length, subs = [['exams', 'Exams'], ['rules', 'Rules & allocation'], ['assign', 'Assignments'], ['conf', 'Conflicts'], ['rep', 'Reports'], ['bk', 'Backup']];
+  const body = { exams: exExams, rules: exRules, assign: exAssign, conf: exConf, rep: exRep, bk: exBackup }[EX.sub]();
   return `<div class="card"><div class="row" style="justify-content:space-between"><div><button class="b" data-exa="back">‹ ${t('Back to the list')}</button> <b style="font-size:17px">${esc(tt.name)}</b> <span class="tag2">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[tt.status])}</span> ${tt.locked ? `<span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</div>
 <div><button class="b ${tt.locked ? '' : 'pri'}" data-exa="lock">${ic('lock')} ${t(tt.locked ? 'Unlock' : 'Lock the final allocation')}</button></div></div>
 <nav class="sub">${subs.map(([k, l]) => `<button class="pill${k == EX.sub ? ' on' : ''}" data-exs="${k}">${t(l)}${k == 'conf' && nc ? ` <span class="tag2 bad">${nc}</span>` : ''}</button>`).join('')}</nav>${tt.locked ? `<div class="lock">${ic('lock')} ${t('The final allocation is locked. Nothing changes by mistake.')}</div>` : ''}</div>${body}`;
@@ -2644,7 +2673,7 @@ async function exImpCheck() {
 }
 async function exImpFile(file) {
   let sheets;
-  try { sheets = await XL.read(file) } catch (e) { return toast(t(String(e.message) == 'XLS' ? 'This format is not supported here. Save the file as .xlsx or CSV and try again.' : 'The file could not be read.'), 1) }
+  try { sheets = await XL.read(file) } catch (e) { return toast(t(String(e.message) == 'XLSOFF' ? 'The .xls reader could not be loaded. Check the internet connection, or save the file as .xlsx or CSV.' : 'The file could not be read.'), 1) }
   sheets = sheets.filter(s => s.rows.length); if (!sheets.length) return toast(t('The file could not be read.'), 1);
   EX.imp = { name: file.name, sheets, si: 0, hdr: true, map: {}, rows: [], chk: null, step: 'map' }; exImpGuess(); render();
 }
@@ -2805,6 +2834,36 @@ function exXlsx() {
   G.forEach(g => { bold.push(rows.length); rows.push([g.title]); (g.info || []).forEach(([k, v]) => rows.push([k, v])); bold.push(rows.length); rows.push(g.head); g.rows.forEach(r => rows.push(r)); rows.push([]) });
   XL.save(nm + ' - ' + tt.name + ' - ' + (EX_REPS.find(x => x[0] == EX.rep.k) || ['', ''])[1], [{ name: 'Report', rows, bold }]);
 }
+/* ---- backup and recovery ---- */
+async function exBkLoad(force) {
+  if (EX.bkLoading || (EX.bk && !force)) return; EX.bkLoading = true;
+  try { EX.bk = (await _uxSrv('api_ctBackups')).backups } catch (e) { EX.bk = EX.bk || [] }
+  EX.bkLoading = false; if (TAB == 'ct') render();
+}
+const exWhy = w => String(w).replace(/^(before replacing) (.*)$/, (m, a, b) => t(a) + ' ' + b).replace(/^(before generating|before import|before delete|before restore|before saving the exam rows|manual backup)$/, (m, a) => t(a));
+function exBkRows(L) {
+  return L.length ? `<div class="tw"><table class="ex"><tr><th>${t('When')}</th><th>${t('By')}</th><th>${t('Reason')}</th><th>${t('Exam rows')}</th><th>${t('Duties')}</th><th></th></tr>${L.map(b => `<tr><td>${esc(b.time)}</td><td>${esc(b.by)}</td><td>${esc(exWhy(b.why))}${b.gone ? ' · ' + esc(b.name) : ''}</td><td>${b.ns}</td><td>${b.na}</td><td><button class="b" data-exa="bkrs" data-id="${b.id}">${t('Restore')}</button></td></tr>`).join('')}</table></div>` : `<p class="msg">${t('No backups yet.')}</p>`;
+}
+function exBackup() {
+  if (!EX.bk) { exBkLoad(); return `<div class="card"><p class="msg">${t('Loading...')}</p></div>` }
+  const L = EX.bk.filter(b => b.tt == EX.id);
+  return `<div class="card"><h3>${t('Backups of this timetable')}</h3><p class="msg">${t('A backup is taken automatically before generating, replacing, importing, saving the exam rows, restoring and deleting. The newest 15 are kept.')}</p>
+<div class="row"><button class="b pri" data-exa="bknow">${t('Back up now')}</button><button class="b" data-exa="bkdl">${t('Download backup file')}</button><label class="b">${t('Restore from a file')}<input type="file" id="ex-bkfile" accept=".json,application/json" hidden></label></div>${exBkRows(L)}</div>`;
+}
+function exBkGone() {            // on the list: timetables that were deleted but still have a backup
+  if (!EX.bk) { exBkLoad(); return '' }
+  const seen = {}, L = EX.bk.filter(b => b.gone && !seen[b.tt] && (seen[b.tt] = 1));
+  return L.length ? `<div class="card"><h3>${t('Recover a deleted timetable')}</h3>${exBkRows(L)}<div class="row"><label class="b">${t('Restore from a file')}<input type="file" id="ex-bkfile" accept=".json,application/json" hidden></label></div></div>` : `<div class="card"><h3>${t('Backup')}</h3><div class="row"><label class="b">${t('Restore from a file')}<input type="file" id="ex-bkfile" accept=".json,application/json" hidden></label></div></div>`;
+}
+async function exRestore(src, target) {
+  const tt = EX.D && EX.D.timetables.find(x => x.id == target), ov = !!(tt && tt.locked == 'final');
+  if (!await UX.ask(t('Restore this backup?'), t('The current state is backed up first, then replaced by this backup.') + (ov ? '<br><b>' + t('The final allocation is locked. Only the administrator can change it. Continue?') + '</b>' : ''), { yes: t('Restore'), danger: ov })) return;
+  try {
+    const r = await srv('api_ctRestore', src, ov); EX.bk = r.backups; EX.D = Object.assign({}, EX.D, { timetables: r.timetables, sessions: r.sessions });
+    if (EX.id) { EX.id = r.restored; EX.ses = null; EX.rules = null; EX.sel = null; EX.D = null; await exLoad(true) } else { EX.D = null; await exLoad(true) }
+    UX.done(t('Restored')); render();
+  } catch (x) { }
+}
 /* ---------------- actions ---------------- */
 async function exOpen(id) { EX.id = id; EX.sub = 'exams'; EX.ses = null; EX.rules = null; EX.imp = null; EX.sel = null; EX.prev = null; EX.res = null; EX.D = null; EX.loading = false; await exLoad(true) }
 async function exConfirmIssues(r) {
@@ -2818,15 +2877,18 @@ async function exSetOp(op) {
 }
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-exa],[data-exs]'); if (!b || TAB != 'ct') return;
-  if (b.dataset.exs) { EX.sub = b.dataset.exs; EX.sel = null; return render() }
+  if (b.dataset.exs) { EX.sub = b.dataset.exs; EX.sel = null; if (EX.sub == 'bk') exBkLoad(true); return render() }
   const a = b.dataset.exa, id = b.dataset.id, tt = exTt();
   if (a == 'new') { EX.form = exEmptyForm(); return render() }
   if (a == 'cancelform') { EX.form = null; return render() }
   if (a == 'edit') { EX.form = Object.assign({}, EX.D.timetables.find(x => x.id == id)); return render() }
   if (a == 'saveform') { try { exSet(await srv('api_ctSaveTimetable', EX.form)); EX.form = null; UX.done(t('Saved')); render() } catch (x) { } return }
-  if (a == 'del') { if (await UX.ask(t('Delete this timetable with its exams and assignments?'), '', { yes: t('Delete'), danger: true })) { try { exSet(await srv('api_ctDelete', id)); EX.D.assigns = []; render() } catch (x) { } } return }
+  if (a == 'del') { if (await UX.ask(t('Delete this timetable with its exams and assignments?'), '', { yes: t('Delete'), danger: true })) { try { exSet(await srv('api_ctDelete', id)); EX.D.assigns = []; EX.bk = null; render() } catch (x) { } } return }
+  if (a == 'bknow') { try { const r = await srv('api_ctBackupNow', EX.id, 'manual backup'); EX.bk = r.backups; UX.done(t('Backup saved')); render() } catch (x) { } return }
+  if (a == 'bkdl') { try { const r = await srv('api_ctExport', EX.id), tt0 = exTt(), blob = new Blob([JSON.stringify(r.file)], { type: 'application/json' }), l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = (tt0.name + ' backup ' + new Date().toISOString().slice(0, 10)).replace(/[\\/:*?"<>|]/g, '_') + '.json'; document.body.appendChild(l); l.click(); setTimeout(() => { URL.revokeObjectURL(l.href); l.remove() }, 4000) } catch (x) { } return }
+  if (a == 'bkrs') { const b0 = (EX.bk || []).find(x => x.id == id); if (b0) await exRestore({ snap: id }, b0.tt); return }
   if (a == 'open') { await exOpen(id); return }
-  if (a == 'back') { EX.id = null; EX.D = null; return render() }
+  if (a == 'back') { EX.id = null; EX.D = null; EX.bk = null; return render() }
   if (a == 'lock') {
     if (!await UX.ask(t(tt.locked ? 'Unlock the allocation?' : 'Lock the final allocation?'), tt.locked ? '' : t('No change can be made until you unlock it.'), { yes: t(tt.locked ? 'Unlock' : 'Lock the final allocation') })) return;
     try { exSet(await srv('api_ivLock', EX.id, !tt.locked)); render() } catch (x) { } return;
@@ -2865,6 +2927,12 @@ async function exSaveRulesFirst() {
 document.addEventListener('change', async e => {
   const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return;
   if (d.exf) { EX.form[d.exf] = el.value; if (d.exf == 'period') { const p = (S.set.examPeriods || []).find(x => x.name == el.value); if (p) { if (p.s) EX.form.start = p.s; if (p.e) EX.form.end = p.e; if (p.year) EX.form.year = p.year; render() } } return }
+  if (el.id == 'ex-bkfile') {
+    const f = el.files[0]; el.value = ''; if (!f) return; let data;
+    try { data = JSON.parse(await f.text()) } catch (x) { return toast(t('This file is not a timetable backup.'), 1) }
+    if (!data || data.v !== 1 || !data.tt) return toast(t('This file is not a timetable backup.'), 1);
+    return exRestore({ data }, data.tt[0]);
+  }
   if (el.id == 'ex-file') return exImpFile(el.files[0]);
   if (d.exi == 'sheet') { EX.imp.si = +el.value; exImpGuess(); EX.imp.step = 'map'; return render() }
   if (d.exi == 'hdr') { EX.imp.hdr = el.checked; exImpGuess(); EX.imp.step = 'map'; return render() }
