@@ -2303,7 +2303,7 @@ render = function () {
 "use strict";
 /* XL: a small, dependency-free reader/writer for .xlsx (a zip of XML files) and a CSV reader. Works offline, no CDN.
    read(file) -> [{name, rows:[[cell,...],...]}]   dates come back as 'yyyy-mm-dd', times as 'HH:MM'
-   save(fileName, [{name, rows, bold:[rowIndexes], widths:[chars]}]) downloads an .xlsx
+   save(fileName, [{name, rows, bold:[rowIndexes], widths:[chars], colFmt:{colIndex:'date'|'time'|'text'}, fmtRows:n, header:true, validations:[{sqref:'E2:E300', list:'Lists!$A$2:$A$40'}], rtl:true}]) downloads an .xlsx
    The old binary .xls format: SheetJS is loaded from cdnjs only when such a file is chosen (needs internet). Without it read() throws 'XLSOFF'. */
 const XL = (() => {
   const td = new TextDecoder(), te = new TextEncoder();
@@ -2422,12 +2422,16 @@ const XL = (() => {
     ['_rels/.rels', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http:\x2f\x2fschemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
     ['xl/workbook.xml', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheets.map((s, i) => `<sheet name="${esc(String(s.name || 'Sheet' + (i + 1)).replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>'],
     ['xl/_rels/workbook.xml.rels', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http:\x2f\x2fschemas.openxmlformats.org/package/2006/relationships">' + sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') + `<Relationship Id="rId${sheets.length + 1}" Type="http:\x2f\x2fschemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
-    ['xl/styles.xml', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>']];
+    ['xl/styles.xml', '<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="20" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>']];
     sheets.forEach((s, i) => {
-      const bold = new Set(s.bold || []), w = s.widths || [];
-      const rows = s.rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => v === '' || v == null ? '' : typeof v === 'number' && isFinite(v) ? `<c r="${colName(ci)}${ri + 1}"${bold.has(ri) ? ' s="1"' : ''}><v>${v}</v></c>` : `<c r="${colName(ci)}${ri + 1}" t="inlineStr"${bold.has(ri) ? ' s="1"' : ''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`).join('') + '</row>').join('');
+      const bold = new Set(s.bold || []), w = s.widths || [], fm = s.colFmt || {}, SX = { date: 2, time: 3, text: 4 }, nr = Math.max(s.rows.length, s.fmtRows || 0);
+      const rows = Array.from({ length: nr }, (_, ri) => { const r = s.rows[ri] || []; const n = Math.max(r.length, ...Object.keys(fm).map(k => +k + 1), 0);
+        return `<row r="${ri + 1}">` + Array.from({ length: n }, (_, ci) => { const v = r[ci], a = `${colName(ci)}${ri + 1}`, st = bold.has(ri) ? 1 : (ri > 0 || !s.header) && fm[ci] ? SX[fm[ci]] : 0, sa = st ? ` s="${st}"` : '';
+          return v === '' || v == null ? (st ? `<c r="${a}"${sa}/>` : '') : typeof v === 'number' && isFinite(v) ? `<c r="${a}"${sa}><v>${v}</v></c>` : `<c r="${a}" t="inlineStr"${sa}><is><t xml:space="preserve">${esc(v)}</t></is></c>` }).join('') + '</row>' }).join('');
       const cols = w.length ? '<cols>' + w.map((x, k) => `<col min="${k + 1}" max="${k + 1}" width="${x}" customWidth="1"/>`).join('') + '</cols>' : '';
-      files.push([`xl/worksheets/sheet${i + 1}.xml`, `<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main">${cols}<sheetData>${rows}</sheetData></worksheet>`]);
+      const dv = (s.validations || []).length ? `<dataValidations count="${s.validations.length}">` + s.validations.map(v => `<dataValidation type="list" errorStyle="warning" allowBlank="1" showInputMessage="1" showErrorMessage="1" errorTitle="${esc(v.errTitle || '')}" error="${esc(v.err || '')}" sqref="${v.sqref}"><formula1>${esc(v.list)}</formula1></dataValidation>`).join('') + '</dataValidations>' : '';
+      const rtl = s.rtl ? '<sheetViews><sheetView rightToLeft="1" workbookViewId="0"/></sheetViews>' : '';
+      files.push([`xl/worksheets/sheet${i + 1}.xml`, `<\x3fxml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http:\x2f\x2fschemas.openxmlformats.org/spreadsheetml/2006/main">${rtl}${cols}<sheetData>${rows}</sheetData>${dv}</worksheet>`]);
     });
     return zip(files);
   }
@@ -2570,6 +2574,10 @@ document.addEventListener('click', async e => {
 .exu .chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ln);border-radius:999px;padding:2px 10px;margin:2px;background:var(--sf);cursor:pointer;font-size:13px}
 .exu .chip.main{border-color:#26806f;background:#e3f1ee;color:#0f4a3f}.exu .chip.res{border-style:dashed;background:#fff8e1;color:#6b4e00}
 .exu .chip.sel{outline:2px solid #1f3a68}.exu .chip.bad{border-color:#d1291f;box-shadow:0 0 0 1px #d1291f}
+.exu table.ex td.gr{min-width:170px}.exu table.ex td.gr select{min-width:110px;width:auto}
+.exu .pool{border:1px solid var(--ln);border-radius:12px;padding:10px;margin:8px 0;background:var(--sf)}
+.exu .pool .pl{max-height:260px;overflow:auto;display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.exu .pool .tag{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ln);border-radius:999px;padding:2px 10px;font-size:13px;background:var(--bg,#fff);cursor:pointer}
 .exu .panel{position:sticky;top:0;z-index:5;border:2px solid #1f3a68;background:var(--sf);border-radius:12px;padding:10px 12px;margin:8px 0}
 .exu .ses{border:1px solid var(--ln);border-radius:12px;padding:8px 10px;margin:10px 0}
 .exu .ses h5{margin:0 0 4px;font-size:14px}
@@ -2629,6 +2637,13 @@ Object.assign(AR, {
   'Recover a deleted timetable': 'استرجاع جدول محذوف', 'This file is not a timetable backup.': 'هذا الملف ليس نسخة احتياطية لجدول.', 'before generating': 'قبل التوزيع', 'before replacing': 'قبل الاستبدال', 'before import': 'قبل الاستيراد', 'before delete': 'قبل الحذف', 'before restore': 'قبل الاسترجاع', 'before saving the exam rows': 'قبل حفظ صفوف الامتحانات', 'manual backup': 'نسخة يدوية',
   'Portrait': 'رأسي', 'Landscape': 'أفقي', 'Print / PDF': 'طباعة / PDF', 'Excel': 'Excel', 'Print preview': 'معاينة الطباعة', 'Nothing to print for this selection.': 'لا يوجد ما يُطبع لهذا الاختيار.', 'Examination Period': 'فترة الامتحانات', 'Academic Year': 'السنة الدراسية', 'Day': 'اليوم', 'Time': 'الوقت',
   'No.': 'م', 'Invigilator Name': 'اسم المراقب', 'Teacher Code': 'كود المدرس', 'Assignment Type': 'نوع المهمة', 'Main Invigilator': 'مراقب أساسي', 'Reserve ': 'احتياطي', 'Signature': 'التوقيع', 'Invigilator Attendance & Signature Sheet': 'كشف حضور وتوقيع المراقبين',
+  'Seats / code': 'أرقام الجلوس / الكود', 'Seat numbers or code': 'أرقام الجلوس أو الكود', 'Grades': 'الصفوف', '+ grade': '+ صف', '＋ Add another subject…': '＋ إضافة مادة أخرى…', '＋ Add another session…': '＋ إضافة فترة أخرى…', '＋ Other…': '＋ آخر…',
+  'New subject': 'مادة جديدة', 'New session': 'فترة جديدة', 'New grade / class': 'صف / فصل جديد', 'Add': 'إضافة', 'count': 'العدد', 'a range like 1001-1030, or a code': 'مدى مثل 1001-1030 أو كود',
+  'Download the Excel template': 'تنزيل تمبلت Excel', 'Fill the template, then choose it here. The columns match, so it is accepted.': 'املأ التمبلت ثم اختره هنا. الأعمدة مطابقة فيُقبل مباشرة.',
+  'Exams (fill this sheet)': 'Exams', 'Instructions': 'التعليمات', 'Lists': 'القوائم', 'Subjects': 'المواد', 'Sessions': 'الفترات', 'Grades & classes': 'الصفوف والفصول',
+  'Who can invigilate': 'من يحق له المراقبة', 'Choose': 'اختيار', 'selected': 'محدد', 'Everyone is allowed.': 'كل المدرسين مسموح لهم.', 'Only the chosen teachers are used for invigilation (allocation, Replace and suggestions).': 'يُستخدم المدرسون المحددون فقط في المراقبة (التوزيع والاستبدال والاقتراحات).',
+  'Shortcuts by stage': 'اختصارات حسب المرحلة', 'Shortcuts by department': 'اختصارات حسب القسم', 'Select all': 'تحديد الكل', 'Search by name': 'ابحث بالاسم', 'Nothing matches your search.': 'لا توجد نتائج مطابقة.', 'Select at least one teacher who can invigilate.': 'حدد مدرساً واحداً على الأقل للمراقبة.',
+  'notInPool': 'خارج نطاق المراقبين المحدد',
   'Details': 'التفاصيل', 'Duties': 'المهام', 'Issued': 'تاريخ الإصدار', 'Session ': 'الفترة ', 'more sheets': 'صفحات أخرى', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Delete this timetable with its exams and assignments?': 'حذف هذا الجدول مع امتحاناته وتوزيعه؟', 'Delete': 'حذف', 'Save': 'حفظ', 'Cancel': 'إلغاء'
 });
 const EX = { bk: null, id: null, sub: 'exams', D: null, loading: false, form: null, imp: null, sel: null, ses: null, rules: null, prev: null, res: null, filt: { date: '', teacher: '', q: '' }, rep: { k: 'sig', date: '', key: '', teacher: '', por: true }, rp: null };
@@ -2690,7 +2705,8 @@ function exWork() {
 <nav class="sub">${subs.map(([k, l]) => `<button class="pill${k == EX.sub ? ' on' : ''}" data-exs="${k}">${t(l)}${k == 'conf' && nc ? ` <span class="tag2 bad">${nc}</span>` : ''}</button>`).join('')}</nav>${tt.locked ? `<div class="lock">${ic('lock')} ${t('The final allocation is locked. Nothing changes by mistake.')}</div>` : ''}</div>${body}`;
 }
 /* ---- exams: import + table ---- */
-const EX_FIELDS = [['date', 'Date', /date|تاريخ|يوم/i], ['session', 'Session', /session|period|فترة|جلسة/i], ['start', 'Start', /start|from|begin|بداية|بدء|^من$/i], ['end', 'End', /end|finish|until|^to$|نهاية|إلى|الى/i], ['time', 'Time range (08:00-10:00)', /time|وقت|ساعة/i], ['subject', 'Subject', /subject|course|مادة|المادة/i], ['room', 'Room / committee', /room|committee|hall|لجنة|قاعة|غرفة|اللجنة/i], ['students', 'Students', /student|count|number of|عدد|طلاب/i], ['grade', 'Grade / class', /grade|class|level|stage|صف|فصل|مرحلة/i]];
+const EX_FIELDS = [['date', 'Date', /date|تاريخ|يوم/i], ['session', 'Session', /session|period|فترة|جلسة/i], ['start', 'Start', /start|from|begin|بداية|بدء|^من$/i], ['end', 'End', /end|finish|until|^to$|نهاية|إلى|الى/i], ['time', 'Time range (08:00-10:00)', /time|وقت|ساعة/i], ['subject', 'Subject', /subject|course|مادة|المادة/i], ['room', 'Room / committee', /room|committee|hall|لجنة|قاعة|غرفة|اللجنة/i], ['seats', 'Seats / code', /seat|جلوس|code|كود/i], ['students', 'Students', /student|count|number of|عدد|طلاب/i], ['grade', 'Grade / class', /grade|class|level|stage|صف|فصل|مرحلة/i]];
+const EX_COLS = ['date', 'session', 'start', 'end', 'subject', 'room', 'grade', 'students', 'seats'];
 const exDigits = s => String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
 const exP2 = n => String(n).padStart(2, '0');
 function exNormDate(v) {
@@ -2712,7 +2728,7 @@ function exSplitTime(v) { const p = exDigits(v).split(/\s*(?:-|–|—|to|الى
 function exImpBuild() {
   const I = EX.imp, sh = I.sheets[I.si], rows = sh.rows.slice(I.hdr ? 1 : 0), M = I.map;
   I.rows = rows.filter(r => r.some(x => x !== '' && x != null)).map(r => {
-    const g = f => M[f] >= 0 ? r[M[f]] : '', o = { date: exNormDate(g('date')), session: String(g('session') ?? '').trim(), subject: String(g('subject') ?? '').trim(), room: String(g('room') ?? '').trim(), students: g('students') === '' ? '' : String(g('students')).replace(/\.0+$/, ''), grade: String(g('grade') ?? '').trim() };
+    const g = f => M[f] >= 0 ? r[M[f]] : '', o = { date: exNormDate(g('date')), session: String(g('session') ?? '').trim(), subject: String(g('subject') ?? '').trim(), room: String(g('room') ?? '').trim(), seats: String(g('seats') ?? '').trim(), students: g('students') === '' ? '' : String(g('students')).replace(/\.0+$/, ''), grade: String(g('grade') ?? '').trim() };
     if (M.time >= 0 && M.start < 0) { const [a, b] = exSplitTime(g('time')); o.start = a; o.end = b } else { o.start = exNormTime(g('start')); o.end = exNormTime(g('end')) }
     return o;
   });
@@ -2730,11 +2746,11 @@ async function exImpFile(file) {
 function exImpGuess() {
   const I = EX.imp, sh = I.sheets[I.si], head = I.hdr ? sh.rows[0] || [] : [], used = {}; I.map = {};
   EX_FIELDS.forEach(([f, , re]) => { let ix = -1; head.forEach((h, i) => { if (ix < 0 && !used[i] && re.test(String(h))) ix = i }); I.map[f] = ix; if (ix >= 0) used[ix] = 1 });
-  if (!I.hdr) ['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].forEach((f, i) => { I.map[f] = i < (sh.rows[0] || []).length ? i : -1 });
+  if (!I.hdr) ['date', 'session', 'start', 'end', 'subject', 'room', 'grade', 'students', 'seats'].forEach((f, i) => { I.map[f] = i < (sh.rows[0] || []).length ? i : -1 });
 }
 function exImport() {
   const I = EX.imp, tt = exTt();
-  let h = `<div class="card"><h3>${ic('up')} ${t('Import from Excel')}</h3><div class="row"><input type="file" id="ex-file" accept=".xlsx,.csv,.xls,.txt"> <span class="msg">${t('Choose a file (XLSX, CSV)')}</span></div>`;
+  let h = `<div class="card"><h3>${ic('up')} ${t('Import from Excel')}</h3><div class="row"><input type="file" id="ex-file" accept=".xlsx,.csv,.xls,.txt"> <span class="msg">${t('Choose a file (XLSX, CSV)')}</span> <button class="b" data-exa="tpl">${ic('up')} ${t('Download the Excel template')}</button></div><p class="msg">${t('Fill the template, then choose it here. The columns match, so it is accepted.')}</p>`;
   if (I) {
     const sh = I.sheets[I.si], head = I.hdr ? sh.rows[0] || [] : [], ncol = Math.max(...sh.rows.slice(0, 20).map(r => r.length), 1), opt = ix => `<option value="-1">— ${t('not used')} —</option>` + Array.from({ length: ncol }, (_, i) => `<option value="${i}"${i == ix ? ' selected' : ''}>${esc((head[i] !== undefined && head[i] !== '' ? head[i] : 'Col ' + (i + 1)))}</option>`).join('');
     h += `<div class="row">${I.sheets.length > 1 ? `<label>${t('Sheet')}<select data-exi="sheet">${I.sheets.map((s, i) => `<option value="${i}"${i == I.si ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : ''}<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-exi="hdr"${I.hdr ? ' checked' : ''}> ${t('First row is the header')}</label></div>
@@ -2743,17 +2759,92 @@ function exImport() {
     if (I.step == 'prev' && I.chk) {
       const bad = {}, dup = {}; I.chk.errors.forEach(e => bad[e.i] = e.msg); I.chk.dups.forEach(i => dup[i] = 1);
       h += `<p><span class="tag2 ok">${I.chk.ok} ${t('rows will be imported')}</span> ${I.chk.errors.length ? `<span class="tag2 bad">${I.chk.errors.length} ${t('rows have errors')}</span>` : ''} ${I.chk.dups.length ? `<span class="tag2">${I.chk.dups.length} ${t('rows already exist (skipped)')}</span>` : ''}</p>
-<div class="tw"><table class="ex"><tr><th>#</th>${['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].map(f => `<th>${t(EX_FIELDS.find(x => x[0] == f)[1])}</th>`).join('')}<th></th></tr>${I.rows.slice(0, 300).map((r, i) => `<tr class="${bad[i] ? 'err' : dup[i] ? 'dup' : ''}"><td>${i + 1}</td>${['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].map(f => `<td><input data-exr="${i}|${f}" value="${esc(r[f])}"></td>`).join('')}<td>${bad[i] ? esc(bad[i]) : dup[i] ? '=' : '✓'}</td></tr>`).join('')}</table></div>
+<div class="tw"><table class="ex"><tr><th>#</th>${EX_COLS.map(f => `<th>${t(EX_FIELDS.find(x => x[0] == f)[1])}</th>`).join('')}<th></th></tr>${I.rows.slice(0, 300).map((r, i) => `<tr class="${bad[i] ? 'err' : dup[i] ? 'dup' : ''}"><td>${i + 1}</td>${EX_COLS.map(f => `<td><input data-exr="${i}|${f}" value="${esc(r[f])}"${f == 'start' || f == 'end' ? ' type="time"' : f == 'date' ? ' type="date"' : ''}></td>`).join('')}<td>${bad[i] ? esc(bad[i]) : dup[i] ? '=' : '✓'}</td></tr>`).join('')}</table></div>
 <p><button class="b" data-exa="impcheck">${t('Check again')}</button> <button class="b pri" data-exa="impgo"${I.chk.errors.length || !I.chk.ok ? ' disabled' : ''}>${t('Import')} (${I.chk.ok})</button></p>`;
     }
   }
   return h + '</div>';
 }
+/* drop-downs of the exam table: subjects of the school, sessions, grades; each has "add another" */
+const exSeatCount = v => {                                   // same rule as seatCount_ on the server
+  const parts = exDigits(v).split(/[,;،\n]+/).map(x => x.trim()).filter(Boolean); let n = 0; if (!parts.length) return null;
+  for (const p of parts) { let m; if ((m = /^(\D*?)(\d+)\s*(?:-|–|—|to)\s*(\D*?)(\d+)$/i.exec(p)) && (m[3] === '' || m[3] === m[1])) { const a = +m[2], b = +m[4]; if (b < a) return null; n += b - a + 1 } else if (/^\D*\d+$/.test(p)) n++; else return null }
+  return n > 0 && n <= 9999 ? n : null;
+};
+const exGrades = r => [...new Set(String(r.grade || '').split(/[,;/+&،\n]/).map(x => x.trim()).filter(Boolean))];
+EX.extra = { subject: [], session: [], grade: [] };
+function exOptList(f) {
+  const cur = (EX.ses || []).map(r => f == 'grade' ? exGrades(r) : [r[f]]).flat().filter(Boolean);
+  if (f == 'subject') return [...new Set([...S.subj.map(r => r[0]).sort(natural), ...EX.extra.subject, ...cur])];
+  if (f == 'session') return [...new Set([...cur, ...EX.extra.session, 'Session 1', 'Session 2', 'Session 3', 'Session 4'])];
+  const cl = (I.classes || []).slice(), gr = [...new Set(cl.map(c => parseInt(String(c).slice(1))).filter(n => !isNaN(n)))].sort((a, b) => a - b).map(n => 'G' + n);
+  return [...new Set([...gr, ...cl, ...EX.extra.grade, ...cur])];
+}
+const exSel = (i, f, cur) => { const L = exOptList(f); return `<select data-exs2="${i}|${f}"><option value=""></option>${L.map(x => `<option value="${esc(x)}"${x == cur ? ' selected' : ''}>${esc(x)}</option>`).join('')}<option value="__new">${t(f == 'subject' ? '＋ Add another subject…' : '＋ Add another session…')}</option></select>` };
+const exGradeCell = (i, r) => `${exGrades(r).map(g => `<span class="chip main" data-exa="rmg" data-i="${i}" data-g="${esc(g)}" title="${t('Remove')}">${esc(g)} ×</span>`).join('')}<select data-exg="${i}"><option value="">${t('+ grade')}</option>${exOptList('grade').filter(g => !exGrades(r).includes(g)).map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('')}<option value="__new">${t('＋ Other…')}</option></select>`;
+async function exAsk(title) {
+  const r = await Swal.fire({ title, input: 'text', showCancelButton: true, confirmButtonText: t('Add'), cancelButtonText: t('Cancel'), heightAuto: false, returnFocus: false, inputValidator: v => !String(v).trim() ? ' ' : null });
+  return r.isConfirmed ? String(r.value).trim() : '';
+}
 function exExams() {
-  if (!EX.ses) EX.ses = exSesRows().map(s => Object.assign({}, s));
+  if (!EX.ses) EX.ses = exSesRows().map(s => Object.assign({ seats: '' }, s));
   const rows = EX.ses;
-  return exImport() + `<div class="card"><h3>${t('Exam schedule')} (${rows.length})</h3><div class="tw"><table class="ex"><tr><th>${t('Date')}</th><th>${t('Session')}</th><th>${t('Start')}</th><th>${t('End')}</th><th>${t('Subject')}</th><th>${t('Room / committee')}</th><th>${t('Students')}</th><th>${t('Grade / class')}</th><th></th></tr>${rows.map((r, i) => `<tr>${['date', 'session', 'start', 'end', 'subject', 'room', 'students', 'grade'].map(f => `<td><input data-exs2="${i}|${f}" value="${esc(r[f])}"${f == 'date' ? ' type="date"' : ''}></td>`).join('')}<td><button class="b dng" data-exa="delrow" data-i="${i}">×</button></td></tr>`).join('')}</table></div>
+  return exImport() + `<div class="card"><h3>${t('Exam schedule')} (${rows.length})</h3><div class="tw"><table class="ex"><tr><th>${t('Date')}</th><th>${t('Session')}</th><th>${t('Start')}</th><th>${t('End')}</th><th>${t('Subject')}</th><th>${t('Room / committee')}</th><th>${t('Grade / class')}</th><th>${t('Students')}</th><th>${t('Seats / code')}</th><th></th></tr>${rows.map((r, i) => `<tr><td><input data-exs2="${i}|date" type="date" value="${esc(r.date)}"></td><td>${exSel(i, 'session', r.session)}</td><td><input data-exs2="${i}|start" type="time" value="${esc(r.start)}"></td><td><input data-exs2="${i}|end" type="time" value="${esc(r.end)}"></td><td>${exSel(i, 'subject', r.subject)}</td><td><input data-exs2="${i}|room" value="${esc(r.room)}"></td><td class="gr">${exGradeCell(i, r)}</td><td><input data-exs2="${i}|students" type="number" min="0" style="min-width:70px" value="${esc(r.students)}"></td><td><input data-exs2="${i}|seats" placeholder="${esc(t('a range like 1001-1030, or a code'))}" value="${esc(r.seats)}"></td><td><button class="b dng" data-exa="delrow" data-i="${i}">×</button></td></tr>`).join('')}</table></div>
 <p><button class="b" data-exa="addrow">+ ${t('Add a row')}</button> <button class="b pri" data-exa="saverows">${ic('check')} ${t('Save exam rows')}</button></p></div>`;
+}
+/* ---- the Excel template: columns match the importer, drop-down lists inside Excel, an instructions sheet ---- */
+function exTemplate() {
+  const tt = exTt(), subj = S.subj.map(r => r[0]).sort(natural), ses = ['Session 1', 'Session 2', 'Session 3', 'Session 4'], cl = (I.classes || []).slice(), gr = [...new Set(cl.map(c => parseInt(String(c).slice(1))).filter(n => !isNaN(n)))].sort((a, b) => a - b).map(n => 'G' + n), grades = [...gr, ...cl];
+  const head = ['Date (التاريخ)', 'Session (الفترة)', 'Start (البداية)', 'End (النهاية)', 'Subject (المادة)', 'Room / committee (اللجنة)', 'Grade / class (الصف)', 'Students (عدد الطلاب)', 'Seats / code (أرقام الجلوس)'], N = 400;
+  const mx = Math.max(subj.length, ses.length, grades.length), lists = [['Subjects (المواد)', 'Sessions (الفترات)', 'Grades & classes (الصفوف)']];
+  for (let i = 0; i < mx; i++) lists.push([subj[i] || '', ses[i] || '', grades[i] || '']);
+  const L = (c, n) => `Lists!$${c}$2:$${c}$${Math.max(n, 1) + 1}`, W = 'Your own value is accepted too. / يمكنك كتابة قيمة أخرى.';
+  const ins = [['How to use this template / طريقة الاستخدام'], [],
+    ['1. Fill the "Exams" sheet: one row = one exam in one room (committee). / املأ ورقة Exams: كل صف = امتحان واحد في لجنة واحدة.'],
+    ['2. Do not rename or reorder the columns. Dates: 2026-11-15. Times: 09:00. / لا تغيّر أسماء الأعمدة. التاريخ 2026-11-15 والوقت 09:00.'],
+    ['3. Session, Subject and Grade have drop-down lists (from the "Lists" sheet). You may type another value. / الفترة والمادة والصف لها قوائم منسدلة ويمكن كتابة قيمة أخرى.'],
+    ['4. Mixed committee: write several grades in the Grade cell separated by a comma: G9, G10. / لجنة مختلطة: اكتب أكثر من صف مفصولة بفاصلة: G9, G10.'],
+    ['5. Students = head count (a number). Seats / code = a range (1001-1030), several ranges (1001-1010, 1021-1030) or your own code. If Students is empty and the seats are a range, the count is worked out. / عدد الطلاب رقم، وأرقام الجلوس مدى أو كود، وإن تُرك العدد فارغاً يُحسب من المدى.'],
+    ['6. Save as .xlsx and use Import from Excel in the Exams tab. / احفظ الملف بصيغة xlsx ثم استورده من تاب Exams.'], [],
+    ['Example / مثال'], ['2026-11-15 | Session 1 | 09:00 | 10:30 | English | Hall 1 | G9, G10 | 30 | 1001-1030']];
+  const exp = { name: 'Exams', rows: [head], header: true, fmtRows: N, colFmt: { 0: 'date', 2: 'time', 3: 'time', 5: 'text', 6: 'text', 8: 'text' }, widths: [14, 16, 10, 10, 20, 22, 20, 16, 24], bold: [0],
+    validations: [{ sqref: `B2:B${N}`, list: L('B', ses.length), errTitle: 'Session', err: W }, { sqref: `E2:E${N}`, list: L('A', subj.length), errTitle: 'Subject', err: W }, { sqref: `G2:G${N}`, list: L('C', grades.length), errTitle: 'Grade', err: W }] };
+  XL.save('Exam template - ' + (tt ? tt.name : ''), [exp, { name: 'Lists', rows: lists, bold: [0], widths: [24, 18, 26] }, { name: 'Instructions', rows: ins, bold: [0, 9], widths: [140] }]);
+}
+/* ---- who may invigilate: a drop-down with stage / department shortcuts, a search box and check boxes (empty list in the rules = everyone) ---- */
+EX.pool = { open: false, q: '', set: null, for: null };
+const exAllT = () => Object.keys(EX.D.names).sort((a, b) => natural(exName(a), exName(b)));
+function exPoolSet() { if (EX.pool.for !== EX.rules || !EX.pool.set) { const R = EX.rules, all = exAllT(); EX.pool.set = new Set(R.only && R.only.length ? R.only.filter(x => all.includes(x)) : all); EX.pool.for = EX.rules } return EX.pool.set }
+function exPoolGroups() {
+  const all = exAllT(), out = [], dep = {};
+  (typeof stages == 'function' ? stages() : []).forEach(g => out.push([g, all.filter(x => S.lessons.some(l => l.t.includes(x) && stageOf(l.c) == g)), 0]));
+  S.tch.forEach(r => { const d = String(r[5] || '').trim(); if (d && all.includes(r[0])) (dep[d] = dep[d] || []).push(r[0]) });
+  Object.keys(dep).sort(natural).forEach(d => out.push([d, dep[d], 1]));
+  return out.filter(x => x[1].length);
+}
+function exPoolList() {
+  const sel = exPoolSet(), q = EX.pool.q.trim().toLowerCase(), L = exAllT().filter(x => !q || exName(x).toLowerCase().includes(q) || String(x).toLowerCase().includes(q));
+  return L.length ? L.map(x => `<label class="tag"><input type="checkbox" data-expx="${esc(x)}"${sel.has(x) ? ' checked' : ''}> ${esc(exName(x))}</label>`).join('') : `<div class="msg">${t('Nothing matches your search.')}</div>`;
+}
+function exPoolBox() {
+  const all = exAllT(), sel = exPoolSet(), open = EX.pool.open;
+  let h = `<div class="pool" id="ex-poolbox"><b>${t('Who can invigilate')}</b> <button class="b" data-exa="poolo">${t('Choose')}: <b>${sel.size}/${all.length}</b> ${t('selected')} ${open ? '▴' : '▾'}</button> <span class="msg">${sel.size == all.length ? t('Everyone is allowed.') : t('Only the chosen teachers are used for invigilation (allocation, Replace and suggestions).')}</span>`;
+  if (open) {
+    const gs = exPoolGroups(), chip = x => `<label class="tag"><input type="checkbox" data-expg="${esc(x[0])}"${x[1].every(i => sel.has(i)) ? ' checked' : ''}> ${esc(x[0])} <small>(${x[1].length})</small></label>`, stg = gs.filter(x => !x[2]), dp = gs.filter(x => x[2]);
+    h += `<div><input type="search" id="ex-poolq" data-expq placeholder="${esc(t('Search by name'))}" value="${esc(EX.pool.q)}"> <button class="b" data-exa="pools" data-v="all">${t('Select all')}</button> <button class="b" data-exa="pools" data-v="none">${t('Clear')}</button></div>`
+      + (stg.length ? `<div><small>${t('Shortcuts by stage')}</small><br>${stg.map(chip).join('')}</div>` : '') + (dp.length ? `<div><small>${t('Shortcuts by department')}</small><br>${dp.map(chip).join('')}</div>` : '') + `<div class="pl" id="ex-pl2">${exPoolList()}</div>`;
+  }
+  return h + '</div>';
+}
+function exPoolRefresh() {
+  const box = document.getElementById('ex-poolbox'); if (!box) return render();
+  const l = box.querySelector('#ex-pl2'), top = l ? l.scrollTop : 0, tmp = document.createElement('div'); tmp.innerHTML = exPoolBox(); box.replaceWith(tmp.firstElementChild);
+  const n = document.getElementById('ex-pl2'); if (n) n.scrollTop = top;
+}
+function exApplyPool() {                       // before every save of the rules
+  if (EX.pool.for !== EX.rules || !EX.pool.set) return true;
+  const all = exAllT(), sel = EX.pool.set; if (!sel.size) { toast(t('Select at least one teacher who can invigilate.'), 1); return false }
+  EX.rules.only = sel.size >= all.length ? [] : all.filter(x => sel.has(x)); return true;
 }
 /* ---- rules ---- */
 function exRules() {
@@ -2765,7 +2856,7 @@ function exRules() {
 <div class="row"><b>${t('Allocation mode')}</b>${[['auto', 'Automatic'], ['semi', 'Semi-automatic'], ['manual', 'Manual']].map(([k, l]) => `<label style="flex-direction:row;align-items:center;gap:5px"><input type="radio" name="exmode" data-exr2="mode" value="${k}"${R.mode == k ? ' checked' : ''}> ${t(l)}</label>`).join('')}</div>
 <div class="grid2">${num('mainPerRoom', 'Main invigilators per room')}${num('reservePerSession', 'Reserve invigilators per session')}${num('maxTotal', 'Max duties per teacher (0 = no limit)')}${num('maxDay', 'Max duties per day (0 = no limit)')}${num('maxConsec', 'Max consecutive sessions (0 = no limit)')}${num('minRest', 'Minimum rest between duties (minutes)')}</div>
 <div style="display:grid;gap:4px;margin:8px 0">${chk('weighted', 'Weighted distribution (use the weights below)')}${chk('avoidOwnSubject', 'Do not assign a teacher to the exam of his own subject')}${chk('avoidOwnClass', 'Do not assign a teacher to the exam of his own classes')}${chk('sameSessionMulti', 'Allow a teacher in several rooms of the same session')}${chk('useAbsences', 'Skip teachers with an approved absence that day')}${chk('promoteReserve', 'When a main invigilator is replaced, a reserve of that session takes the room first')}</div>
-<h4>${t('Teachers')}</h4><div class="tw"><table class="ex"><tr><th>${t('Name')}</th><th>${t('Code')}</th><th>${t('Exclude')}</th><th>${t('Priority')}</th><th>${t('Weight')}</th><th>${t('Unavailable dates (yyyy-mm-dd, comma separated)')}</th></tr>${T.map(id => `<tr><td>${esc(exName(id))}</td><td>${esc(id)}</td><td><input type="checkbox" data-exr3="ex|${esc(id)}"${R.excluded.includes(id) ? ' checked' : ''}></td><td><input type="checkbox" data-exr3="pr|${esc(id)}"${R.priority.includes(id) ? ' checked' : ''}></td><td><input type="number" step="0.5" min="0.5" max="10" style="width:70px" data-exr3="w|${esc(id)}" value="${R.weights[id] || 1}"></td><td><input data-exr3="un|${esc(id)}" value="${esc((R.unavailable[id] || []).join(', '))}"></td></tr>`).join('')}</table></div>
+${exPoolBox()}<h4>${t('Teachers')}</h4><div class="tw"><table class="ex"><tr><th>${t('Name')}</th><th>${t('Code')}</th><th>${t('Exclude')}</th><th>${t('Priority')}</th><th>${t('Weight')}</th><th>${t('Unavailable dates (yyyy-mm-dd, comma separated)')}</th></tr>${T.map(id => `<tr><td>${esc(exName(id))}</td><td>${esc(id)}</td><td><input type="checkbox" data-exr3="ex|${esc(id)}"${R.excluded.includes(id) ? ' checked' : ''}></td><td><input type="checkbox" data-exr3="pr|${esc(id)}"${R.priority.includes(id) ? ' checked' : ''}></td><td><input type="number" step="0.5" min="0.5" max="10" style="width:70px" data-exr3="w|${esc(id)}" value="${R.weights[id] || 1}"></td><td><input data-exr3="un|${esc(id)}" value="${esc((R.unavailable[id] || []).join(', '))}"></td></tr>`).join('')}</table></div>
 <p><button class="b" data-exa="saverules">${ic('check')} ${t('Save the rules')}</button> ${man ? `<span class="msg">${t('The mode is Manual: assign teachers yourself in the Assignments tab.')}</span>` : `<button class="b pri" data-exa="gen" data-keep="locked">${t('Generate the allocation')}</button> <button class="b" data-exa="gen" data-keep="all">${t('Fill the gaps only')}</button>`}</p></div>${exPrev()}`;
 }
 function exPrev() {
@@ -2784,7 +2875,7 @@ function exChip(a, bad) {
   const on = EX.sel == a.id;
   return `<button class="chip ${a.type == 'main' ? 'main' : 'res'}${on ? ' sel' : ''}${bad ? ' bad' : ''}" data-exa="sel" data-id="${a.id}" title="${esc(a.t)}">${esc(exName(a.t))}${a.locked ? ' 🔒' : ''}</button>`;
 }
-const exTOpts = () => Object.keys(EX.D.names).sort((a, b) => natural(exName(a), exName(b))).map(id => `<option value="${esc(id)}">${esc(exName(id))} (${esc(id)})</option>`).join('');
+const exTOpts = () => Object.keys(EX.D.names).filter(id => { const o = (exTt() && exTt().rules.only) || []; return !o.length || o.includes(id) }).sort((a, b) => natural(exName(a), exName(b))).map(id => `<option value="${esc(id)}">${esc(exName(id))} (${esc(id)})</option>`).join('');
 function exPanel() {
   const a = EX.sel && exAs().find(x => x.id == EX.sel); if (!a) { EX.sel = null; return '' }
   const key = a.key, same = exAs().filter(x => x.key == key && x.id != a.id), ses = exSesRows().find(s => s.id == a.slot);
@@ -2808,7 +2899,7 @@ function exAssign() {
       const mine = rooms.filter(r => !F.teacher || A.some(a => a.type == 'main' && a.slot == r.id && a.t == F.teacher));
       if (F.teacher && !mine.length && !res.some(a => a.t == F.teacher)) return '';
       any = true;
-      return `<div class="ses"><h5>${esc(s.name)} · ${esc(s.start)}-${esc(s.end)}</h5><div class="tw"><table class="ex"><tr><th>${t('Room')}</th><th>${t('Subject')}</th><th>${t('Students')}</th><th>${t('Main invigilators')}</th><th></th></tr>${(F.teacher ? mine : rooms).map(r => `<tr><td><b>${esc(r.room)}</b></td><td>${esc(r.subject)}</td><td>${esc(r.students)}</td><td>${A.filter(a => a.type == 'main' && a.slot == r.id).map(a => exChip(a, bad.has(a.id))).join('')}</td><td><select data-exadd="main|${r.id}|${s.key}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select></td></tr>`).join('')}
+      return `<div class="ses"><h5>${esc(s.name)} · ${esc(s.start)}-${esc(s.end)}</h5><div class="tw"><table class="ex"><tr><th>${t('Room')}</th><th>${t('Subject')}</th><th>${t('Students')}</th><th>${t('Main invigilators')}</th><th></th></tr>${(F.teacher ? mine : rooms).map(r => `<tr><td><b>${esc(r.room)}</b></td><td>${esc(r.subject)}${r.grade ? ` <small>(${esc(r.grade)})</small>` : ''}</td><td>${esc(r.students)}${r.seats ? ` <small>${esc(r.seats)}</small>` : ''}</td><td>${A.filter(a => a.type == 'main' && a.slot == r.id).map(a => exChip(a, bad.has(a.id))).join('')}</td><td><select data-exadd="main|${r.id}|${s.key}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select></td></tr>`).join('')}
 <tr><td colspan="3"><b>${t('Reserve invigilators')}</b></td><td>${res.map(a => exChip(a, bad.has(a.id))).join('')}</td><td><select data-exadd="reserve||${s.key}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select></td></tr></table></div></div>`;
     }).join('');
     if (day) h += `<h4>${esc(d)} · ${esc(exDay(d))}</h4>${day}`;
@@ -2837,14 +2928,14 @@ function exGroups() {
   const inSes = (k, type, slot) => A.filter(a => a.key == k && a.type == type && (type == 'reserve' || a.slot == slot));
   if (R.k == 'sig') S2.forEach(s => s.rows.forEach(r => {
     const list = inSes(s.key, 'main', r.id).concat(inSes(s.key, 'reserve')); if (R.teacher && !list.some(a => a.t == R.teacher)) return;
-    G.push({ title: t('Invigilator Attendance & Signature Sheet'), info: exInfo(s, [[t('Subject'), r.subject], [t('Room'), r.room]]), sig: true, head: [t('No.'), t('Invigilator Name'), t('Teacher Code'), t('Assignment Type'), t('Signature')], rows: list.map((a, i) => [i + 1, exName(a.t), a.t, role(a), '']) });
+    G.push({ title: t('Invigilator Attendance & Signature Sheet'), info: exInfo(s, [[t('Subject'), r.subject], [t('Room'), r.room]].concat(r.grade ? [[t('Grade / class'), r.grade]] : [], r.students ? [[t('Students'), r.students]] : [], r.seats ? [[t('Seats / code'), r.seats]] : [])), sig: true, head: [t('No.'), t('Invigilator Name'), t('Teacher Code'), t('Assignment Type'), t('Signature')], rows: list.map((a, i) => [i + 1, exName(a.t), a.t, role(a), '']) });
   }));
   if (R.k == 'daily') [...new Set(S2.map(s => s.date))].forEach(d => G.push({ title: t('Daily invigilation schedule') + ' – ' + d + ' ' + exDay(d), head: [t('Session'), t('Time'), t('Subject'), t('Room'), t('Main invigilators'), t('Reserve invigilators')], rows: S2.filter(s => s.date == d).flatMap(s => s.rows.map(r => [s.name, s.start + ' - ' + s.end, r.subject, r.room, inSes(s.key, 'main', r.id).map(a => exName(a.t)).join(', '), inSes(s.key, 'reserve').map(a => exName(a.t)).join(', ')])) }));
   if (R.k == 'teacher' || R.k == 'rooms') {
     const owners = R.k == 'teacher' ? [...new Set(A.map(a => a.t))].filter(x => !R.teacher || x == R.teacher).sort((a, b) => natural(exName(a), exName(b))) : [...new Set(exSesRows().map(s => s.room))].sort(natural);
     owners.forEach(o => {
       if (R.k == 'teacher') { const rows = []; S2.forEach(s => { A.filter(a => a.t == o && a.key == s.key).forEach(a => { const r = s.rows.find(x => x.id == a.slot) || s.rows[0]; rows.push([s.date, exDay(s.date), s.start + ' - ' + s.end, s.name, r.subject, a.type == 'main' ? r.room : '', role(a)]) }) }); if (rows.length) G.push({ title: t('Teacher schedules') + ' – ' + exName(o) + ' (' + o + ')', head: [t('Date'), t('Day'), t('Time'), t('Session'), t('Subject'), t('Room'), t('Assignment Type')], rows }) }
-      else { const rows = []; S2.forEach(s => s.rows.filter(r => r.room == o).forEach(r => rows.push([s.date, exDay(s.date), s.start + ' - ' + s.end, r.subject, r.students, inSes(s.key, 'main', r.id).map(a => exName(a.t)).join(', '), inSes(s.key, 'reserve').map(a => exName(a.t)).join(', ')]))); if (rows.length) G.push({ title: t('Room assignment sheets') + ' – ' + o, head: [t('Date'), t('Day'), t('Time'), t('Subject'), t('Students'), t('Main invigilators'), t('Reserve invigilators')], rows }) }
+      else { const rows = []; S2.forEach(s => s.rows.filter(r => r.room == o).forEach(r => rows.push([s.date, exDay(s.date), s.start + ' - ' + s.end, r.subject, r.grade || '', r.students, r.seats || '', inSes(s.key, 'main', r.id).map(a => exName(a.t)).join(', '), inSes(s.key, 'reserve').map(a => exName(a.t)).join(', ')]))); if (rows.length) G.push({ title: t('Room assignment sheets') + ' – ' + o, head: [t('Date'), t('Day'), t('Time'), t('Subject'), t('Grade / class'), t('Students'), t('Seats / code'), t('Main invigilators'), t('Reserve invigilators')], rows }) }
     });
   }
   if (R.k == 'mains' || R.k == 'reserves') {
@@ -2915,7 +3006,7 @@ async function exRestore(src, target) {
   } catch (x) { }
 }
 /* ---------------- actions ---------------- */
-async function exOpen(id) { EX.id = id; EX.sub = 'exams'; EX.ses = null; EX.rules = null; EX.imp = null; EX.sel = null; EX.prev = null; EX.res = null; EX.D = null; EX.loading = false; await exLoad(true) }
+async function exOpen(id) { EX.id = id; EX.sub = 'exams'; EX.ses = null; EX.rules = null; EX.imp = null; EX.sel = null; EX.prev = null; EX.res = null; EX.D = null; EX.loading = false; EX.pool = { open: false, q: '', set: null, for: null }; EX.extra = { subject: [], session: [], grade: [] }; await exLoad(true) }
 async function exConfirmIssues(r) {
   const li = r.issues.map(c => `<li><b>${esc(c.t ? exName(c.t) : '')}</b>: ${esc(exCText(c))}${(c.sugg || []).length ? ' — ' + t('Suggested instead') + ': ' + c.sugg.map(x => esc(exName(x))).join(', ') : ''}</li>`).join('');
   return UX.ask(t('This creates conflicts'), '<ul style="text-align:start">' + li + '</ul>', { yes: t('Save anyway'), danger: true });
@@ -2946,10 +3037,14 @@ document.addEventListener('click', async e => {
   if (a == 'impprev') { exImpBuild(); await exImpCheck(); EX.imp.step = 'prev'; return render() }
   if (a == 'impcheck') { await exImpCheck(); return render() }
   if (a == 'impgo') { try { const r = await srv('api_ctImport', EX.id, EX.imp.rows); exSet(r); EX.imp = null; EX.ses = null; UX.done(t('Imported') + ': ' + r.added); render() } catch (x) { } return }
-  if (a == 'addrow') { EX.ses.push({ id: '', date: tt.start || '', session: '', start: '', end: '', subject: '', room: '', students: '', grade: '' }); return render() }
+  if (a == 'addrow') { EX.ses.push({ id: '', date: tt.start || '', session: '', start: '', end: '', subject: '', room: '', students: '', grade: '', seats: '' }); return render() }
+  if (a == 'tpl') return exTemplate();
+  if (a == 'rmg') { const r = EX.ses[+b.dataset.i], g = exGrades(r).filter(x => x != b.dataset.g); r.grade = g.join(', '); return render() }
   if (a == 'delrow') { EX.ses.splice(+b.dataset.i, 1); return render() }
   if (a == 'saverows') { try { exSet(await srv('api_ctSaveSessions', EX.id, EX.ses)); EX.ses = null; UX.done(t('Saved')); await exLoad(true); render() } catch (x) { } return }
-  if (a == 'saverules') { try { exSet(await srv('api_ivSaveRules', EX.id, EX.rules)); EX.rules = null; UX.done(t('Saved')); render() } catch (x) { } return }
+  if (a == 'poolo') { EX.pool.open = !EX.pool.open; EX.pool.q = ''; return exPoolRefresh() }
+  if (a == 'pools') { const q = EX.pool.q.trim().toLowerCase(), sl = exPoolSet(); exAllT().filter(x => !q || exName(x).toLowerCase().includes(q) || String(x).toLowerCase().includes(q)).forEach(x => b.dataset.v == 'all' ? sl.add(x) : sl.delete(x)); return exPoolRefresh() }
+  if (a == 'saverules') { if (!exApplyPool()) return; try { exSet(await srv('api_ivSaveRules', EX.id, EX.rules)); EX.rules = null; UX.done(t('Saved')); render() } catch (x) { } return }
   if (a == 'gen') {
     if (!await exSaveRulesFirst()) return;
     const keep = b.dataset.keep, mode = exTt().rules.mode;
@@ -2971,7 +3066,7 @@ document.addEventListener('click', async e => {
   if (a == 'xlsx') { if (!EX.rp.G.length) return toast(t('Nothing to print for this selection.'), 1); return exXlsx() }
 });
 async function exSaveRulesFirst() {
-  if (!EX.rules) return true;
+  if (!EX.rules) return true; if (!exApplyPool()) return false;
   try { exSet(await srv('api_ivSaveRules', EX.id, EX.rules)); EX.rules = null; return true } catch (x) { return false }
 }
 document.addEventListener('change', async e => {
@@ -2988,15 +3083,28 @@ document.addEventListener('change', async e => {
   if (d.exi == 'hdr') { EX.imp.hdr = el.checked; exImpGuess(); EX.imp.step = 'map'; return render() }
   if (d.exm) { EX.imp.map[d.exm] = +el.value; return }
   if (d.exr) { const [i, f] = d.exr.split('|'); EX.imp.rows[+i][f] = el.value; return }
-  if (d.exs2) { const [i, f] = d.exs2.split('|'); EX.ses[+i][f] = el.value; return }
+  if (d.exg !== undefined) {
+    const r = EX.ses[+d.exg]; let v = el.value; if (!v) return;
+    if (v == '__new') { v = await exAsk(t('New grade / class')); if (!v) return render(); EX.extra.grade.push(v) }
+    r.grade = [...exGrades(r), v].join(', '); return render();
+  }
+  if (d.exs2) {
+    const [i, f] = d.exs2.split('|'), r = EX.ses[+i]; let v = el.value;
+    if (v == '__new') { v = await exAsk(t(f == 'subject' ? 'New subject' : 'New session')); if (!v) return render(); EX.extra[f].push(v); r[f] = v; return render() }
+    r[f] = v;
+    if (f == 'seats') { const n = exSeatCount(v); if (n != null && String(r.students || '') === '') { r.students = String(n); render() } }
+    return;
+  }
   if (d.exr2) { const R = EX.rules, k = d.exr2; if (el.type == 'checkbox') R[k] = el.checked; else if (el.type == 'radio') { R[k] = el.value; render() } else R[k] = +el.value; return }
   if (d.exr3) { const [k, id] = d.exr3.split('|'), R = EX.rules; const tog = (l, on) => { const i = l.indexOf(id); if (on && i < 0) l.push(id); if (!on && i >= 0) l.splice(i, 1) };
     if (k == 'ex') tog(R.excluded, el.checked); else if (k == 'pr') tog(R.priority, el.checked); else if (k == 'w') { const w = parseFloat(el.value); if (w > 0 && w != 1) R.weights[id] = w; else delete R.weights[id] } else if (k == 'un') { const v = el.value.split(/[,\s]+/).filter(Boolean); if (v.length) R.unavailable[id] = v; else delete R.unavailable[id] } return }
+  if (d.expx !== undefined) { const sl = exPoolSet(); el.checked ? sl.add(d.expx) : sl.delete(d.expx); return exPoolRefresh() }
+  if (d.expg !== undefined) { const g = exPoolGroups().find(x => x[0] == d.expg), sl = exPoolSet(); if (g) g[1].forEach(x => el.checked ? sl.add(x) : sl.delete(x)); return exPoolRefresh() }
   if (d.exfl) { EX.filt[d.exfl] = el.value; return render() }
   if (d.exrp) { const k = d.exrp; EX.rep[k] = k == 'por' ? el.value == '1' : el.value; if (k == 'date') EX.rep.key = ''; return render() }
   if (d.exadd && el.value) { const [type, slot, key] = d.exadd.split('|'); return exSetOp({ k: 'assign', type, slot, key, t: el.value }) }
 });
-document.addEventListener('input', e => { const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return; if (d.exfl == 'q') { EX.filt.q = el.value; clearTimeout(EX.qt); EX.qt = setTimeout(render, 350) } });
+document.addEventListener('input', e => { const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return; if ('expq' in d) { EX.pool.q = el.value; const l = document.getElementById('ex-pl2'); if (l) l.innerHTML = exPoolList(); return } if (d.exfl == 'q') { EX.filt.q = el.value; clearTimeout(EX.qt); EX.qt = setTimeout(render, 350) } });
 /* ---------------- the tab ---------------- */
 function rExam() { if (!EX.D) { exLoad(); return `<p class="msg">${t('Loading...')}</p>` } return `<div class="exu">${EX.id ? exWork() : exList()}</div>` }
 TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'st'), 1), 0, ['ct', 'Custom Timetables', 'grid']);
