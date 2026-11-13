@@ -1061,6 +1061,10 @@ document.addEventListener('drop', async e => {
 <style>
 /* view-only users (teachers, coordinators without edit) */
 body.ro .bar .msg,body.ro .seg:has([data-bmw]){display:none}
+.pgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px}.pg{border:1px solid var(--ln);border-radius:12px;padding:8px 12px;background:var(--sf)}.pg h5{margin:0 0 4px;font-size:14px}
+.pr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--ln);flex-wrap:wrap}.eff{font-size:12px;margin-inline-end:6px}.eff.ok{color:#1a7a52}.eff.no{color:#b3261e}
+.sg2{display:inline-flex;border:1px solid var(--ln);border-radius:999px;overflow:hidden}.sg2 button{border:0;background:var(--sf);color:inherit;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px}.sg2 button.on{background:#1f3a68;color:#fff}.sg2 button.on.al{background:#1a7a52}.sg2 button.on.bl{background:#b3261e}
+table.rm th.gh{background:var(--hl);text-align:start}
 body.na .bmk,body.na [data-bmk]{display:none}   /* admin-only numbers on the Master sheet */
 body.ro td.sel,body.ro .en{cursor:default}
 body.ro .tt td.sel:hover,body.ro .en:hover{background:inherit;box-shadow:none}
@@ -1080,20 +1084,42 @@ Object.assign(AR, {
 });
 let US = null, roleDone = false;
 /* per-person permissions: the list shown in Users & links > Permissions (the server decides, see PERM_DEF in Roles.gs) */
-const PERM_LIST = [['master', 'Master sheet'], ['conflicts', 'Conflicts tab'], ['print', 'Reports & Print'], ['export', 'Save a copy (Excel)'], ['notif', 'Notifications'], ['abs_report', 'Report an absence'], ['abs_decide', 'Approve or reject absences'], ['abs_cover', 'Assign substitutes and print the substitute sheet'], ['ct', 'Custom timetables (exams & invigilation)']];
-Object.assign(AR, { 'Permissions': 'الصلاحيات', 'Master sheet': 'الشيت الكبير (Master)', 'Conflicts tab': 'تاب التعارضات', 'Save a copy (Excel)': 'حفظ نسخة Excel', 'Report an absence': 'تسجيل غياب', 'Approve or reject absences': 'قبول أو رفض الغياب', 'Assign substitutes and print the substitute sheet': 'تعيين البدلاء وطباعة كشف البدلاء', 'Custom timetables (exams & invigilation)': 'الجداول المخصصة (الامتحانات والمراقبة)',
+const PERM_GROUPS = [['Timetables', [['edit', 'Edit lessons (drag, swap, assign)'], ['master', 'Master sheet']]], ['Reports & printing', [['print', 'Reports & Print'], ['export', 'Save a copy (Excel)']]], ['Conflicts & notifications', [['conflicts', 'Conflicts tab'], ['notif', 'Notifications']]],
+  ['Absence & substitutes', [['abs_report', 'Report an absence'], ['abs_behalf', 'Report an absence for other teachers (inside the scope)'], ['abs_decide', 'Approve or reject absences'], ['abs_assign', 'Assign substitutes'], ['abs_print', 'Print the substitute sheet']]], ['Head of department', [['abs_dept', 'Report an absence for his teachers'], ['abs_prelim', 'Preliminary approval of their absences'], ['abs_propose', 'Choose substitutes for his absent teachers (before the final approval)']]], ['Exams & invigilation', [['ct', 'Custom timetables (exams & invigilation)']]]];
+const PERM_LIST = PERM_GROUPS.flatMap(g => g[1]);
+Object.assign(AR, { 'Timetables': 'الجداول', 'Reports & printing': 'التقارير والطباعة', 'Conflicts & notifications': 'التعارضات والإشعارات', 'Absence & substitutes': 'الغياب والبدلاء', 'Exams & invigilation': 'الامتحانات والمراقبة', 'Edit lessons (drag, swap, assign)': 'تعديل الحصص (سحب، تبديل، تعيين)', 'Assign substitutes': 'تعيين البدلاء', 'Head of department': 'رئيس القسم', 'Report an absence for his teachers': 'تسجيل غياب مدرسيه', 'Preliminary approval of their absences': 'الموافقة المبدئية على غيابهم', 'Choose substitutes for his absent teachers (before the final approval)': 'اختيار بدلاء مدرسيه الغائبين (قبل الاعتماد النهائي)', 'Departments headed': 'الأقسام التي يرأسها', 'All the teachers of these departments belong to him automatically.': 'كل مدرسي هذه الأقسام يتبعونه تلقائياً.', 'Add a teacher (for example seconded from another department)': 'أضف مدرساً (مثلاً منتدباً من قسم آخر)', 'Teachers under this head': 'المدرسون التابعون له', 'No departments yet: fill the Department column in Settings > Teachers.': 'لا توجد أقسام بعد: املأ عمود Department في الإعدادات > المدرسون.', 'automatic for a head of department': 'تلقائي لرئيس القسم', 'Remove': 'حذف', 'Head of department: report an absence for the teachers of his department': 'رئيس القسم: تسجيل غياب مدرسي قسمه', 'Report an absence for other teachers (inside the scope)': 'تسجيل غياب نيابةً عن مدرسين آخرين (داخل نطاقه)', 'Print the substitute sheet': 'طباعة كشف البدلاء', 'Roles': 'الأدوار', 'Default permissions of each role': 'صلاحيات كل دور (الافتراضية)', 'Save the role defaults': 'حفظ صلاحيات الأدوار', 'Allowed': 'مسموح', 'Blocked': 'ممنوع', 'Follows the Can edit column': 'حسب عمود «Can edit»', 'Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.': 'للأدمن فقط دائماً: الإعدادات، المستخدمين واللينكات، التوزيع التلقائي، مساعد النقل.', 'Reset to the role': 'إرجاع لإعداد الدور', 'Permissions': 'الصلاحيات', 'Master sheet': 'الشيت الكبير (Master)', 'Conflicts tab': 'تاب التعارضات', 'Save a copy (Excel)': 'حفظ نسخة Excel', 'Report an absence': 'تسجيل غياب', 'Approve or reject absences': 'قبول أو رفض الغياب', 'Assign substitutes and print the substitute sheet': 'تعيين البدلاء وطباعة كشف البدلاء', 'Custom timetables (exams & invigilation)': 'الجداول المخصصة (الامتحانات والمراقبة)',
   'Default': 'افتراضي', 'Allow': 'سماح', 'Block': 'منع', 'default: yes': 'الافتراضي: مسموح', 'default: no': 'الافتراضي: ممنوع', 'Admin links always have every option.': 'رابط الأدمن يملك كل الإمكانيات دائماً.',
   'Choose what this person can use. Default = what the role gets; Allow / Block changes it for this person only. Editing timetables is controlled by the Can edit column.': 'اختر ما يستطيع هذا الشخص استخدامه. الافتراضي = ما يأخذه الدور؛ سماح / منع يغيّره لهذا الشخص فقط. تعديل الجداول يتحكم فيه عمود «Can edit».', 'changed': 'معدّل' });
 const usPerm = (r, k) => { try { const o = JSON.parse(r[9] || '{}'); return o[k] === true ? 'allow' : o[k] === false ? 'block' : '' } catch (e) { return '' } };
 const usSetPerm = (r, k, v) => { let o = {}; try { o = JSON.parse(r[9] || '{}') || {} } catch (e) { } if (v == 'allow') o[k] = true; else if (v == 'block') o[k] = false; else delete o[k]; r[9] = Object.keys(o).length ? JSON.stringify(o) : '' };
+const usHeads = r => { try { const o = JSON.parse(r[10] || '{}') || {}; return { d: o.d || [], t: o.t || [] } } catch (e) { return { d: [], t: [] } } };
+const usSetHeads = (r, h) => { r[10] = h.d.length || h.t.length ? JSON.stringify(h) : '' };
+const usDepts = () => [...new Set((US.teachers || []).map(x => String(x[2] || '').trim()).filter(Boolean))].sort(natural);
+const usHeadSet = r => { const h = usHeads(r), dk = new Set(h.d.map(x => x.toLowerCase())), out = new Set(h.t); (US.teachers || []).forEach(x => { if (x[2] && dk.has(String(x[2]).trim().toLowerCase())) out.add(x[0]) }); return out };
+function usHeadBox(r, i) {
+  const h = usHeads(r), D = usDepts(), set = [...usHeadSet(r)], nm = id => ((US.teachers || []).find(x => x[0] == id) || [id, id])[1];
+  return `<div class="pg" style="margin-top:10px"><h5>${t('Head of department')}</h5><p class="msg">${t('All the teachers of these departments belong to him automatically.')}</p>
+${D.length ? `<div><b>${t('Departments headed')}</b><br>${D.map(d => `<label class="tag"><input type="checkbox" data-uhd="${i}|${esc(d)}"${h.d.includes(d) ? ' checked' : ''}> ${esc(d)}</label>`).join('')}</div>` : `<p class="msg">${t('No departments yet: fill the Department column in Settings > Teachers.')}</p>`}
+<div style="margin-top:6px"><b>${t('Add a teacher (for example seconded from another department)')}</b><br>${h.t.map(id => `<span class="chip main" style="display:inline-flex;gap:4px;border:1px solid var(--ln);border-radius:999px;padding:2px 10px;margin:2px">${esc(nm(id))} <a href="#" data-uhr="${i}|${esc(id)}" style="text-decoration:none">×</a></span>`).join('')}
+<select data-uht="${i}"><option value="">+ ${t('Add a teacher')}</option>${(US.teachers || []).filter(x => !h.t.includes(x[0])).map(x => `<option value="${esc(x[0])}">${esc(x[1])}${x[2] ? ' (' + esc(x[2]) + ')' : ''}</option>`).join('')}</select></div>
+${set.length ? `<p class="msg"><b>${t('Teachers under this head')} (${set.length}):</b> ${set.map(id => esc(nm(id))).join('، ')}</p>` : ''}</div>`;
+}
 const usChanged = r => PERM_LIST.filter(([k]) => usPerm(r, k)).length;
 function usPanel(r, i) {
   const P = US.permDefs || [], role = String(r[3] || '').toLowerCase();
   if (role == 'admin') return `<tr class="usp"><td colspan="9"><p class="msg">${t('Admin links always have every option.')}</p></td></tr>`;
-  return `<tr class="usp"><td colspan="9"><p class="msg">${t('Choose what this person can use. Default = what the role gets; Allow / Block changes it for this person only. Editing timetables is controlled by the Can edit column.')}</p><div class="grid2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px 16px">${PERM_LIST.map(([k, l]) => {
-    const d = (P.find(x => x.k == k) || { d: {} }).d[role], v = usPerm(r, k);
-    return `<label style="display:flex;flex-direction:column;gap:3px"><span>${t(l)} <small class="msg">(${t(d ? 'default: yes' : 'default: no')})</small></span><select data-up="${i}|${k}"><option value=""${v == '' ? ' selected' : ''}>${t('Default')}</option><option value="allow"${v == 'allow' ? ' selected' : ''}>${t('Allow')}</option><option value="block"${v == 'block' ? ' selected' : ''}>${t('Block')}</option></select></label>`;
-  }).join('')}</div></td></tr>`;
+  const grp = ([gn, L]) => `<div class="pg"><h5>${t(gn)}</h5>${L.map(([k, l]) => {
+    const d = !!(P.find(x => x.k == k) || { d: {} }).d[role] || (['abs_dept', 'abs_prelim', 'abs_propose'].includes(k) && usHeadSet(r).size > 0), v = usPerm(r, k), eff = v == 'allow' ? true : v == 'block' ? false : d;
+    return `<div class="pr"><span>${t(l)}${['abs_dept', 'abs_prelim', 'abs_propose'].includes(k) ? ` <small class="msg">(${t('automatic for a head of department')})</small>` : ''}</span><span><span class="eff ${eff ? 'ok' : 'no'}">${eff ? '✓ ' + t('Allowed') : '✕ ' + t('Blocked')}</span> <span class="sg2"><button data-upb="${i}|${k}|" class="${v == '' ? 'on' : ''}">${t('Default')} (${t(d ? 'Allowed' : 'Blocked')})</button><button data-upb="${i}|${k}|allow" class="al${v == 'allow' ? ' on' : ''}">${t('Allow')}</button><button data-upb="${i}|${k}|block" class="bl${v == 'block' ? ' on' : ''}">${t('Block')}</button></span></span></div>`;
+  }).join('')}</div>`;
+  return `<tr class="usp"><td colspan="9"><p class="msg">${t('Choose what this person can use. Default = what the role gets; Allow / Block changes it for this person only. Editing timetables is controlled by the Can edit column.')}</p><div class="pgs">${PERM_GROUPS.map(grp).join('')}</div>${usHeadBox(r, i)}<p class="msg">${t('Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.')}</p>${usChanged(r) ? `<button class="b" data-upb="${i}|*|">${t('Reset to the role')}</button>` : ''}</td></tr>`;
+}
+/* the role matrix: one table, every option x every role (the defaults of a role; a person can still be changed one by one) */
+function usRoleBox() {
+  if (!US.rp) { US.rp = {}; ['coordinator', 'teacher', 'viewer'].forEach(rl => { US.rp[rl] = {}; (US.permDefs || []).forEach(p => US.rp[rl][p.k] = !!p.d[rl]) }) }
+  const rl = [['coordinator', 'Coordinator'], ['teacher', 'Teacher '], ['viewer', 'Viewer']];
+  return `<div class="card usr"><h3>${t('Roles')}: ${t('Default permissions of each role')}</h3><div class="sc"><table class="ed rm"><tr><th>${t('Permissions')}</th><th>${t('Admin')}</th>${rl.map(x => `<th>${t(x[1])}</th>`).join('')}</tr>${PERM_GROUPS.map(([gn, L]) => `<tr><th colspan="5" class="gh">${t(gn)}</th></tr>` + L.map(([k, l]) => `<tr><td>${t(l)}</td><td style="text-align:center">✓</td>${rl.map(([r]) => k == 'edit' ? `<td style="text-align:center"><small class="msg">${t('Follows the Can edit column')}</small></td>` : `<td style="text-align:center"><input type="checkbox" data-rp="${r}|${k}"${US.rp[r][k] ? ' checked' : ''}></td>`).join('')}</tr>`).join('')).join('')}</table></div>
+<div class="bar" style="position:static;margin:10px 0 0"><button class="b pri" data-usa="saverp">${ic('check')} ${t('Save the role defaults')}</button></div></div>`;
 }
 
 function applyRole() {
@@ -1134,8 +1160,8 @@ function rUsers() {
   const row = (r, i) => `<tr><td><input data-ue="${i}|1" value="${esc(r[1])}"></td><td><input data-ue="${i}|2" type="email" value="${esc(r[2])}"></td><td>${sel(i, 3, roles, r[3])}</td>
 <td><input data-ue="${i}|4" value="${esc(r[4])}" list="us-scope" placeholder="* ,  G4-G10, G11A, TU108" style="min-width:200px"></td><td>${sel(i, 5, yn, r[5] || 'No')}</td><td>${sel(i, 6, yn, r[6] || 'Yes')}</td>
 <td>${/^y/i.test(r[7]) ? `<span class="tag w">${t('Pending')}</span>` : ''}</td>
-<td style="white-space:nowrap">${r[0] ? `<button class="b" data-usa="copy" data-i="${i}" title="${t('Copy link')}">${ic('copy')}</button> <button class="b" data-usa="wa" data-i="${i}">${ic('link')} WhatsApp</button>` : `<small class="msg">${t('Save first')}</small>`} <button class="b${usChanged(r) ? ' pri' : ''}" data-usa="perm" data-i="${i}">${ic('gear')} ${t('Permissions')}${usChanged(r) ? ' (' + usChanged(r) + ')' : ''}</button> <button class="b dng" data-usa="del" data-i="${i}">${ic('trash')}</button></td></tr>${US.pi === i ? usPanel(r, i) : ''}`;
-  return `<div class="card usr"><p class="msg">${t('Each person opens the app with their own link and sees only their scope. Share a link only with its owner.')}</p><p class="msg">${t('Scope: stages, grades, classes or teacher ids separated by commas, e.g. G4-G10, G11A, TU108. Use * for everything, and a minus to exclude, e.g. *, -G12.')}</p>
+<td style="white-space:nowrap">${r[0] ? `<button class="b" data-usa="copy" data-i="${i}" title="${t('Copy link')}">${ic('copy')}</button> <button class="b" data-usa="wa" data-i="${i}">${ic('link')} WhatsApp</button>` : `<small class="msg">${t('Save first')}</small>`} <button class="b${usChanged(r) ? ' pri' : ''}" data-usa="perm" data-i="${i}">${ic('gear')} ${t('Permissions')}${usChanged(r) ? ' (' + usChanged(r) + ')' : ''}${usHeadSet(r).size ? ' · ' + t('Head of department') : ''}</button> <button class="b dng" data-usa="del" data-i="${i}">${ic('trash')}</button></td></tr>${US.pi === i ? usPanel(r, i) : ''}`;
+  return usRoleBox() + `<div class="card usr"><p class="msg">${t('Each person opens the app with their own link and sees only their scope. Share a link only with its owner.')}</p><p class="msg">${t('Scope: stages, grades, classes or teacher ids separated by commas, e.g. G4-G10, G11A, TU108. Use * for everything, and a minus to exclude, e.g. *, -G12.')}</p>
 <datalist id="us-scope">${dl}</datalist>
 <div class="sc" style="max-height:60vh"><table class="ed"><tr><th>${t('Name')}</th><th>${t('Email')}</th><th>${t('Role')}</th><th>${t('Scope')}</th><th>${t('Can edit')}</th><th>${t('Active')}</th><th></th><th></th></tr>${US.rows.map(row).join('')}</table></div>
 <div class="bar" style="position:static;margin:10px 0 0"><button class="b" data-usa="add">${ic('plus')} ${t('Add personal link')}</button><button class="b" data-usa="addopen">${ic('plus')} ${t('Add open link')}</button><button class="b pri" data-usa="save">${ic('check')} ${t('Save')}</button></div></div>`;
@@ -1143,16 +1169,18 @@ function rUsers() {
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-usa]'); if (!b || !US) return;
   const a = b.dataset.usa, i = +b.dataset.i, r = US.rows[i];
-  if (a == 'add') US.rows.push(['', '', '', 'teacher', '', 'No', 'Yes', 'Yes', '', '']);
-  else if (a == 'addopen') US.rows.push(['', 'Open link', '', 'viewer', '', 'No', 'Yes', '', '', '']);
+  if (a == 'add') US.rows.push(['', '', '', 'teacher', '', 'No', 'Yes', 'Yes', '', '', '']);
+  else if (a == 'addopen') US.rows.push(['', 'Open link', '', 'viewer', '', 'No', 'Yes', '', '', '', '']);
   else if (a == 'perm') { US.pi = US.pi === i ? -1 : i }
+  else if (a == 'saverp') { try { const keep = US.rows, pi = US.pi; US = await srv('api_saveRolePerms', US.rp); US.rows = keep; US.pi = pi; US.rp = null; toast(t('Saved')) } catch (x) { return } }
   else if (a == 'del') { if (!(await UX.ask(t('Delete') + '?', '<b>' + esc(r[1] || r[2] || '') + '</b>', { danger: true, yes: t('Yes, delete') }))) return; US.rows.splice(i, 1) }
   else if (a == 'copy') { try { await navigator.clipboard.writeText(linkOf(r)); toast(t('Link copied')) } catch (x) { prompt(t('Copy link'), linkOf(r)) } return }
  else if (a == 'wa') { window.open('https:' + '/' + '/wa.me/?text=' + encodeURIComponent((S.set.school || '') + ' – ' + t('Class timetables') + '\n' + linkOf(r)), '_blank'); return }
   else if (a == 'save') { try { US = await srv('api_saveUsers', US.rows); toast(t('Saved')) } catch (x) { return } }
   render();
 });
-const usEdit = e => { const el = e.target; if (!US || !el.dataset) return; if (el.dataset.ue) { const [i, c] = el.dataset.ue.split('|'); US.rows[+i][+c] = el.value; if (c == 3 && e.type == 'change') render() } else if (el.dataset.up && e.type == 'change') { const [i, k] = el.dataset.up.split('|'); usSetPerm(US.rows[+i], k, el.value); render() } };
+document.addEventListener('click', e => { const x = e.target.closest && e.target.closest('[data-uhr]'); if (x && US) { e.preventDefault(); const [i, id] = x.dataset.uhr.split('|'), r = US.rows[+i], h = usHeads(r); h.t = h.t.filter(y => y != id); usSetHeads(r, h); render(); return } const b = e.target.closest && e.target.closest('[data-upb]'); if (!b || !US) return; const [i, k, v] = b.dataset.upb.split('|'), r = US.rows[+i]; if (k == '*') r[9] = ''; else usSetPerm(r, k, v); render() });
+const usEdit = e => { const el = e.target; if (!US || !el.dataset) return; if (el.dataset.ue) { const [i, c] = el.dataset.ue.split('|'); US.rows[+i][+c] = el.value; if (c == 3 && e.type == 'change') render() } else if (el.dataset.uhd && e.type == 'change') { const [i, d] = el.dataset.uhd.split('|'), r = US.rows[+i], h = usHeads(r); h.d = el.checked ? [...new Set([...h.d, d])] : h.d.filter(x => x != d); usSetHeads(r, h); render() } else if (el.dataset.uht && e.type == 'change') { if (!el.value) return; const r = US.rows[+el.dataset.uht], h = usHeads(r); h.t = [...new Set([...h.t, el.value])]; usSetHeads(r, h); render() } else if (el.dataset.rp && e.type == 'change') { const [r, k] = el.dataset.rp.split('|'); US.rp[r][k] = el.checked } };
 document.addEventListener('input', usEdit);
 document.addEventListener('change', usEdit);
 
@@ -2128,7 +2156,7 @@ UX_PRE.api_applyMoves = a => {
 .abx table.cv{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
 .abx table.cv th,.abx table.cv td{border-bottom:1px solid var(--ln);padding:6px 8px;text-align:start;vertical-align:middle}
 .abx select{max-width:260px}
-.abx .st-pending{color:#a06a00}.abx .st-approved{color:#1a7a52}.abx .st-rejected,.abx .st-cancelled{color:var(--bad)}
+.abx .tag2{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;background:var(--hl)}.abx .st-pending{color:#a06a00}.abx .st-prelim{color:#1f3a68}.abx .st-approved{color:#1a7a52}.abx .st-rejected,.abx .st-cancelled{color:var(--bad)}
 .abx .open{color:var(--bad)}
 .abx h4{margin:14px 0 4px}
 </style>
@@ -2144,7 +2172,7 @@ Object.assign(AR, {
   'Substitute lessons': 'حصص الاحتياطي', 'Substitute': 'المدرس الاحتياطي', 'Absent teacher': 'المدرس الغائب', 'Period': 'الحصة', 'Class': 'الفصل', 'Subject': 'المادة', 'Signature': 'التوقيع',
   'not assigned': 'غير معيّن', 'Auto-assign all': 'تعيين تلقائي للكل', 'Print substitute sheet': 'طباعة شيت الاحتياطي', 'Substitute sheet': 'شيت الاحتياطي',
   'My absence requests': 'طلبات غيابي', 'My substitute lessons': 'حصص الاحتياطي المكلّف بها', 'Cancel the request': 'إلغاء الطلب', 'Cancel this absence?': 'إلغاء هذا الغياب؟',
-  'pending': 'بانتظار الموافقة', 'approved': 'تمت الموافقة', 'rejected': 'مرفوض', 'cancelled': 'ملغي', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Request sent': 'تم إرسال الطلب',
+  'pending': 'بانتظار الموافقة', 'prelim': 'موافقة مبدئية (بانتظار الاعتماد)', 'Final approval': 'الاعتماد النهائي', 'Preliminary approval': 'موافقة مبدئية', 'provisional': 'مبدئي', 'You can now choose the substitutes. The absence still needs the final approval of the administrator or coordinator.': 'يمكنك الآن اختيار البدلاء. ما زال الغياب يحتاج الاعتماد النهائي من الأدمن أو الكوردينيتور.', 'approved': 'تمت الموافقة', 'rejected': 'مرفوض', 'cancelled': 'ملغي', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Request sent': 'تم إرسال الطلب',
   'Approved': 'تمت الموافقة', 'Rejected': 'تم الرفض', 'Cancelled': 'تم الإلغاء', 'Assigned': 'تم التعيين', 'Auto-assigned': 'تم التعيين التلقائي', 'could not be assigned': 'تعذر تعيينها',
   'same department': 'نفس القسم', 'same stage': 'نفس المرحلة', 'same subject': 'نفس المادة', 'same class': 'نفس الفصل', 'covers': 'احتياطي', 'Refresh': 'تحديث',
   'Show past': 'عرض السابق', 'Choose a valid date.': 'اختر تاريخاً صحيحاً.', 'Choose at least one lesson.': 'اختر حصة واحدة على الأقل.', 'Substitutes': 'الاحتياطي', 'Who covers an absent teacher': 'من يغطي المدرس الغائب',
@@ -2158,7 +2186,7 @@ const ABX = { ver: 0, data: null, loading: false, tid: '', date: '', to: '', rea
 const ABX_CRIT = [['dept', 'Same department as the absent teacher'], ['stage', 'Teaches the same stage as the class'], ['subject', 'Teaches the same subject'], ['class', 'Teaches this class'], ['load', 'Fewest substitute lessons so far']];
 const abxName = id => (ABX.data && ABX.data.names[id]) || tname(id);
 const abxMy = () => (S && S.myTids) || [];
-const abxAllowed = () => !!S && !S.register && (S.role == 'admin' || !!(S.perms && (S.perms.abs_report || S.perms.abs_decide || S.perms.abs_cover)));
+const abxAllowed = () => !!S && !S.register && (S.role == 'admin' || !!(S.perms && (S.perms.abs_report || S.perms.abs_behalf || S.perms.abs_dept || S.perms.abs_decide || S.perms.abs_assign || S.perms.abs_print)));
 const abxDow = d => new Date(d + 'T00:00:00').getDay();
 const abxWhen = d => esc(dayName(abxDow(d))) + ' ' + esc(d);
 const abxP = l => esc(l.label || ('P' + l.p)) + (l.start ? ' <small>' + hhmm(l.start) + '-' + hhmm(l.end) + '</small>' : '');
@@ -2171,12 +2199,14 @@ async function abxLoad(force) {
 function abxLessonsOf(tid, date) {           // the lessons of the teacher on that date, from what the browser already has
   if (!date) return [];
   const d = abxDow(date);
-  return S.lessons.filter(l => l.d == d && l.t.includes(tid) && l.sl && !l.sl.brk).sort((a, b) => a.sl.s - b.sl.s || natural(a.c, b.c));
+  const own = S.lessons.filter(l => l.d == d && l.t.includes(tid) && l.sl && !l.sl.brk), rl = ABX.data && ABX.data.repLessons && ABX.data.repLessons[tid];
+  const src = own.length || !rl ? own : rl.filter(l => l.d == d).map(l => ({ c: l.c, d: l.d, p: l.p, s: l.s, t: [tid], sl: { s: l.start, e: l.end, label: l.label } }));
+  return src.sort((a, b) => a.sl.s - b.sl.s || natural(a.c, b.c));
 }
 function abxForm(D) {
   const mine = abxMy(), admin = S.role == 'admin';
-  if (!admin && !mine.length) return '';
-  const tids = admin ? S.tch.map(r => r[0]).sort((a, b) => natural(tname(a), tname(b))) : mine;
+  const tids = (admin ? S.tch.map(r => r[0]) : (D.reportable || mine)).slice().sort((a, b) => natural(tname(a), tname(b)));
+  if (!tids.length) return '';
   if (!ABX.tid || !tids.includes(ABX.tid)) ABX.tid = tids[0] || '';
   if (!ABX.date) ABX.date = D.today;
   const ls = ABX.to ? [] : abxLessonsOf(ABX.tid, ABX.date);
@@ -2192,9 +2222,9 @@ function abxForm(D) {
 const abxLes = a => a.lessons.map(l => esc(l.c) + ' ' + esc(l.label || 'P' + l.p) + ' ' + esc(l.s)).join(' · ');
 const abxTag = s => '<b class="st-' + s + '">' + t(s) + '</b>';
 function abxInbox(D) {
-  if (!D.approver) return '';
-  const ps = D.absences.filter(a => a.status == 'pending' && a.date >= D.today).sort((a, b) => a.date < b.date ? -1 : 1);
-  return '<div class="card"><h3>' + t('Absence requests waiting for you') + ' (' + ps.length + ')</h3>' + (ps.length ? ps.map(a => '<div class="it"><div class="hd"><span><b>' + esc(abxName(a.t)) + '</b> · ' + abxWhen(a.date) + (a.whole ? ' · ' + t('Whole day') : '') + '</span><span><button class="b pri" data-abx="ok" data-id="' + a.id + '">' + t('Approve') + '</button> <button class="b dng" data-abx="no" data-id="' + a.id + '">' + t('Reject') + '</button></span></div>' +
+  if (!D.approver || (D.canDecide === false && !D.canPrelim)) return '';
+  const dec = D.canDecide !== false, ps = D.absences.filter(a => a.date >= D.today && (dec ? (a.status == 'pending' || a.status == 'prelim') : (a.status == 'pending' && a.hod))).sort((a, b) => a.date < b.date ? -1 : 1);
+  return '<div class="card"><h3>' + t('Absence requests waiting for you') + ' (' + ps.length + ')</h3>' + (ps.length ? ps.map(a => '<div class="it"><div class="hd"><span><b>' + esc(abxName(a.t)) + '</b> · ' + abxWhen(a.date) + (a.whole ? ' · ' + t('Whole day') : '') + '</span><span>' + (a.status == 'prelim' ? '<span class="tag2">' + t('prelim') + '</span> ' : '') + (dec ? '<button class="b pri" data-abx="ok" data-id="' + a.id + '">' + t(a.status == 'prelim' ? 'Final approval' : 'Approve') + '</button> <button class="b dng" data-abx="no" data-id="' + a.id + '">' + t('Reject') + '</button>' : '<button class="b pri" data-abx="prelim" data-id="' + a.id + '">' + t('Preliminary approval') + '</button>') + '</span></div>' +
     '<small>' + abxLes(a) + (a.reason ? '<br>' + esc(a.reason) : '') + '</small></div>').join('') : '<p class="msg">' + t('Nothing here yet.') + '</p>') + '</div>';
 }
 const abxOpt = (c, sg) => {
@@ -2210,11 +2240,11 @@ function abxCovers(D) {
   if (!dates.length) return h + '<p class="msg">' + t('Nothing here yet.') + '</p></div>';
   dates.forEach(d => {
     const day = cs.filter(c => c.date == d).sort((a, b) => a.start - b.start || natural(a.c, b.c)), absIds = [...new Set(day.map(c => c.abs))];
-    h += '<h4>' + abxWhen(d) + ' <button class="b" data-abx="print" data-d="' + d + '">' + ic('print') + ' ' + t('Print substitute sheet') + '</button></h4>';
+    h += '<h4>' + abxWhen(d) + (D.canPrint === false ? '' : ' <button class="b" data-abx="print" data-d="' + d + '">' + ic('print') + ' ' + t('Print substitute sheet') + '</button>') + '</h4>';
     absIds.forEach(id => {
       const rows = day.filter(c => c.abs == id), open = rows.filter(c => !c.sub).length;
-      h += '<div class="it"><div class="hd"><b>' + esc(abxName(rows[0].absent)) + '</b>' + (open && d >= D.today ? '<button class="b" data-abx="auto" data-id="' + id + '">⚡ ' + t('Auto-assign all') + '</button>' : '') + '</div><table class="cv"><tr><th>' + t('Period') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Substitute') + '</th></tr>' +
-        rows.map(c => '<tr><td>' + abxP(c) + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + (c.sugg ? '<select data-abs="' + c.id + '" class="' + (c.sub ? '' : 'open') + '">' + abxOpt(c, c.sugg) + '</select>' + (!c.sugg.length && !c.sub ? ' <small class="open">' + t('No substitute is free') + '</small>' : '') : (c.sub ? esc(abxName(c.sub)) : '—')) + '</td></tr>').join('') + '</table></div>';
+      h += '<div class="it"><div class="hd"><b>' + esc(abxName(rows[0].absent)) + '</b>' + (open && d >= D.today && (D.canAssign || D.canPropose) ? '<button class="b" data-abx="auto" data-id="' + id + '">⚡ ' + t('Auto-assign all') + '</button>' : '') + '</div><table class="cv"><tr><th>' + t('Period') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Substitute') + '</th></tr>' +
+        rows.map(c => '<tr><td>' + abxP(c) + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + (c.prov ? '<small class="tag2">' + t('provisional') + '</small> ' : '') + (c.sugg ? '<select data-abs="' + c.id + '" class="' + (c.sub ? '' : 'open') + '">' + abxOpt(c, c.sugg) + '</select>' + (!c.sugg.length && !c.sub ? ' <small class="open">' + t('No substitute is free') + '</small>' : '') : (c.sub ? esc(abxName(c.sub)) : '—')) + '</td></tr>').join('') + '</table></div>';
     });
   });
   return h + '</div>';
@@ -2235,7 +2265,7 @@ function rAbsence() {
 }
 /* the printed sheet: class, substitute teacher, time, period and an empty box for the signature */
 function abxPrint(date) {
-  const D = ABX.data, rows = D.covers.filter(c => c.date == date).sort((a, b) => a.start - b.start || natural(a.c, b.c));
+  const D = ABX.data, rows = D.covers.filter(c => c.date == date && !c.prov).sort((a, b) => a.start - b.start || natural(a.c, b.c));
   if (!rows.length) return;
   const tr = rows.map((c, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(c.label || 'P' + c.p) + '</td><td>' + (c.start ? hhmm(c.start) + ' - ' + hhmm(c.end) : '') + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + esc(abxName(c.absent)) + '</td><td>' + (c.sub ? '<b>' + esc(abxName(c.sub)) + '</b>' : '—') + '</td><td style="height:44px"></td></tr>').join('');
   printHtml(sheet(t('Substitute sheet') + ' – ' + dayName(abxDow(date)) + ' ' + date, '', '<table class="tt"><tr><th style="width:34px">#</th><th>' + t('Period') + '</th><th>' + t('Time') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Absent teacher') + '</th><th>' + t('Substitute') + '</th><th style="width:22%">' + t('Signature') + '</th></tr>' + tr + '</table>'));
@@ -2259,6 +2289,7 @@ document.addEventListener('click', async e => {
     return;
   }
   if (k == 'ok') { const r = await abxSwalNote(t('Approve this request?'), '<p>' + esc(t('The covers are created and you can choose the substitutes.')) + '</p>', t('Approve')); if (r && await abxDo('api_absDecide', id, true, r.note)) { UX.done(t('Approved')); render() } return }
+  if (k == 'prelim') { const r = await abxSwalNote(t('Preliminary approval'), '<p>' + esc(t('You can now choose the substitutes. The absence still needs the final approval of the administrator or coordinator.')) + '</p>', t('Preliminary approval')); if (r && await abxDo('api_absPrelim', id, r.note)) { UX.done(t('Preliminary approval')); render() } return }
   if (k == 'no') { const r = await abxSwalNote(t('Reject this request?'), '', t('Reject'), true); if (r && await abxDo('api_absDecide', id, false, r.note)) { UX.done(t('Rejected')); render() } return }
   if (k == 'cancel') { if (await UX.ask(t('Cancel this absence?'), '', { yes: t('Cancel the request'), danger: true }) && await abxDo('api_absCancel', id)) { UX.done(t('Cancelled')); render() } return }
   if (k == 'auto') { if (await abxDo('api_absAuto', id)) { const n = ABX.data.autoDone || 0, left = ABX.data.autoLeft || 0; UX.done(t('Auto-assigned') + ': ' + n + (left ? ' · ' + left + ' ' + t('could not be assigned') : '')); render() } return }
