@@ -625,7 +625,7 @@ function doPrint() {
 
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
-const SUBS = [['general', 'General settings', 'gear'], ['periods', 'Exam & custom periods', 'clock'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['subs', 'Substitutes', 'users'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
+const SUBS = [['general', 'General settings', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['subs', 'Substitutes', 'users'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
 const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
@@ -2621,7 +2621,7 @@ document.addEventListener('click', async e => {
   else if (a == 'nologo') { SX.br.logo = ''; render() }
   else if (a == 'save') {
     const k = b.dataset.k, val = k == 'academic' ? SX.ac : k == 'examPeriods' ? SX.pe : SX.br;
-    try { S = await srv('api_saveSettingsX', k, val); SX.ac = null; index(); sxLogoApply(); UX.done(t('Saved')); render() } catch (x) { }
+    try { S = k == 'examPeriods' ? await srv('api_ctSavePeriods', val) : await srv('api_saveSettingsX', k, val); SX.ac = null; index(); sxLogoApply(); UX.done(t('Saved')); render() } catch (x) { }
   }
 });
 
@@ -2737,6 +2737,7 @@ Object.assign(AR, {
 const EX = { bk: null, id: null, sub: 'exams', D: null, loading: false, form: null, imp: null, sel: null, ses: null, rules: null, prev: null, res: null, filt: { date: '', teacher: '', q: '' }, rep: { k: 'sig', date: '', key: '', teacher: '', por: true }, rp: null };
 const EX_TYPES = [['exam', 'Examination'], ['term', 'Term examination'], ['semester', 'Semester schedule'], ['quarter', 'Quarterly examination'], ['special', 'Special examination'], ['activity', 'Activity'], ['revision', 'Revision session'], ['event', 'Event / trip'], ['training', 'Training'], ['other', 'Other custom timetable']];
 /* Group 5: a timetable that is not an examination (activity, revision, event...) - same screens, its own words, a free "location", participants and an availability check */
+Object.assign(AR, Object.fromEntries(Object.entries({ 'Manage periods': 'إدارة الفترات' }).filter(([k]) => !(k in AR))));
 const EX_EXAM_TYPES = ['exam', 'term', 'semester', 'quarter', 'special'];
 const exIsAct = x => !!x && !EX_EXAM_TYPES.includes(x.type);
 const EX_ACT_MAP = { 'Examination period': 'Period', 'Examination Period': 'Period', 'Exams': 'Schedule', 'Exam schedule': 'Activity schedule', 'Subject': 'Activity', 'Room / committee': 'Location', 'Room': 'Location', 'Grade / class': 'Participants', 'Save exam rows': 'Save rows', '＋ Add another subject…': '＋ Add another activity…',
@@ -2788,7 +2789,7 @@ function exList() {
 <label>${t('Timetable name')}<input data-exf="name" value="${esc(f.name)}"></label>
 <label>${t('Timetable type')}<select data-exf="type">${EX_TYPES.map(([k, l]) => `<option value="${k}"${f.type == k ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
 <label>${t('Academic Year')}<input data-exf="year" value="${esc(f.year)}"></label>
-<label>${t('Examination period')}<input data-exf="period" list="ex-pl" value="${esc(f.period)}"><datalist id="ex-pl">${per.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist></label>
+<label>${t('Examination period')}<input data-exf="period" list="ex-pl" value="${esc(f.period)}"><datalist id="ex-pl">${per.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist><button class="lnk" type="button" data-exa="top" data-k="periods">${t('Manage periods')}</button></label>
 <label>${t('Start date')}<input type="date" data-exf="start" value="${esc(f.start)}"></label><label>${t('End date')}<input type="date" data-exf="end" value="${esc(f.end)}"></label>
 <label>${t('Status')}<select data-exf="status">${['draft', 'published', 'archived'].map(k => `<option value="${k}"${f.status == k ? ' selected' : ''}>${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[k])}</option>`).join('')}</select></label>
 <label style="grid-column:1/-1">${t('Notes')}<input data-exf="desc" value="${esc(f.desc)}"></label></div>
@@ -3127,6 +3128,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-exa],[data-exs]'); if (!b || TAB != 'ct') return;
   if (b.dataset.exs) { EX.sub = b.dataset.exs; EX.sel = null; if (EX.sub == 'bk') exBkLoad(true); return render() }
   const a = b.dataset.exa, id = b.dataset.id, tt = exTt();
+  if (a == 'top') { EX.top = b.dataset.k; return render() }
   if (a == 'new') { EX.form = exEmptyForm(); return render() }
   if (a == 'cancelform') { EX.form = null; return render() }
   if (a == 'edit') { EX.form = Object.assign({}, EX.D.timetables.find(x => x.id == id)); return render() }
@@ -3217,7 +3219,12 @@ document.addEventListener('input', e => { const el = e.target, d = el.dataset; i
 function rExam() {
   if (!EX.D) { exLoad(); return `<p class="msg">${t('Loading...')}</p>` }
   TX = exIsAct(EX.id ? exTt() : EX.form) ? EX_ACT_MAP : null;      // the words of an activity timetable (see EX_ACT_MAP)
-  try { return `<div class="exu">${EX.id ? exWork() : exList()}</div>` } finally { TX = null }
+  try {
+    if (EX.id) return `<div class="exu">${exWork()}</div>`;
+    const top = EX.top == 'periods' ? 'periods' : 'list';
+    const nav = `<nav class="sub">${[['list', 'Timetables'], ['periods', 'Exam & custom periods']].map(([k, l]) => `<button class="pill${k == top ? ' on' : ''}" data-exa="top" data-k="${k}">${t(l)}</button>`).join('')}</nav>`;
+    return `<div class="exu">${nav}${top == 'periods' ? sPeriods() : exList()}</div>`;
+  } finally { TX = null }
 }
 TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'st'), 1), 0, ['ct', 'Custom Timetables', 'grid']);
 const _rEx = render;
