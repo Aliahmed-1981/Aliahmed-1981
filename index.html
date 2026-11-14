@@ -625,7 +625,7 @@ function doPrint() {
 /* ===================== 5. SETTINGS (10 sub-tabs, each with its own Save) ===================== */
 let SUB = 'general', ED = {}, SF = '', AF = '', LOGR = null, XI = null;
 const SUBS = [['general', 'General', 'gear'], ['academic', 'Academic year', 'book'], ['periods', 'Exam & custom periods', 'clock'], ['brand', 'School branding', 'gear'], ['slots', 'Time slots', 'clock'], ['classes', 'Classes & stages', 'book'], ['subjects', 'Subjects', 'book'], ['teachers', 'Teachers', 'user'], ['assign', 'Assignments', 'link'], ['req', 'Weekly requirements', 'grid'], ['auto', 'Auto schedule', 'clock'], ['subs', 'Substitutes', 'users'], ['shared', 'Shared lessons', 'users'], ['access', 'Access', 'lock'], ['io', 'Import / Export', 'up']];
-const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
+const SRC = { Schedules: () => S.sch, Classes: () => S.cls, Subjects: () => S.subj.map(r => [r[0], r[1] || '', r[0], r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '']), Teachers: () => S.tch, Blocked: () => S.blocked, Assignments: () => S.asg, WeeklyReq: () => S.req, Shared: () => S.shared, Rooms: () => S.rooms, Access: () => S.access };
 const ed = n => ED[n] || (ED[n] = SRC[n]().map(r => r.slice()));
 /* generic editable table. cols: [index, label, type, options]; filter limits the rows shown (row index stays the real one) */
 const subjIco2 = v => !v ? '' : /^data:image\//.test(v) ? `<img class="si" src="${esc(v)}" alt="">` : `<span class="si">${esc(v)}</span>`;
@@ -662,7 +662,7 @@ function sClasses() {
   return `<div class="card"><p class="msg">${t('A class uses the schedule of its stage. Give one class its own schedule name to give it its own periods.')}</p>${edTable('Classes', [[0, 'Class', 'text'], [1, 'Schedule', 'select', () => schedNames().map(x => [x, x])]], { title: 'Classes' })}</div>
 <div class="card"><h3>${t('Rooms')}</h3>${edTable('Rooms', [[0, 'Room ID', 'text'], [1, 'Name', 'text']], { title: 'Rooms' })}</div>`;
 }
-const sSubjects = () => `<div class="card"><p class="msg">${t('Renaming a subject updates every lesson, assignment and requirement.')}</p>${edTable('Subjects', [[0, 'Subject', 'text'], [1, 'Color', 'color'], [3, 'Picture', 'icon'], [4, 'Max per day', 'select', () => [1, 2, 3, 4].map(n => [String(n), String(n)])], [5, 'Same class, same day', 'select', () => [['consec', t('Together (double period)')], ['sep', t('Separate (never next to each other)')]]], [6, 'Placement', 'select', () => [['before', t('Before the break')], ['after', t('After the break')]]], [7, 'Priority', 'select', () => [['5', '5 - ' + t('Highest')], ['4', '4'], ['3', '3 - ' + t('Normal')], ['2', '2'], ['1', '1 - ' + t('Lowest')]]]], { title: 'Subjects' })}<p class="msg">${t('Subject rules help the auto distribution and the move assistant. A blank cell means no rule. A double period = two lessons right after each other, never across the break. When rules clash, the subject with the higher priority wins.')}</p></div>`;
+const sSubjects = () => `<div class="card"><p class="msg">${t('Renaming a subject updates every lesson, assignment and requirement.')}</p>${edTable('Subjects', [[0, 'Subject', 'text'], [1, 'Color', 'color'], [3, 'Picture', 'icon'], [4, 'Max per day', 'select', () => [1, 2, 3, 4].map(n => [String(n), String(n)])], [5, 'Same class, same day', 'select', () => [['consec', t('Together (double period)')], ['sep', t('Separate (never next to each other)')]]], [6, 'Placement', 'select', () => [['before', t('Before the break')], ['after', t('After the break')]]], [7, 'Priority', 'select', () => [['5', '5 - ' + t('Highest')], ['4', '4'], ['3', '3 - ' + t('Normal')], ['2', '2'], ['1', '1 - ' + t('Lowest')]]], [8, 'Department', 'select', deptOpts]], { title: 'Subjects' })}<p class="msg">${t('Subject rules help the auto distribution and the move assistant. A blank cell means no rule. A double period = two lessons right after each other, never across the break. When rules clash, the subject with the higher priority wins.')}</p></div>`;
 const sTeachers = () => `<div class="card">${edTable('Teachers', [[0, 'Teacher ID', 'text'], [1, 'Name', 'text'], [2, 'Max per day', 'num'], [3, 'Max per week', 'num'], [4, 'Language', 'select', [['French', 'French'], ['German', 'German'], ['Arabic', 'Arabic'], ['English', 'English']]]], { title: 'Teachers' })}</div>
 <div class="card"><h3>${t('Unavailable and locked times')}</h3>${edTable('Blocked', [[0, 'Teacher', 'select', teacherOpts], [1, 'Day', 'select', dayOpts], [2, 'Start', 'time'], [3, 'End', 'time'], [4, 'Note', 'text'], [5, 'Kind', 'select', [['unavailable', t('unavailable')], ['locked', t('locked')]]]], { title: 'Unavailable times' })}</div>`;
 const sAssign = () => `<div class="bar" style="position:static"><label>${t('Class')}</label><select data-af><option value="">${t('All')}</option>${opts(I.classes.map(c => [c, c]), AF)}</select></div><div class="card">${edTable('Assignments', [[0, 'Class', 'select', () => I.classes.map(c => [c, c])], [1, 'Subject', 'select', () => S.subj.map(r => [r[0], r[0]])], [2, 'Teacher', 'select', teacherOpts], [4, 'Primary', 'select', [['Yes', 'Yes'], ['', '']]], [5, 'Active', 'select', [['Yes', 'Yes'], ['No', 'No']]]], { filter: r => !AF || r[0] == AF, title: 'Assignments' })}</div>`;
@@ -685,7 +685,7 @@ async function saveTbl(n) {
   let rows = ed(n).filter(r => String(r[n == 'Shared' ? 1 : 0]).trim());
   if (n == 'Subjects') {                                         // rename first so lessons follow the new name
     for (const r of rows) if (r[2] && lc(r[2]) != lc(r[0]) && String(r[0]).trim()) S = await srv('api_renameSubject', r[2], r[0]);
-    rows = rows.map(r => [r[0], r[1], r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '']);
+    rows = rows.map(r => [r[0], r[1], r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '', r[8] || '']);
   }
   if (n == 'Assignments') rows = rows.map(r => { r = r.slice(); r[3] = I.tn[r[2]] || r[3]; return r });
   S = await srv('api_saveTable', n, rows); ED = {}; index(); toast(t('Saved')); render();
@@ -736,7 +736,7 @@ function exportXlsx() {
 }
 
 /* ===================== 6. APP: render, events, init ===================== */
-const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', '', '', '', '', ''], Teachers: () => ['', '', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
+const NEWROW = { Schedules: () => [SF, '0', '', '', '', '', 'N'], Classes: () => ['', ''], Subjects: () => ['', '#888888', '', '', '', '', '', '', ''], Teachers: () => ['', '', '', '', '', ''], Blocked: () => ['', '0', '', '', '', 'unavailable'], Assignments: () => [AF, '', '', '', '', 'Yes', 'added in app'], WeeklyReq: () => ['', '', ''], Shared: () => ['', '', '0', '', '', ''], Rooms: () => ['', ''], Access: () => [''] };
 const TABS = [['tt', 'Timetables', 'grid'], ['cf', 'Conflicts', 'alert'], ['rp', 'Reports & Print', 'print'], ['st', 'Settings', 'gear']];
 function render() {
   const k = S.conflicts.counts;
@@ -1088,7 +1088,7 @@ const PERM_GROUPS = [['Timetables', [['edit', 'Edit lessons (drag, swap, assign)
   ['Absence & substitutes', [['abs_report', 'Report an absence'], ['abs_behalf', 'Report an absence for other teachers (inside the scope)'], ['abs_decide', 'Approve or reject absences'], ['abs_assign', 'Assign substitutes'], ['abs_print', 'Print the substitute sheet']]], ['Head of department', [['abs_dept', 'Report an absence for his teachers'], ['abs_prelim', 'Preliminary approval of their absences'], ['abs_propose', 'Choose substitutes for his absent teachers (before the final approval)']]], ['Exams & invigilation', [['ct', 'Custom timetables (exams & invigilation)']]]];
 const PERM_LIST = PERM_GROUPS.flatMap(g => g[1]);
 Object.assign(AR, { 'Timetables': 'الجداول', 'Reports & printing': 'التقارير والطباعة', 'Conflicts & notifications': 'التعارضات والإشعارات', 'Absence & substitutes': 'الغياب والبدلاء', 'Exams & invigilation': 'الامتحانات والمراقبة', 'Edit lessons (drag, swap, assign)': 'تعديل الحصص (سحب، تبديل، تعيين)', 'Assign substitutes': 'تعيين البدلاء', 'Head of department': 'رئيس القسم', 'Report an absence for his teachers': 'تسجيل غياب مدرسيه', 'Preliminary approval of their absences': 'الموافقة المبدئية على غيابهم', 'Choose substitutes for his absent teachers (before the final approval)': 'اختيار بدلاء مدرسيه الغائبين (قبل الاعتماد النهائي)', 'Departments headed': 'الأقسام التي يرأسها', 'All the teachers of these departments belong to him automatically.': 'كل مدرسي هذه الأقسام يتبعونه تلقائياً.', 'Add a teacher (for example seconded from another department)': 'أضف مدرساً (مثلاً منتدباً من قسم آخر)', 'Teachers under this head': 'المدرسون التابعون له', 'No departments yet: fill the Department column in Settings > Teachers.': 'لا توجد أقسام بعد: املأ عمود Department في الإعدادات > المدرسون.', 'automatic for a head of department': 'تلقائي لرئيس القسم', 'Remove': 'حذف', 'Head of department: report an absence for the teachers of his department': 'رئيس القسم: تسجيل غياب مدرسي قسمه', 'Report an absence for other teachers (inside the scope)': 'تسجيل غياب نيابةً عن مدرسين آخرين (داخل نطاقه)', 'Print the substitute sheet': 'طباعة كشف البدلاء', 'Roles': 'الأدوار', 'Default permissions of each role': 'صلاحيات كل دور (الافتراضية)', 'Save the role defaults': 'حفظ صلاحيات الأدوار', 'Allowed': 'مسموح', 'Blocked': 'ممنوع', 'Follows the Can edit column': 'حسب عمود «Can edit»', 'Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.': 'للأدمن فقط دائماً: الإعدادات، المستخدمين واللينكات، التوزيع التلقائي، مساعد النقل.', 'Reset to the role': 'إرجاع لإعداد الدور', 'Permissions': 'الصلاحيات', 'Master sheet': 'الشيت الكبير (Master)', 'Conflicts tab': 'تاب التعارضات', 'Save a copy (Excel)': 'حفظ نسخة Excel', 'Report an absence': 'تسجيل غياب', 'Approve or reject absences': 'قبول أو رفض الغياب', 'Assign substitutes and print the substitute sheet': 'تعيين البدلاء وطباعة كشف البدلاء', 'Custom timetables (exams & invigilation)': 'الجداول المخصصة (الامتحانات والمراقبة)',
-  'Default': 'افتراضي', 'Allow': 'سماح', 'Block': 'منع', 'default: yes': 'الافتراضي: مسموح', 'default: no': 'الافتراضي: ممنوع', 'Admin links always have every option.': 'رابط الأدمن يملك كل الإمكانيات دائماً.',
+  'Choose the departments this head leads below, otherwise he has no teachers under him.': 'اختر الأقسام التي يرأسها بالأسفل، وإلا فلن يتبعه أي مدرس.', 'Default': 'افتراضي', 'Allow': 'سماح', 'Block': 'منع', 'default: yes': 'الافتراضي: مسموح', 'default: no': 'الافتراضي: ممنوع', 'Admin links always have every option.': 'رابط الأدمن يملك كل الإمكانيات دائماً.',
   'Choose what this person can use. Default = what the role gets; Allow / Block changes it for this person only. Editing timetables is controlled by the Can edit column.': 'اختر ما يستطيع هذا الشخص استخدامه. الافتراضي = ما يأخذه الدور؛ سماح / منع يغيّره لهذا الشخص فقط. تعديل الجداول يتحكم فيه عمود «Can edit».', 'changed': 'معدّل' });
 const usPerm = (r, k) => { try { const o = JSON.parse(r[9] || '{}'); return o[k] === true ? 'allow' : o[k] === false ? 'block' : '' } catch (e) { return '' } };
 const usSetPerm = (r, k, v) => { let o = {}; try { o = JSON.parse(r[9] || '{}') || {} } catch (e) { } if (v == 'allow') o[k] = true; else if (v == 'block') o[k] = false; else delete o[k]; r[9] = Object.keys(o).length ? JSON.stringify(o) : '' };
@@ -1098,7 +1098,7 @@ const usDepts = () => [...new Set((US.teachers || []).map(x => String(x[2] || ''
 const usHeadSet = r => { const h = usHeads(r), dk = new Set(h.d.map(x => x.toLowerCase())), out = new Set(h.t); (US.teachers || []).forEach(x => { if (x[2] && dk.has(String(x[2]).trim().toLowerCase())) out.add(x[0]) }); return out };
 function usHeadBox(r, i) {
   const h = usHeads(r), D = usDepts(), set = [...usHeadSet(r)], nm = id => ((US.teachers || []).find(x => x[0] == id) || [id, id])[1];
-  return `<div class="pg" style="margin-top:10px"><h5>${t('Head of department')}</h5><p class="msg">${t('All the teachers of these departments belong to him automatically.')}</p>
+  return `<div class="pg" style="margin-top:10px"><h5>${t('Head of department')}</h5><p class="msg">${t('All the teachers of these departments belong to him automatically.')}</p>${String(r[3] || '').toLowerCase() == 'hod' && !h.d.length && !h.t.length ? `<p class="msg" style="color:var(--bad)">${t('Choose the departments this head leads below, otherwise he has no teachers under him.')}</p>` : ''}
 ${D.length ? `<div><b>${t('Departments headed')}</b><br>${D.map(d => `<label class="tag"><input type="checkbox" data-uhd="${i}|${esc(d)}"${h.d.includes(d) ? ' checked' : ''}> ${esc(d)}</label>`).join('')}</div>` : `<p class="msg">${t('No departments yet: fill the Department column in Settings > Teachers.')}</p>`}
 <div style="margin-top:6px"><b>${t('Add a teacher (for example seconded from another department)')}</b><br>${h.t.map(id => `<span class="chip main" style="display:inline-flex;gap:4px;border:1px solid var(--ln);border-radius:999px;padding:2px 10px;margin:2px">${esc(nm(id))} <a href="#" data-uhr="${i}|${esc(id)}" style="text-decoration:none">×</a></span>`).join('')}
 <select data-uht="${i}"><option value="">+ ${t('Add a teacher')}</option>${(US.teachers || []).filter(x => !h.t.includes(x[0])).map(x => `<option value="${esc(x[0])}">${esc(x[1])}${x[2] ? ' (' + esc(x[2]) + ')' : ''}</option>`).join('')}</select></div>
@@ -1109,16 +1109,16 @@ function usPanel(r, i) {
   const P = US.permDefs || [], role = String(r[3] || '').toLowerCase();
   if (role == 'admin') return `<tr class="usp"><td colspan="9"><p class="msg">${t('Admin links always have every option.')}</p></td></tr>`;
   const grp = ([gn, L]) => `<div class="pg"><h5>${t(gn)}</h5>${L.map(([k, l]) => {
-    const d = !!(P.find(x => x.k == k) || { d: {} }).d[role] || (['abs_dept', 'abs_prelim', 'abs_propose'].includes(k) && usHeadSet(r).size > 0), v = usPerm(r, k), eff = v == 'allow' ? true : v == 'block' ? false : d;
-    return `<div class="pr"><span>${t(l)}${['abs_dept', 'abs_prelim', 'abs_propose'].includes(k) ? ` <small class="msg">(${t('automatic for a head of department')})</small>` : ''}</span><span><span class="eff ${eff ? 'ok' : 'no'}">${eff ? '✓ ' + t('Allowed') : '✕ ' + t('Blocked')}</span> <span class="sg2"><button data-upb="${i}|${k}|" class="${v == '' ? 'on' : ''}">${t('Default')} (${t(d ? 'Allowed' : 'Blocked')})</button><button data-upb="${i}|${k}|allow" class="al${v == 'allow' ? ' on' : ''}">${t('Allow')}</button><button data-upb="${i}|${k}|block" class="bl${v == 'block' ? ' on' : ''}">${t('Block')}</button></span></span></div>`;
+    const d = !!(P.find(x => x.k == k) || { d: {} }).d[role] || (role != 'hod' && ['abs_dept', 'abs_prelim', 'abs_propose'].includes(k) && usHeadSet(r).size > 0), v = usPerm(r, k), eff = v == 'allow' ? true : v == 'block' ? false : d;
+    return `<div class="pr"><span>${t(l)}${role != 'hod' && ['abs_dept', 'abs_prelim', 'abs_propose'].includes(k) ? ` <small class="msg">(${t('automatic for a head of department')})</small>` : ''}</span><span><span class="eff ${eff ? 'ok' : 'no'}">${eff ? '✓ ' + t('Allowed') : '✕ ' + t('Blocked')}</span> <span class="sg2"><button data-upb="${i}|${k}|" class="${v == '' ? 'on' : ''}">${t('Default')} (${t(d ? 'Allowed' : 'Blocked')})</button><button data-upb="${i}|${k}|allow" class="al${v == 'allow' ? ' on' : ''}">${t('Allow')}</button><button data-upb="${i}|${k}|block" class="bl${v == 'block' ? ' on' : ''}">${t('Block')}</button></span></span></div>`;
   }).join('')}</div>`;
   return `<tr class="usp"><td colspan="9"><p class="msg">${t('Choose what this person can use. Default = what the role gets; Allow / Block changes it for this person only. Editing timetables is controlled by the Can edit column.')}</p><div class="pgs">${PERM_GROUPS.map(grp).join('')}</div>${usHeadBox(r, i)}<p class="msg">${t('Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.')}</p>${usChanged(r) ? `<button class="b" data-upb="${i}|*|">${t('Reset to the role')}</button>` : ''}</td></tr>`;
 }
 /* the role matrix: one table, every option x every role (the defaults of a role; a person can still be changed one by one) */
 function usRoleBox() {
-  if (!US.rp) { US.rp = {}; ['coordinator', 'teacher', 'viewer'].forEach(rl => { US.rp[rl] = {}; (US.permDefs || []).forEach(p => US.rp[rl][p.k] = !!p.d[rl]) }) }
-  const rl = [['coordinator', 'Coordinator'], ['teacher', 'Teacher '], ['viewer', 'Viewer']];
-  return `<div class="card usr"><h3>${t('Roles')}: ${t('Default permissions of each role')}</h3><div class="sc"><table class="ed rm"><tr><th>${t('Permissions')}</th><th>${t('Admin')}</th>${rl.map(x => `<th>${t(x[1])}</th>`).join('')}</tr>${PERM_GROUPS.map(([gn, L]) => `<tr><th colspan="5" class="gh">${t(gn)}</th></tr>` + L.map(([k, l]) => `<tr><td>${t(l)}</td><td style="text-align:center">✓</td>${rl.map(([r]) => k == 'edit' ? `<td style="text-align:center"><small class="msg">${t('Follows the Can edit column')}</small></td>` : `<td style="text-align:center"><input type="checkbox" data-rp="${r}|${k}"${US.rp[r][k] ? ' checked' : ''}></td>`).join('')}</tr>`).join('')).join('')}</table></div>
+  if (!US.rp) { US.rp = {}; ['coordinator', 'hod', 'teacher', 'viewer'].forEach(rl => { US.rp[rl] = {}; (US.permDefs || []).forEach(p => US.rp[rl][p.k] = !!p.d[rl]) }) }
+  const rl = [['coordinator', 'Coordinator'], ['hod', 'Head of department'], ['teacher', 'Teacher '], ['viewer', 'Viewer']];
+  return `<div class="card usr"><h3>${t('Roles')}: ${t('Default permissions of each role')}</h3><div class="sc"><table class="ed rm"><tr><th>${t('Permissions')}</th><th>${t('Admin')}</th>${rl.map(x => `<th>${t(x[1])}</th>`).join('')}</tr>${PERM_GROUPS.map(([gn, L]) => `<tr><th colspan="6" class="gh">${t(gn)}</th></tr>` + L.map(([k, l]) => `<tr><td>${t(l)}</td><td style="text-align:center">✓</td>${rl.map(([r]) => k == 'edit' ? `<td style="text-align:center"><small class="msg">${t('Follows the Can edit column')}</small></td>` : `<td style="text-align:center"><input type="checkbox" data-rp="${r}|${k}"${US.rp[r][k] ? ' checked' : ''}></td>`).join('')}</tr>`).join('')).join('')}</table></div>
 <div class="bar" style="position:static;margin:10px 0 0"><button class="b pri" data-usa="saverp">${ic('check')} ${t('Save the role defaults')}</button></div></div>`;
 }
 
@@ -1154,7 +1154,7 @@ function loadUsers() { srv('api_users').then(r => { US = r; render() }) }
 const linkOf = r => (US.base || '') + '?k=' + r[0];
 function rUsers() {
   if (!US) { loadUsers(); return `<p class="msg">${t('Loading...')}</p>` }
-  const roles = [['admin', t('Admin')], ['coordinator', t('Coordinator')], ['teacher', t('Teacher ')], ['viewer', t('Viewer')]], yn = [['Yes', 'Yes'], ['No', 'No']];
+  const roles = [['admin', t('Admin')], ['coordinator', t('Coordinator')], ['hod', t('Head of department')], ['teacher', t('Teacher ')], ['viewer', t('Viewer')]], yn = [['Yes', 'Yes'], ['No', 'No']];
   const dl = '<option value="*">' + (HL == 'ar' ? 'كل الجداول' : 'Everything') + '</option>' + [...US.stages, ...US.classes].map(x => `<option value="${esc(x)}">`).join('') + US.teachers.map(r => `<option value="${esc(r[0])}">${esc(r[1])}</option>`).join('');
   const sel = (i, c, L, v) => `<select data-ue="${i}|${c}">${opts(L, v)}</select>`;
   const row = (r, i) => `<tr><td><input data-ue="${i}|1" value="${esc(r[1])}"></td><td><input data-ue="${i}|2" type="email" value="${esc(r[2])}"></td><td>${sel(i, 3, roles, r[3])}</td>
@@ -1197,7 +1197,7 @@ render = function () {
   } else _r2();
   if (S && S.role) {                       // role badge (also a quick check that roles are active)
     let rb = $('#rb'); if (!rb) { rb = document.createElement('span'); rb.id = 'rb'; rb.style.cssText = 'font-size:11px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.2);color:#fff;white-space:nowrap'; $('#cc').before(rb) }
-    rb.textContent = S.role + (S.canEdit ? '' : ' · view');
+    rb.textContent = (typeof PF_ROLE != 'undefined' && PF_ROLE[S.role] ? t(PF_ROLE[S.role]) : S.role) + (S.canEdit ? '' : ' · ' + t('view only'));
   }
   if (S && S.role !== 'admin') {
     $('#cc').style.display = S.perms && S.perms.conflicts ? '' : 'none';
@@ -1352,9 +1352,9 @@ UX.lessonUndo = (cells, title) => {
 };
 UX.cellsOf = ls => { const m = {}; ls.forEach(l => m[l.c + '|' + l.d + '|' + l.p] = [l.c, l.d, l.p]); return Object.values(m) };
 UX.copy = x => JSON.parse(JSON.stringify(x));
-UX.COLS = { Schedules: 7, Classes: 2, Subjects: 7, Teachers: 6, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
+UX.COLS = { Schedules: 7, Classes: 2, Subjects: 8, Teachers: 6, Assignments: 7, WeeklyReq: 3, Blocked: 6, Shared: 6, Rooms: 2, Access: 1 };
 UX.LABEL = { Schedules: 'Time slots', Classes: 'Classes', Subjects: 'Subjects', Teachers: 'Teachers', Assignments: 'Assignments', WeeklyReq: 'Weekly requirements', Blocked: 'Unavailable times', Shared: 'Shared lessons', Rooms: 'Rooms', Access: 'Access' };
-UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '', r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '']) : SRC[n]().map(r => r.slice());
+UX.stateOf = n => n == 'Subjects' ? S.subj.map(r => [r[0], r[1] || '', r[2] || '', r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '']) : SRC[n]().map(r => r.slice());
 UX.keys = (n, rows) => rows.map(r => { const o = []; for (let i = 0; i < UX.COLS[n]; i++) o.push(String(r[i] == null ? '' : r[i]).trim()); return JSON.stringify(o) });
 UX.diff = (n, oldRows, newRows) => {
   const cnt = {}; UX.keys(n, oldRows).forEach(k => cnt[k] = (cnt[k] || 0) + 1);
@@ -1424,7 +1424,7 @@ srv = async function (fn, ...a) {
 const _uxSaveTbl = saveTbl, _uxSaveGeneral = saveGeneral, _uxAct = act;
 saveTbl = async function (n) {
   const old = UX.stateOf(n), edited = ed(n);
-  const rows = edited.filter(r => String(r[n == 'Shared' ? 1 : 0]).trim()).map(r => n == 'Subjects' ? [r[0], r[1], r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || ''] : r);
+  const rows = edited.filter(r => String(r[n == 'Shared' ? 1 : 0]).trim()).map(r => n == 'Subjects' ? [r[0], r[1], r[3] || '', r[4] || '', r[5] || '', r[6] || '', r[7] || '', r[8] || ''] : r);
   const d = UX.diff(n, old, rows);
   if (!d.any) { toast(t('No changes')); return }
   if (!(await UX.ask(t('Save changes?'), UX.diffHtml([[n, d]]), { yes: t('Save') }))) return;
@@ -1561,7 +1561,7 @@ function thRow(r, i) {
     <input data-thf="${i}|0" value="${esc(tid)}" style="width:92px" title="${t('Teacher ID')}"><input data-thf="${i}|1" value="${esc(r[1])}" style="width:230px" placeholder="${t('Name')}" title="${t('Name')}">
     <input data-thf="${i}|2" value="${esc(r[2])}" inputmode="numeric" style="width:58px" placeholder="${t('Max per day')}" title="${t('Max per day')}"><input data-thf="${i}|3" value="${esc(r[3])}" inputmode="numeric" style="width:58px" placeholder="${t('Max per week')}" title="${t('Max per week')}">
     <select data-thf="${i}|4" title="${t('Language')}">${opts(thLangs.concat(thLangs.includes(r[4]) ? [] : [r[4]]).map(x => [x, x]), r[4])}</select>
-    <input data-thf="${i}|5" value="${esc(r[5] || '')}" style="width:120px" placeholder="${t('Department')}" title="${t('Department')}">
+    <select data-thf="${i}|5" style="width:150px" title="${t('Department')}"><option value="">${t('Department')}</option>${deptSel(r[5])}</select>
     <span class="tg">${mine.length} ${t('classes and subjects')} · ${grp.length} ${t('unavailable times')}</span>
     <button class="b dng" data-th="del" data-tid="${esc(tid)}" style="margin-inline-start:auto">${ic('trash')}</button></div>${body}</div>`;
 }
@@ -2171,7 +2171,7 @@ Object.assign(AR, {
   'Approve this request?': 'الموافقة على هذا الطلب؟', 'The covers are created and you can choose the substitutes.': 'سيتم إنشاء حصص الاحتياطي وتختار المدرسين البدلاء.',
   'Substitute lessons': 'حصص الاحتياطي', 'Substitute': 'المدرس الاحتياطي', 'Absent teacher': 'المدرس الغائب', 'Period': 'الحصة', 'Class': 'الفصل', 'Subject': 'المادة', 'Signature': 'التوقيع',
   'not assigned': 'غير معيّن', 'Auto-assign all': 'تعيين تلقائي للكل', 'Print substitute sheet': 'طباعة شيت الاحتياطي', 'Substitute sheet': 'شيت الاحتياطي',
-  'My absence requests': 'طلبات غيابي', 'My substitute lessons': 'حصص الاحتياطي المكلّف بها', 'Cancel the request': 'إلغاء الطلب', 'Cancel this absence?': 'إلغاء هذا الغياب؟',
+  'My absence requests': 'طلبات غيابي', 'My substitute lessons': 'حصص الاحتياطي المكلّف بها', 'Cut the leave': 'قطع الإجازة', 'I will be back from:': 'سأعود للعمل من:', 'the whole absence is cancelled': 'يُلغى الغياب كله', 'Leave shortened': 'تم قطع الإجازة', 'Requests I can manage': 'طلبات يمكنني إدارتها', 'Dialog library not loaded. Check the internet connection.': 'تعذر تحميل مكتبة النوافذ. تأكد من الإنترنت.', 'No lessons on this day: the absence is recorded without substitutes.': 'لا توجد حصص في هذا اليوم: يُسجَّل الغياب بدون بدلاء.', 'Cancel the request': 'إلغاء الطلب', 'Cancel this absence?': 'إلغاء هذا الغياب؟',
   'pending': 'بانتظار الموافقة', 'prelim': 'موافقة مبدئية (بانتظار الاعتماد)', 'Final approval': 'الاعتماد النهائي', 'Preliminary approval': 'موافقة مبدئية', 'provisional': 'مبدئي', 'You can now choose the substitutes. The absence still needs the final approval of the administrator or coordinator.': 'يمكنك الآن اختيار البدلاء. ما زال الغياب يحتاج الاعتماد النهائي من الأدمن أو الكوردينيتور.', 'approved': 'تمت الموافقة', 'rejected': 'مرفوض', 'cancelled': 'ملغي', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Request sent': 'تم إرسال الطلب',
   'Approved': 'تمت الموافقة', 'Rejected': 'تم الرفض', 'Cancelled': 'تم الإلغاء', 'Assigned': 'تم التعيين', 'Auto-assigned': 'تم التعيين التلقائي', 'could not be assigned': 'تعذر تعيينها',
   'same department': 'نفس القسم', 'same stage': 'نفس المرحلة', 'same subject': 'نفس المادة', 'same class': 'نفس الفصل', 'covers': 'احتياطي', 'Refresh': 'تحديث',
@@ -2217,6 +2217,7 @@ function abxForm(D) {
     '<label>' + t('Date') + '<input type="date" data-abf="date" value="' + esc(ABX.date) + '"' + (S.role == 'admin' ? '' : ' min="' + esc(D.today) + '"') + '></label>' +
     '<label>' + t('Until (optional)') + '<input type="date" data-abf="to" value="' + esc(ABX.to) + '" min="' + esc(ABX.date) + '"></label>' +
     '<label style="flex:1;min-width:200px">' + t('Reason') + '<input data-abf="reason" value="' + esc(ABX.reason) + '" maxlength="300"></label></div>' + pick +
+    (ABX.whole && !ABX.to && !ls.length ? '<p class="msg">' + t('No lessons on this day: the absence is recorded without substitutes.') + '</p>' : '') +
     '<div class="row"><button class="b pri" data-abx="send">' + ic('check') + ' ' + t('Send the request') + '</button></div></div>';
 }
 const abxLes = a => a.lessons.map(l => esc(l.c) + ' ' + esc(l.label || 'P' + l.p) + ' ' + esc(l.s)).join(' · ');
@@ -2249,10 +2250,20 @@ function abxCovers(D) {
   });
   return h + '</div>';
 }
+/* one request with its buttons: cancel only while the date has not arrived (the administrator: any time), "cut the leave" from the day itself */
+function abxRow(a, D) {
+  const live = ['pending', 'prelim', 'approved'].includes(a.status), admin = S.role == 'admin';
+  const canCancel = live && (admin ? a.date >= D.today : a.date > D.today), canCut = live && a.date >= D.today && a.lessons.length > 0;
+  return '<div class="it"><div class="hd"><span><b>' + (a.mine ? '' : esc(abxName(a.t)) + ' · ') + abxWhen(a.date) + '</b> · ' + abxTag(a.status) + (a.whole ? ' · ' + t('Whole day') : '') + '</span><span>' +
+    (canCut ? '<button class="b" data-abx="cut" data-id="' + a.id + '">' + t('Cut the leave') + '</button> ' : '') + (canCancel ? '<button class="b dng" data-abx="cancel" data-id="' + a.id + '">' + t('Cancel the request') + '</button>' : '') + '</span></div>' +
+    '<small>' + (a.lessons.length ? abxLes(a) : t('No lessons on this day')) + (a.reason ? '<br>' + esc(a.reason) : '') + (a.note ? '<br>' + esc(a.note) : '') + '</small></div>';
+}
 function abxMine(D) {
   const mine = D.absences.filter(a => a.mine), cv = D.covers.filter(c => c.sub && abxMy().includes(c.sub) && (D.past || c.date >= D.today));
   let h = '';
-  if (abxMy().length || mine.length) h += '<div class="card"><h3>' + t('My absence requests') + '</h3>' + (mine.length ? mine.slice().sort((a, b) => a.date < b.date ? 1 : -1).map(a => '<div class="it"><div class="hd"><span><b>' + abxWhen(a.date) + '</b> · ' + abxTag(a.status) + (a.whole ? ' · ' + t('Whole day') : '') + '</span>' + ((a.status == 'pending' || a.status == 'approved') && a.date >= D.today ? '<button class="b dng" data-abx="cancel" data-id="' + a.id + '">' + t('Cancel the request') + '</button>' : '') + '</div><small>' + abxLes(a) + (a.reason ? '<br>' + esc(a.reason) : '') + (a.note ? '<br>' + esc(a.note) : '') + '</small></div>').join('') : '<p class="msg">' + t('Nothing here yet.') + '</p>') + '</div>';
+  const others = D.absences.filter(a => !a.mine && a.manage);
+  if (abxMy().length || mine.length) h += '<div class="card"><h3>' + t('My absence requests') + '</h3>' + (mine.length ? mine.slice().sort((a, b) => a.date < b.date ? 1 : -1).map(a => abxRow(a, D)).join('') : '<p class="msg">' + t('Nothing here yet.') + '</p>') + '</div>';
+  if (others.length) h += '<div class="card"><h3>' + t('Requests I can manage') + ' (' + others.length + ')</h3>' + others.slice().sort((a, b) => a.date < b.date ? 1 : -1).map(a => abxRow(a, D)).join('') + '</div>';
   if (cv.length) h += '<div class="card"><h3>' + t('My substitute lessons') + '</h3><table class="cv"><tr><th>' + t('Date') + '</th><th>' + t('Period') + '</th><th>' + t('Class') + '</th><th>' + t('Subject') + '</th><th>' + t('Absent teacher') + '</th></tr>' +
     cv.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start - b.start).map(c => '<tr><td>' + abxWhen(c.date) + '</td><td>' + abxP(c) + '</td><td>' + esc(c.c) + '</td><td>' + esc(c.s) + '</td><td>' + esc(abxName(c.absent)) + '</td></tr>').join('') + '</table></div>';
   return h;
@@ -2292,6 +2303,14 @@ document.addEventListener('click', async e => {
   if (k == 'prelim') { const r = await abxSwalNote(t('Preliminary approval'), '<p>' + esc(t('You can now choose the substitutes. The absence still needs the final approval of the administrator or coordinator.')) + '</p>', t('Preliminary approval')); if (r && await abxDo('api_absPrelim', id, r.note)) { UX.done(t('Preliminary approval')); render() } return }
   if (k == 'no') { const r = await abxSwalNote(t('Reject this request?'), '', t('Reject'), true); if (r && await abxDo('api_absDecide', id, false, r.note)) { UX.done(t('Rejected')); render() } return }
   if (k == 'cancel') { if (await UX.ask(t('Cancel this absence?'), '', { yes: t('Cancel the request'), danger: true }) && await abxDo('api_absCancel', id)) { UX.done(t('Cancelled')); render() } return }
+  if (k == 'cut') {
+    const a = ABX.data.absences.find(x => x.id == id); if (!a) return;
+    if (!window.Swal) return toast(t('Dialog library not loaded. Check the internet connection.'), 1);
+    const seen = new Set(), opt = {}; a.lessons.slice().sort((x, y) => x.start - y.start).forEach((l, i) => { if (seen.has(l.start)) return; seen.add(l.start); opt[l.start] = (l.label || 'P' + l.p) + ' · ' + hhmm(l.start) + (i == 0 ? ' (' + t('the whole absence is cancelled') + ')' : '') });
+    const r = await Swal.fire({ icon: 'question', title: t('Cut the leave'), text: t('I will be back from:'), input: 'select', inputOptions: opt, inputPlaceholder: t('choose'), showCancelButton: true, confirmButtonText: t('Cut the leave'), cancelButtonText: t('Cancel'), confirmButtonColor: '#26806F', cancelButtonColor: '#5c6f77', reverseButtons: true, heightAuto: false, returnFocus: false, inputValidator: v => v ? null : t('choose') });
+    if (r.isConfirmed && await abxDo('api_absReturn', id, +r.value)) { UX.done(t('Leave shortened')); render() }
+    return;
+  }
   if (k == 'auto') { if (await abxDo('api_absAuto', id)) { const n = ABX.data.autoDone || 0, left = ABX.data.autoLeft || 0; UX.done(t('Auto-assigned') + ': ' + n + (left ? ' · ' + left + ' ' + t('could not be assigned') : '')); render() } return }
 });
 document.addEventListener('change', async e => {
@@ -3167,6 +3186,177 @@ render = function () {
   $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'ct'));
   $('#v').innerHTML = rExam(); window.scrollTo(0, sy);
 };
+</script>
+
+<style>
+.du .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.du td.m{font-weight:700}
+.du tr.past td{opacity:.5}
+.du .tag2{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;background:var(--hl)}
+</style>
+<script>
+/* ---------- "My exam duties": the invigilation of PUBLISHED timetables that belongs to the caller (a head of department also sees his teachers) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'My exam duties': 'مراقباتي', 'Exam duties': 'المراقبات', 'No published duties for you yet.': 'لا توجد مراقبات منشورة لك حتى الآن.',
+  'Only the published timetables appear here.': 'تظهر هنا الجداول المنشورة فقط.', 'Mine only': 'مراقباتي فقط', 'My teachers and me': 'أنا ومدرسو قسمي',
+  'Reserve': 'احتياطي', 'Main': 'أساسي', 'Refresh': 'تحديث', 'Teacher': 'المدرس', 'Timetable': 'الجدول', 'Type': 'النوع', 'Day': 'اليوم', 'Time': 'الوقت', 'Room': 'الغرفة', 'Subject': 'المادة', 'Date': 'التاريخ', 'Session': 'الفترة', 'Grade / class': 'الصف / الفصل', 'Print / PDF': 'طباعة / PDF'
+}).filter(([k]) => !(k in AR))));
+const DU = { D: null, loading: false, who: 'all' };
+async function duLoad() { if (DU.loading) return; DU.loading = true; try { DU.D = await srv('api_myDuties') } catch (x) { DU.D = { duties: [], hod: false, admin: false } } DU.loading = false; render() }
+function duRows() { const D = DU.D; return D.duties.filter(d => DU.who != 'mine' || d.mine || D.admin) }
+function duTable(rows, many) {
+  const today = new Date().toISOString().slice(0, 10);
+  return `<table class="ex"><tr><th>${t('Date')}</th><th>${t('Day')}</th><th>${t('Time')}</th><th>${t('Session')}</th><th>${t('Subject')}</th><th>${t('Room')}</th><th>${t('Grade / class')}</th><th>${t('Type')}</th>${many ? `<th>${t('Teacher')}</th>` : ''}<th>${t('Timetable')}</th></tr>${rows.map(d => `<tr class="${d.date < today ? 'past' : ''}"><td class="m">${esc(d.date)}</td><td>${esc(dayName(new Date(d.date + 'T00:00:00').getDay()))}</td><td>${esc(d.start)}${d.end ? ' - ' + esc(d.end) : ''}</td><td>${esc(d.session)}</td><td>${esc(d.subject)}</td><td>${esc(d.room)}</td><td>${esc(d.grade)}</td><td><span class="tag2">${t(d.type == 'reserve' ? 'Reserve' : 'Main')}</span></td>${many ? `<td>${esc(d.name)}${d.mine ? '' : ''}</td>` : ''}<td>${esc(d.ttName)}</td></tr>`).join('')}</table>`;
+}
+function rDuty() {
+  if (!DU.D) { duLoad(); return `<p class="msg">${t('Loading...')}</p>` }
+  const D = DU.D, rows = duRows(), many = D.hod || D.admin;
+  return `<div class="du"><div class="card"><h3>${t('My exam duties')} (${rows.length})</h3><p class="msg">${t('Only the published timetables appear here.')}</p>
+<div class="row">${D.hod ? `<select data-duw="1"><option value="all"${DU.who == 'all' ? ' selected' : ''}>${t('My teachers and me')}</option><option value="mine"${DU.who == 'mine' ? ' selected' : ''}>${t('Mine only')}</option></select>` : ''}<button class="b" data-dua="refresh">${t('Refresh')}</button>${rows.length ? `<button class="b" data-dua="print">${t('Print / PDF')}</button>` : ''}</div>
+${rows.length ? `<div class="tw">${duTable(rows, many)}</div>` : `<p class="msg">${t('No published duties for you yet.')}</p>`}</div></div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-dua]'); if (!b || TAB != 'du') return;
+  if (b.dataset.dua == 'refresh') { DU.D = null; return render() }
+  if (b.dataset.dua == 'print') { const D = DU.D, rows = duRows(); return printHtml(`<div class="sheet"><h2>${t('My exam duties')}</h2><div class="tw">${duTable(rows, D.hod || D.admin)}</div></div>`) }
+});
+document.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.duw) { DU.who = e.target.value; render() } });
+TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'st'), 1), 0, ['du', 'My exam duties', 'clock']);
+const _rDu = render;
+render = function () {
+  if (S && (S.register || S.role == 'admin' || !S.role)) { const i = TABS.findIndex(x => x[0] == 'du'); if (i >= 0) TABS.splice(i, 1); if (TAB == 'du') TAB = 'tt' }
+  if (TAB != 'du') return _rDu();
+  const sy = window.scrollY;
+  TAB = 'tt'; try { _rDu() } finally { TAB = 'du' }
+  $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'du'));
+  $('#v').innerHTML = rDuty(); window.scrollTo(0, sy);
+};
+</script>
+
+<script>
+"use strict";
+/* Departments: one list for subjects and teachers (a drop-down with "add a new department"). Needs Scripts.html, TeachersUI.html and Ux.html before it. */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Department': 'القسم', 'Add a new department…': 'إضافة قسم جديد…', 'New department': 'قسم جديد', 'Add': 'إضافة', 'Cancel': 'إلغاء'
+}).filter(([k]) => !(k in AR))));
+const DEPT_EXTRA = [];
+/* every department in use: subjects, teachers, rows being edited, and the ones just added in this session (case-insensitive, first spelling wins) */
+function deptList() {
+  const seen = {}, out = [], add = v => { v = String(v == null ? '' : v).trim(); if (!v || v == '__newdept') return; const k = lc(v); if (!seen[k]) { seen[k] = 1; out.push(v) } };
+  (S.subj || []).forEach(r => add(r[7])); (S.tch || []).forEach(r => add(r[5]));
+  (ED.Subjects || []).forEach(r => add(r[8])); (ED.Teachers || []).forEach(r => add(r[5]));
+  DEPT_EXTRA.forEach(add);
+  return out.sort((a, b) => a.localeCompare(b));
+}
+const deptOpts = () => deptList().map(d => [d, d]).concat([['__newdept', '＋ ' + t('Add a new department…')]]);
+const deptSel = cur => opts(deptOpts(), cur);
+/* remember the value before a change, so a cancelled "new department" dialog can put it back */
+document.addEventListener('focusin', e => { const el = e.target; if (el && el.tagName == 'SELECT' && el.dataset && (el.dataset.e || el.dataset.thf)) el.dataset.prev = el.value });
+document.addEventListener('change', async e => {
+  const el = e.target; if (!el || el.value !== '__newdept' || !el.dataset) return;
+  let put;
+  if (el.dataset.e) { const [n, r, c] = el.dataset.e.split('|'); put = v => { ed(n)[+r][+c] = v } }
+  else if (el.dataset.thf) { const [i, c] = el.dataset.thf.split('|').map(Number); put = v => { ed('Teachers')[i][c] = v } }
+  else return;
+  const prev = el.dataset.prev && el.dataset.prev != '__newdept' ? el.dataset.prev : '';
+  let name = '';
+  if (window.Swal) { const r = await Swal.fire({ title: t('New department'), input: 'text', showCancelButton: true, confirmButtonText: t('Add'), cancelButtonText: t('Cancel'), heightAuto: false, returnFocus: false, inputValidator: v => !String(v).trim() ? ' ' : null }); name = r.isConfirmed ? String(r.value).trim() : '' }
+  else name = (prompt(t('New department')) || '').trim();
+  if (name) { const same = deptList().find(x => lc(x) == lc(name)); name = same || name; if (!same) DEPT_EXTRA.push(name); put(name) } else put(prev);
+  render();
+});
+</script>
+
+<style>
+header .ti b .sop{display:inline-block;margin-inline-start:8px;padding:1px 9px;border-radius:999px;background:rgba(255,255,255,.2);font-size:12px;letter-spacing:1.5px;vertical-align:middle}
+header .ti small .via{font-weight:700}
+#wb{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 20px;background:var(--sf);border-bottom:1px solid var(--ln)}
+#wb .av{width:48px;height:48px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px;overflow:hidden;border:0;cursor:pointer;position:relative;padding:0;flex:none}
+#wb .av img{width:100%;height:100%;object-fit:cover;display:block}
+#wb .av::after{content:'\1F4F7';position:absolute;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;font-size:16px;opacity:0;transition:opacity .15s}
+#wb .av:hover::after,#wb .av:focus-visible::after{opacity:1}
+#wb .who{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+#wb .who b{font-size:16px}
+#wb .who small{color:var(--mut)}
+#wb .role{display:inline-block;font-size:12px;padding:1px 10px;border-radius:999px;background:var(--hl);color:var(--ink)}
+#wb .rm{border:0;background:none;color:var(--bad);cursor:pointer;font:inherit;font-size:12px}
+#wb .when{margin-inline-start:auto;text-align:end;line-height:1.25;display:flex;flex-direction:column}
+#wb .clk{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+#wb .when small{color:var(--mut)}
+@media(max-width:560px){#wb{padding:8px 12px}#wb .when{margin-inline-start:0;text-align:start;width:100%;flex-direction:row;gap:10px;align-items:baseline;flex-wrap:wrap}#wb .clk{font-size:18px}}
+</style>
+<script>
+"use strict";
+/* Identity: program name in the header, and a welcome bar with the person's picture, name, role, today's date and the clock. Needs Scripts.html. */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Time Table Module': 'موديول الجداول الدراسية', 'Good morning': 'صباح الخير', 'Good afternoon': 'طاب يومك', 'Good evening': 'مساء الخير',
+  'Welcome to School Operations Platform': 'مرحبًا بك في منصة العمليات المدرسية', 'Change picture': 'تغيير الصورة', 'Remove photo': 'إزالة الصورة',
+  'Admin': 'مدير', 'Coordinator': 'منسّق', 'Head of department': 'رئيس القسم', 'Teacher': 'مدرس', 'Viewer': 'مشاهد',
+  'Please choose an image file.': 'اختر ملف صورة.', 'view only': 'عرض فقط', 'Picture saved': 'تم حفظ الصورة', 'Picture removed': 'تمت إزالة الصورة'
+}).filter(([k]) => !(k in AR))));
+let PROF = { name: '', photo: '', role: '' };
+const PF_ROLE = { admin: 'Admin', coordinator: 'Coordinator', hod: 'Head of department', teacher: 'Teacher', viewer: 'Viewer' };
+const pfLoc = () => HL == 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB';
+const pfGreet = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' };
+const pfInit = n => { const w = String(n || '').trim().split(/\s+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || '?').slice(0, 1)).toUpperCase() };
+function pfFile() {                                   // one hidden file input for the whole page
+  let f = document.getElementById('wb-file');
+  if (!f) { f = document.createElement('input'); f.type = 'file'; f.accept = 'image/*'; f.id = 'wb-file'; f.style.display = 'none'; document.body.appendChild(f) }
+  return f;
+}
+function wbTick() {
+  const c = document.getElementById('wb-c'), d = document.getElementById('wb-d'), n = new Date(); if (!c) return;
+  c.textContent = n.toLocaleTimeString(pfLoc(), { hour: 'numeric', minute: '2-digit' });
+  d.textContent = n.toLocaleDateString(pfLoc(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const g = document.getElementById('wb-g'); if (g) g.textContent = t(pfGreet()) + (PROF.name ? (HL == 'ar' ? '، ' : ', ') + PROF.name : '');
+}
+function wbDraw() {
+  let w = document.getElementById('wb');
+  if (!S || !S.role || S.register) { if (w) w.remove(); return }
+  if (!w) { w = document.createElement('div'); w.id = 'wb'; document.getElementById('tabs').before(w) }
+  const wk = S.set && S.set.year ? S.set.year + ' · ' + t('Week') + ': ' + weekTxt() : '';
+  w.innerHTML = `<button class="av" id="wb-av" type="button" title="${esc(t('Change picture'))}">${PROF.photo ? `<img src="${esc(PROF.photo)}" alt="">` : esc(pfInit(PROF.name))}</button>
+<div class="who"><b id="wb-g"></b><small>${esc(t('Welcome to School Operations Platform'))} · <span class="role">${esc(t(PF_ROLE[S.role] || 'Viewer'))}</span>${PROF.photo ? ` <button class="rm" id="wb-rm" type="button">${esc(t('Remove photo'))}</button>` : ''}</small></div>
+<div class="when"><span class="clk" id="wb-c"></span><small id="wb-d"></small>${wk ? `<small>${esc(wk)}</small>` : ''}</div>`;
+  wbTick();
+}
+function pfShrink(file) {                              // centre-crop to a 192 px square JPEG small enough for a sheet cell
+  return new Promise((ok, no) => {
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(u);
+      const N = 192, s = Math.min(img.width, img.height), cv = document.createElement('canvas'); cv.width = cv.height = N;
+      cv.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, N, N);
+      let q = 0.85, out = cv.toDataURL('image/jpeg', q); while (out.length > 30000 && q > 0.3) { q -= 0.1; out = cv.toDataURL('image/jpeg', q) }
+      ok(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); no(new Error(t('Please choose an image file.'))) };
+    img.src = u;
+  });
+}
+async function pfSave(photo) { PROF = await srv('api_saveMyPhoto', photo); wbDraw(); toast(t(photo ? 'Picture saved' : 'Picture removed')) }
+document.addEventListener('click', e => {
+  if (e.target.closest && e.target.closest('#wb-av')) return pfFile().click();
+  if (e.target.closest && e.target.closest('#wb-rm')) pfSave('').catch(() => { });
+});
+document.addEventListener('change', async e => {
+  if (e.target.id != 'wb-file') return;
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (!/^image\//.test(f.type)) return toast(t('Please choose an image file.'), 1);
+  try { await pfSave(await pfShrink(f)) } catch (x) { toast(String((x && x.message) || x), 1) }
+});
+/* header: program name + "Time Table Module of VIA - SOP"; the year and week moved to the welcome bar */
+const _pfApplyLang = applyLang;
+applyLang = function () { _pfApplyLang(); const x = $('#ttl'); if (x) x.innerHTML = esc(t('School Operations Platform')) + '<span class="sop">SOP</span>' };
+const _pfRender = render;
+render = function () {
+  if (S && S.profile) PROF = S.profile;
+  _pfRender();
+  const s = $('#sub'); if (s) s.innerHTML = '<span class="via">VIA - SOP</span> | ' + esc(t('Time Table Module'));
+  wbDraw();
+};
+setInterval(wbTick, 1000); pfFile();
+try { applyLang() } catch (e) { }
 </script>
 
 <style>
