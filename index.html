@@ -680,7 +680,10 @@ ${XI ? `<h4>${esc(XI.name)}</h4><table class="ed"><tr><th></th><th>${t('What')}<
 }
 function rSettings() {
   const body = { general: () => sGeneralAll(), periods: () => sPeriods(), slots: sSlots, classes: sClasses, subjects: sSubjects, teachers: sTeachers, assign: sAssign, req: sReq, auto: () => sAuto(), subs: () => sSubs(), shared: sShared, access: sAccess, io: sIO }[SUB]();
-  return `<nav class="sub">${SUBS.map(([k, l, i]) => `<button class="pill${k == SUB ? ' on' : ''}" data-sub="${k}">${ic(i)} ${t(l)}</button>`).join('')}</nav>${body}`;
+  const GR = [['School', ['general']], ['Timetable data', ['slots', 'classes', 'subjects', 'teachers', 'assign', 'req', 'shared']], ['Scheduling', ['auto', 'subs']], ['Access & data', ['access', 'io']]], used = GR.flatMap(g => g[1]);
+  const pill = ([k, l, i]) => `<button class="pill${k == SUB ? ' on' : ''}" data-sub="${k}">${ic(i)} ${t(l)}</button>`, rest = SUBS.filter(x => !used.includes(x[0]));
+  const grp = (g, ids) => { const it = SUBS.filter(x => ids.includes(x[0])); return it.length ? `<div class="sg"><small>${t(g)}</small>${it.map(pill).join('')}</div>` : '' };
+  return `<div class="sl"><nav class="sub side">${GR.map(([g, ids]) => grp(g, ids)).join('')}${grp('More', rest.map(x => x[0]))}</nav><div class="scont">${body}</div></div>`;
 }
 async function saveTbl(n) {
   let rows = ed(n).filter(r => String(r[n == 'Shared' ? 1 : 0]).trim());
@@ -1587,7 +1590,7 @@ function thMount() {
   const v = $('#v'), nav = v && v.querySelector('nav.sub'); if (!nav) return;
   const ae = document.activeElement, focus = ae && ae.id == 'thq' ? [ae.selectionStart, ae.selectionEnd] : null;   // read BEFORE the old DOM is removed
   while (nav.nextSibling) nav.nextSibling.remove();
-  nav.insertAdjacentHTML('afterend', rTH());
+  nav.insertAdjacentHTML('afterend', `<div class="scont">${rTH()}</div>`);
   if (focus) { const q = $('#thq'); if (q) { q.focus(); q.setSelectionRange(focus[0], focus[1]) } }
 }
 const _thRender = render;
@@ -3483,6 +3486,306 @@ document.addEventListener('click', async e => {
 });
 </script>
 
+<style>
+/* ---- Group 9: Today page, grouped settings menu, quick search, dark mode toggle, a calmer look ---- */
+:root[data-theme=dark]{--bg:#0e1a20;--sf:#16252c;--ink:#e6eef0;--mut:#93a8b0;--ln:#2b3e47;--hl:#3a3516;--bads:#4a2320;--wns:#4d3a12;--sh:0 4px 16px rgba(0,0,0,.4);color-scheme:dark}
+@media print{:root,:root[data-theme=dark]{--bg:#f3f6f9;--sf:#fff;--ink:#14262e;--mut:#5c6f77;--ln:#dbe3e8;--hl:#fff6cc;--bads:#ffe3e0;--wns:#fff0cf;color-scheme:light}}
+.hbtn{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;display:inline-flex;gap:6px;align-items:center;transition:background .15s}
+.hbtn:hover{background:rgba(255,255,255,.28)}
+.hbtn kbd{font:11px/1 inherit;background:rgba(255,255,255,.2);border-radius:5px;padding:2px 5px}
+.card,.kpi,.tc{border:1px solid var(--ln)}
+.card{box-shadow:0 1px 2px rgba(23,59,94,.06),0 6px 18px rgba(23,59,94,.06)}
+.kpi,.pill,button.b{transition:transform .12s,box-shadow .12s,background .12s}
+.kpi:hover{transform:translateY(-2px)}
+button:focus-visible,select:focus-visible,input:focus-visible,.pill:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+/* grouped settings menu */
+.sl{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+nav.sub.side{flex-direction:column;flex-wrap:nowrap;gap:2px;padding:10px;background:var(--sf);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ln);position:sticky;top:8px}
+nav.side .sg{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+nav.side .sg>small{color:var(--mut);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:6px 10px 2px}
+nav.side .pill{box-shadow:none;background:transparent;border-radius:10px;width:100%;justify-content:flex-start;padding:8px 10px}
+nav.side .pill:hover:not(.on){background:var(--hl)}
+nav.side .pill.on{background:var(--navy);color:#fff}
+.scont{min-width:0}
+@media (max-width:860px){.sl{display:block}nav.sub.side{flex-direction:row;flex-wrap:wrap;position:static;margin-bottom:12px}nav.side .sg{flex-direction:row;flex-wrap:wrap;margin:0}nav.side .sg>small{display:none}nav.side .pill{width:auto;background:var(--bg)}}
+/* Today */
+.td h3{margin:0 0 8px}
+.td .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.td .grid .card{margin:0}
+.td .li2{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--ln)}
+.td .li2:last-child{border-bottom:0}
+.td .tm{min-width:92px;font-variant-numeric:tabular-nums;color:var(--mut);font-size:13px}
+.td .grow{flex:1;min-width:0}
+.td .qa{display:flex;gap:8px;flex-wrap:wrap}
+.td .empty2{color:var(--mut);padding:10px 0}
+.td .hello{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.td .hello b{font-size:18px}
+/* quick search */
+#pal{position:fixed;inset:0;z-index:4000;background:rgba(10,20,30,.45);display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+#pal.on{display:flex}
+#pal .bx{width:min(560px,92vw);background:var(--sf);color:var(--ink);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;border:1px solid var(--ln)}
+#pal input{width:100%;border:0;border-bottom:1px solid var(--ln);border-radius:0;padding:14px 16px;font-size:16px;background:transparent;outline:0}
+#pal .rs{max-height:52vh;overflow:auto;padding:6px}
+#pal .it{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;cursor:pointer}
+#pal .it.on,#pal .it:hover{background:var(--hl)}
+#pal .it small{color:var(--mut);margin-inline-start:auto}
+#pal .ft{padding:6px 12px;color:var(--mut);font-size:12px;border-top:1px solid var(--ln)}
+</style>
+<script>
+"use strict";
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Today': 'اليوم', 'Quick search': 'بحث سريع', 'Search teachers, classes, pages...': 'ابحث عن مدرس أو فصل أو صفحة...', 'No results': 'لا توجد نتائج', 'Go to': 'انتقال إلى', 'Page': 'صفحة', 'Class': 'الفصل', 'Teacher': 'المدرس',
+  'Enter to open, Esc to close': 'Enter للفتح، Esc للإغلاق', 'Dark mode': 'الوضع الداكن', 'Light mode': 'الوضع الفاتح',
+  'School': 'المدرسة', 'Timetable data': 'بيانات الجدول', 'Scheduling': 'الجدولة', 'Access & data': 'الصلاحيات والبيانات', 'More': 'المزيد',
+  'Lessons today': 'حصص اليوم', 'My lessons today': 'حصصي اليوم', 'No school today': 'لا دراسة اليوم', 'Absent today': 'غائبون اليوم', 'need cover': 'تحتاج بديلًا', 'Next 7 days': 'الأيام السبعة القادمة', 'Conflicts': 'التعارضات',
+  'Absences today': 'الغياب اليوم', 'No absences today.': 'لا غياب اليوم.', 'Coming up': 'القادم', 'Nothing scheduled in the next 7 days.': 'لا شيء مجدول خلال الأيام السبعة القادمة.', 'Quick actions': 'إجراءات سريعة',
+  'Open': 'فتح', 'Pending': 'بانتظار القرار', 'Approved': 'معتمد', 'Provisional': 'مبدئي', 'Report an absence': 'تسجيل غياب', 'Open the timetables': 'فتح الجداول', 'Print': 'طباعة', 'No lessons today.': 'لا حصص لك اليوم.', 'Enjoy the weekend': 'عطلة سعيدة',
+  'Loading...': 'جارٍ التحميل...', 'Good morning': 'صباح الخير', 'Good afternoon': 'مساء الخير', 'Exam duty': 'مراقبة', 'Lessons': 'حصص', 'Custom Timetables': 'الجداول المخصصة'
+}).filter(([k]) => !(k in AR))));
+
+/* ---------- dark mode (stored in this browser only; empty = follow the device) ---------- */
+const THM = {
+  get() { try { return localStorage.getItem('theme') || '' } catch (e) { return '' } },
+  set(v) { try { v ? localStorage.setItem('theme', v) : localStorage.removeItem('theme') } catch (e) { } THM.apply() },
+  dark() { const v = THM.get(); return v ? v == 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) },
+  apply() {
+    const v = THM.get(), r = document.documentElement; v ? r.setAttribute('data-theme', v) : r.removeAttribute('data-theme');
+    const b = document.getElementById('thm'); if (b) { b.textContent = THM.dark() ? '☀' : '☾'; b.title = t(THM.dark() ? 'Light mode' : 'Dark mode') }
+  }
+};
+(function () {
+  const cc = document.getElementById('cc'); if (!cc) return;
+  cc.insertAdjacentHTML('afterend', `<button class="hbtn" id="srch" type="button">${ic('eye')} <span id="srcht"></span> <kbd>Ctrl K</kbd></button><button class="hbtn" id="thm" type="button"></button>`);
+  document.getElementById('thm').onclick = () => THM.set(THM.dark() ? 'light' : 'dark');
+  document.getElementById('srch').onclick = () => palOpen();
+  THM.apply();
+})();
+
+/* ---------- Today ---------- */
+const TD = { init: false, ask: {} };
+const tdDate = (d = new Date()) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+function tdLoad() {        // the same calls the other tabs make, once per visit; nothing new on the server
+  const P = (S && S.perms) || {}, admin = S.role == 'admin', re = () => { if (TAB == 'td') render() };
+  if (typeof abxAllowed == 'function' && abxAllowed() && !ABX.data && !TD.ask.ab) { TD.ask.ab = 1; Promise.resolve(abxLoad()).then(re, re); setTimeout(re, 1800) }
+  if ((admin || P.ct) && typeof exLoad == 'function' && !EX.D && !TD.ask.ex) { TD.ask.ex = 1; Promise.resolve(exLoad()).then(re, re); setTimeout(re, 1800) }
+  else if (!admin && !P.ct && typeof duLoad == 'function' && !DU.D && !TD.ask.du && S.role) { TD.ask.du = 1; duLoad() }
+}
+function tdUpcoming(ds) {          // [{date,start,end,title,where,tag}] for the next 7 days
+  const P = (S && S.perms) || {}, end = tdDate(new Date(Date.now() + 7 * 864e5)), out = [];
+  if ((S.role == 'admin' || P.ct) && EX.D) {
+    const live = {}; (EX.D.timetables || []).forEach(x => { if (x.status != 'archived') live[x.id] = x });
+    (EX.D.sessions || []).forEach(s => { if (live[s.tt] && s.date >= ds && s.date <= end) out.push({ date: s.date, start: s.start, end: s.end, title: s.subject, where: s.room, tag: live[s.tt].name }) });
+  } else if (DU.D) (DU.D.duties || []).forEach(d => { if (d.date >= ds && d.date <= end && (d.mine || DU.D.admin)) out.push({ date: d.date, start: d.start, end: d.end, title: d.subject, where: d.room, tag: t('Exam duty') + ' · ' + d.ttName }) });
+  return out.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start < b.start ? -1 : 1);
+}
+function rToday() {
+  tdLoad();
+  const P = S.perms || {}, admin = S.role == 'admin', my = S.myTids || [], now = new Date(), ds = tdDate(now), dow = now.getDay(), school = I.days.includes(dow);
+  const mine = !!my.length && !admin;
+  const L = S.lessons.filter(l => l.d == dow && l.sl && !l.sl.brk && (!mine || l.t.some(x => my.includes(x)))).sort((a, b) => a.sl.s - b.sl.s || natural(a.c, b.c));
+  const tile = (go, color, icn, n, label, sub) => `<button class="kpi" data-tdgo="${go}"><i style="background:${color}">${ic(icn)}</i><span><b>${n}</b><small>${t(label)}${sub ? ' · ' + sub : ''}</small></span></button>`;
+  const tiles = [tile('tt', 'var(--teal)', 'grid', school ? L.length : '–', mine ? 'My lessons today' : 'Lessons today', school ? '' : t('No school today'))];
+  if (admin || P.conflicts) tiles.push(tile('cf', S.conflicts.counts.error ? 'var(--bad)' : 'var(--green)', 'alert', S.conflicts.counts.error + S.conflicts.counts.warning, 'Conflicts', S.conflicts.counts.error ? S.conflicts.counts.error + ' ' + t('Errors') : ''));
+  const A = typeof abxAllowed == 'function' && abxAllowed() && ABX.data ? ABX.data : null;
+  let abs = [], need = 0, AC = [];
+  if (A) { AC = A.covers || []; abs = (A.absences || []).filter(a => a.date == ds && ['approved', 'prelim', 'pending'].includes(a.status)); need = AC.filter(c => c.date == ds && !c.sub && abs.some(a => a.id == c.abs)).length; tiles.push(tile('ab', 'var(--amber)', 'user', abs.length, 'Absent today', need ? need + ' ' + t('need cover') : '')) }
+  const up = tdUpcoming(ds);
+  if (admin || P.ct || (DU.D && (DU.D.duties || []).length)) tiles.push(tile(admin || P.ct ? 'ct' : 'du', 'var(--violet)', 'clock', up.length, 'Next 7 days'));
+  const cards = [];
+  if (mine || (!admin && L.length)) cards.push(`<div class="card"><h3>${t('My lessons today')}</h3>${school && L.length ? L.map(l => `<div class="li2"><span class="tm">${pt(l.sl.s)}–${pt(l.sl.e)}</span><span class="grow"><b>${esc(l.s)}</b> <small class="msg">${esc(l.c)}${l.r ? ' · ' + esc(l.r) : ''}</small></span></div>`).join('') : `<div class="empty2">${t(school ? 'No lessons today.' : 'Enjoy the weekend')}</div>`}</div>`);
+  if (A) cards.push(`<div class="card"><h3>${t('Absences today')}</h3>${abs.length ? abs.map(a => { const cv = AC.filter(c => c.abs == a.id && c.date == ds), nc = cv.filter(c => !c.sub).length; return `<div class="li2"><span class="grow"><b>${esc(abxName(a.t))}</b> <small class="msg">${cv.length} ${t('Lessons')}${nc ? ' · ' + nc + ' ' + t('need cover') : ''}</small></span><span class="tag${a.status == 'approved' ? '' : ' w'}">${t(a.status == 'approved' ? 'Approved' : a.status == 'prelim' ? 'Provisional' : 'Pending')}</span></div>` }).join('') : `<div class="empty2">${t('No absences today.')}</div>`}<p><button class="b" data-tdgo="ab">${t('Open')}</button></p></div>`);
+  if (admin || P.ct || DU.D) cards.push(`<div class="card"><h3>${t('Coming up')}</h3>${up.length ? up.slice(0, 8).map(u => `<div class="li2"><span class="tm">${esc(u.date.slice(5))} ${esc(u.start)}</span><span class="grow"><b>${esc(u.title)}</b> <small class="msg">${esc(u.where || '')}${u.tag ? ' · ' + esc(u.tag) : ''}</small></span></div>`).join('') : `<div class="empty2">${t('Nothing scheduled in the next 7 days.')}</div>`}</div>`);
+  const qa = [['tt', 'Open the timetables', 'grid']];
+  if (A !== null || (typeof abxAllowed == 'function' && abxAllowed())) qa.push(['ab', 'Report an absence', 'user']);
+  if (TABS.some(x => x[0] == 'ct')) qa.push(['ct', 'Custom Timetables', 'grid']);
+  if (TABS.some(x => x[0] == 'rp')) qa.push(['rp', 'Reports & Print', 'print']);
+  return `<div class="td"><div class="kpis">${tiles.join('')}</div>${cards.length ? `<div class="grid">${cards.join('')}</div>` : ''}
+<div class="card"><h3>${t('Quick actions')}</h3><div class="qa">${qa.map(([k, l, i]) => `<button class="b" data-tdgo="${k}">${ic(i)} ${t(l)}</button>`).join('')}</div></div></div>`;
+}
+TABS.unshift(['td', 'Today', 'clock']);
+const _rTd = render;
+render = function () {
+  if (S && !S.register && !TD.init) { TD.init = true; if (TAB == 'tt') TAB = 'td' }          // open on Today
+  if (TAB != 'td') return _rTd();
+  const sy = window.scrollY;
+  TAB = 'tt'; try { _rTd() } finally { TAB = 'td' }
+  $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'td'));
+  $('#v').innerHTML = rToday(); window.scrollTo(0, sy);
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-tdgo]'); if (!b) return;
+  const g = b.dataset.tdgo; if (g == 'cf') return goConflicts('');
+  if (TABS.some(x => x[0] == g)) { TAB = g; render() }
+});
+
+/* ---------- quick search (Ctrl+K, or / outside a text box) ---------- */
+const PAL = { on: false, q: '', i: 0, items: [] };
+function palAll() {
+  const out = [], add = (label, sub, go) => out.push({ label, sub, go });
+  TABS.forEach(([id, l]) => add(t(l), t('Page'), () => { TAB = id; render() }));
+  if (TABS.some(x => x[0] == 'st')) SUBS.forEach(([k, l]) => add(t(l), t('Settings'), () => { TAB = 'st'; SUB = k; render() }));
+  teachersWithLessons().forEach(id => add(tname(id), t('Teacher') + ' · ' + id, () => { TAB = 'tt'; VIEW = 'teacher'; SEL.t = id; render() }));
+  I.classes.forEach(c => add(c, t('Class'), () => { TAB = 'tt'; VIEW = 'class'; SEL.c = c; render() }));
+  if (typeof EX != 'undefined' && EX.D && TABS.some(x => x[0] == 'ct')) (EX.D.timetables || []).forEach(x => add(x.name, t('Custom Timetables'), () => { TAB = 'ct'; EX.top = 'list'; exOpen(x.id) }));
+  return out;
+}
+function palFilter() {
+  const q = PAL.q.trim().toLowerCase(), all = palAll();
+  if (!q) return all.slice(0, 10);
+  const w = q.split(/\s+/), sc = x => { const l = x.label.toLowerCase(), s = (x.label + ' ' + x.sub).toLowerCase(); return w.every(k => s.includes(k)) ? (l.startsWith(w[0]) ? 0 : l.includes(w[0]) ? 1 : 2) : 9 };
+  return all.map(x => [sc(x), x]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0]).slice(0, 12).map(x => x[1]);
+}
+function palDraw() {
+  const bx = document.getElementById('pal'); if (!bx) return;
+  PAL.items = palFilter(); PAL.i = Math.min(PAL.i, Math.max(0, PAL.items.length - 1));
+  bx.querySelector('.rs').innerHTML = PAL.items.length ? PAL.items.map((x, i) => `<div class="it${i == PAL.i ? ' on' : ''}" data-pi="${i}">${esc(x.label)}<small>${esc(x.sub)}</small></div>`).join('') : `<div class="it">${t('No results')}</div>`;
+}
+function palOpen() {
+  if (!S || S.register) return;
+  let bx = document.getElementById('pal');
+  if (!bx) { bx = document.createElement('div'); bx.id = 'pal'; bx.innerHTML = `<div class="bx"><input type="text" id="palq" autocomplete="off"><div class="rs"></div><div class="ft"></div></div>`; document.body.appendChild(bx) }
+  bx.querySelector('input').placeholder = t('Search teachers, classes, pages...'); bx.querySelector('.ft').textContent = t('Enter to open, Esc to close');
+  PAL.q = ''; PAL.i = 0; bx.querySelector('input').value = ''; bx.classList.add('on'); PAL.on = true; palDraw(); bx.querySelector('input').focus();
+}
+function palClose() { const bx = document.getElementById('pal'); if (bx) bx.classList.remove('on'); PAL.on = false }
+function palGo(i) { const x = PAL.items[i]; if (!x) return; palClose(); x.go() }
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() == 'k') { e.preventDefault(); return PAL.on ? palClose() : palOpen() }
+  if (!PAL.on) { const el = document.activeElement; if (e.key == '/' && !(el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) && !e.ctrlKey && !e.metaKey) { e.preventDefault(); palOpen() } return }
+  if (e.key == 'Escape') return palClose();
+  if (e.key == 'ArrowDown') { e.preventDefault(); PAL.i = Math.min(PAL.i + 1, PAL.items.length - 1); return palDraw() }
+  if (e.key == 'ArrowUp') { e.preventDefault(); PAL.i = Math.max(PAL.i - 1, 0); return palDraw() }
+  if (e.key == 'Enter') { e.preventDefault(); palGo(PAL.i) }
+});
+document.addEventListener('input', e => { if (e.target.id == 'palq') { PAL.q = e.target.value; PAL.i = 0; palDraw() } });
+document.addEventListener('mousedown', e => {
+  const it = e.target.closest && e.target.closest('#pal .it[data-pi]'); if (it) { e.preventDefault(); return palGo(+it.dataset.pi) }
+  if (PAL.on && e.target.id == 'pal') palClose();
+});
+(function () { const f = () => { const s = document.getElementById('srcht'); if (s) s.textContent = t('Quick search') }; f(); const _al = applyLang; applyLang = function () { _al.apply(this, arguments); f(); THM.apply() } })();
+</script>
+<style>
+/* ---- Group 10: help tips (a small bubble next to the part of the screen it explains) ---- */
+#tipb{position:fixed;z-index:3500;width:min(300px,calc(100vw - 16px));background:var(--sf);color:var(--ink);border:1px solid var(--ln);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:12px 14px;font-size:13.5px;line-height:1.5}
+#tipb::before{content:'';position:absolute;left:var(--ax,24px);width:12px;height:12px;background:var(--sf);border:1px solid var(--ln);transform:rotate(45deg)}
+#tipb.dn::before{top:-7px;border-right:0;border-bottom:0}
+#tipb.up::before{bottom:-7px;border-left:0;border-top:0}
+#tipb.in::before{display:none}
+#tipb .tt{font-weight:600;margin:0 0 4px}
+#tipb .ac{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+#tipb .ac .off{margin-inline-start:auto;background:none;border:0;color:var(--mut);cursor:pointer;font:inherit;font-size:12px;text-decoration:underline;padding:4px}
+.tip-hl{outline:3px solid var(--gold);outline-offset:3px;border-radius:8px;transition:outline-color .2s}
+#tipm{position:fixed;z-index:3600;min-width:230px;background:var(--sf);color:var(--ink);border:1px solid var(--ln);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:6px}
+#tipm button,#tipm label{display:flex;gap:8px;align-items:center;width:100%;text-align:start;background:none;border:0;color:inherit;font:inherit;padding:8px 10px;border-radius:10px;cursor:pointer}
+#tipm button:hover,#tipm label:hover{background:var(--hl)}
+</style>
+<script>
+"use strict";
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Help': 'مساعدة', 'Got it': 'فهمت', 'Next': 'التالي', 'Turn off tips': 'إيقاف النصائح', 'Show tips for this page': 'اعرض نصائح هذه الصفحة', 'Show help tips automatically': 'إظهار نصائح المساعدة تلقائيًا', 'Reset all tips': 'إعادة عرض كل النصائح', 'No tips for this page.': 'لا توجد نصائح لهذه الصفحة.', 'Tips will show again.': 'ستظهر النصائح من جديد.'
+}).filter(([k]) => !(k in AR))));
+
+/* where a tip is shown: tab, the element it points to, and the text in both languages */
+const TIPS = [
+  { id: 'ct-new', tab: 'ct', sel: '[data-exa=new]', en: 'Start here. Create a timetable for an exam or for any other activity (revision, event, training). You pick the type in the form.', ar: 'ابدأ من هنا. أنشئ جدولًا لامتحان أو لأي نشاط آخر (مراجعة، فعالية، تدريب)، واختر النوع من النموذج.' },
+  { id: 'ct-periods', tab: 'ct', sel: 'nav.sub .pill[data-k=periods]', en: 'Define your exam and activity periods once here (First Term Exams, After School Activities...). They then appear in the Period box of every new timetable.', ar: 'عرّف فترات الامتحانات والأنشطة مرة واحدة هنا، وتظهر بعدها في خانة Period عند إنشاء أي جدول جديد.' },
+  { id: 'ct-type', tab: 'ct', sel: 'select[data-exf=type]', en: 'Use the examination types for exams. Activity, Revision, Event and Training use their own wording, the location is optional, and teacher availability is checked.', ar: 'استخدم أنواع الامتحانات للامتحانات. أما نشاط ومراجعة وفعالية وتدريب فلها مصطلحاتها، والمكان اختياري، ويتم فحص توفر المدرسين.' },
+  { id: 'ct-part', tab: 'ct', sel: 'select[data-exg]', en: 'Who takes part: pick stages, grades or classes (and departments for activities). Add as many as you need, or choose Other… for a free group name.', ar: 'المشاركون: اختر المراحل أو الصفوف أو الفصول (والأقسام في الأنشطة) وأضف ما تحتاج، أو اختر Other… لاسم مجموعة حرة.' },
+  { id: 'ct-rules', tab: 'ct', sel: '[data-exs=rules]', en: 'Rules & allocation: how many supervisors per room and how many reserves. In activities, a teacher with a lesson, a blocked time or another timetable at that hour gets a warning.', ar: 'القواعد والتوزيع: عدد المراقبين أو المشرفين لكل قاعة وعدد الاحتياطي. وفي الأنشطة يظهر تحذير لمن لديه حصة أو وقت محظور أو جدول آخر في نفس الوقت.' },
+  { id: 'ct-assign', tab: 'ct', sel: '[data-exs=assign]', en: 'Generate the allocation automatically, then adjust it by hand. A warning shows when a teacher is busy, and you can still confirm it.', ar: 'ولّد التوزيع تلقائيًا ثم عدّله يدويًا. يظهر تحذير لو المدرس مشغول، وتقدر تؤكد التعيين رغم ذلك.' },
+  { id: 'ct-lock', tab: 'ct', sel: '[data-exa=lock]', en: 'Lock the final allocation once it is approved. After that, every change asks for your confirmation first.', ar: 'اقفل التوزيع النهائي بعد اعتماده، وبعدها أي تغيير يطلب تأكيدك أولًا.' },
+  { id: 'ab-date', tab: 'ab', sel: '[data-abf=date]', en: 'Pick the date. Use “Until” for several days. Choose the whole day or specific lessons. With no lessons the absence is still recorded.', ar: 'اختر التاريخ، واستخدم Until لعدة أيام. اختر اليوم كله أو حصصًا محددة، وحتى لو لا توجد حصص يتم تسجيل الغياب.' },
+  { id: 'ab-cut', tab: 'ab', sel: '[data-abx=cut]', en: 'Teacher came back earlier? Cut the leave from a chosen time, and the later lessons are released from substitution.', ar: 'عاد المدرس مبكرًا؟ اقطع الإجازة من وقت تختاره وتتحرر الحصص التالية من البديل.' },
+  { id: 'ab-cancel', tab: 'ab', sel: '[data-abx=cancel]', en: 'You can cancel your own request before its date. Managers can also cancel requests entered on someone’s behalf.', ar: 'تقدر تلغي طلبك قبل موعده، والمسؤولون يلغون الطلبات المسجلة بالنيابة عن غيرهم.' },
+  { id: 'st-menu', tab: 'st', sel: 'nav.sub.side', en: 'Settings are grouped by topic. Tip: press Ctrl+K to jump to any page, teacher or class.', ar: 'الإعدادات مجمّعة حسب الموضوع. نصيحة: اضغط Ctrl+K للانتقال لأي صفحة أو مدرس أو فصل.' },
+  { id: 'st-dept', tab: 'st', sel: 'select[data-e$="|8"]', en: 'Department: choose it from the list, or add a new one from the same drop-down. Teachers use the same list.', ar: 'القسم: اختره من القائمة أو أضف قسمًا جديدًا من نفس القائمة، ونفس القائمة تُستخدم للمدرسين.' },
+  { id: 'us-matrix', tab: 'us', sel: 'table.ed.rm', en: 'Role defaults: tick what each role may do. A person can still be changed one by one in the list below. A head of department sees the teachers of his department.', ar: 'افتراضات الأدوار: حدد ما يُسمح به لكل دور، ويمكن تعديل شخص بعينه من القائمة بالأسفل. ورئيس القسم يرى مدرسي قسمه.' },
+  { id: 'us-scope', tab: 'us', sel: '.usr input[data-ue$="|4"]', en: 'Scope: * for everything, or stages, classes and teacher IDs. A teacher needs his own teacher ID here to see his exam duties.', ar: 'النطاق: * للكل، أو مراحل وفصول وأرقام مدرسين. المدرس يحتاج رقمه هنا ليرى مراقباته.' }
+];
+/* what this browser remembers: tips switched off, and the tips already shown */
+const TP = {
+  get() { try { const v = JSON.parse(localStorage.getItem('tips') || '{}'); return { off: !!v.off, seen: v.seen || {} } } catch (e) { return { off: false, seen: {} } } },
+  put(v) { try { localStorage.setItem('tips', JSON.stringify(v)) } catch (e) { } },
+  cur: null, queue: []
+};
+const tpSeen = id => { const v = TP.get(); v.seen[id] = 1; TP.put(v) };
+const tpVisible = el => { if (!el || !el.getClientRects().length) return false; const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight - 40 && r.right > 0 && r.left < innerWidth };
+function tpClose() {
+  const b = document.getElementById('tipb'); if (b) b.remove();
+  document.querySelectorAll('.tip-hl').forEach(x => x.classList.remove('tip-hl')); TP.cur = null;
+}
+function tpPlace() {
+  const b = document.getElementById('tipb'), c = TP.cur; if (!b || !c) return;
+  const el = document.querySelector(c.sel); if (!el) return tpClose();
+  el.classList.add('tip-hl');
+  const r = el.getBoundingClientRect(), w = b.offsetWidth, h = b.offsetHeight, room = innerHeight - r.bottom, fitBelow = room >= h + 20, fitAbove = r.top >= h + 20;
+  const left = Math.max(8, Math.min(r.left, innerWidth - w - 8));
+  b.className = fitBelow ? 'dn' : fitAbove ? 'up' : 'in';        // 'in' = the element is taller than the free space: sit on its visible top
+  b.style.left = left + 'px'; b.style.top = Math.max(8, Math.min(fitBelow ? r.bottom + 12 : fitAbove ? r.top - h - 12 : Math.max(r.top, 0) + 12, innerHeight - h - 8)) + 'px';
+  b.style.setProperty('--ax', Math.max(14, Math.min(r.left + r.width / 2 - left - 6, w - 30)) + 'px');
+}
+function tpShow(tip, forced) {
+  const el = document.querySelector(tip.sel); if (!el) return false;
+  tpClose(); TP.cur = tip; tpSeen(tip.id); el.classList.add('tip-hl');
+  const more = forced && TP.queue.length, b = document.createElement('div'); b.id = 'tipb'; b.setAttribute('role', 'status');
+  b.innerHTML = `<div>${esc(HL == 'ar' ? tip.ar : tip.en)}</div><div class="ac"><button class="b pri" data-tipa="${more ? 'next' : 'ok'}">${t(more ? 'Next' : 'Got it')}${more ? ' (' + TP.queue.length + ')' : ''}</button><button class="off" data-tipa="off">${t('Turn off tips')}</button></div>`;
+  document.body.appendChild(b); tpPlace(); return true;
+}
+function tpAuto() {                    // first visit: one unseen tip of this screen whose element is on the screen
+  if (!S || S.register || TP.cur || (typeof PAL != 'undefined' && PAL.on)) return;
+  const st = TP.get(); if (st.off) return;
+  const tip = TIPS.find(x => x.tab == TAB && !st.seen[x.id] && tpVisible(document.querySelector(x.sel)));
+  if (tip) tpShow(tip, false);
+}
+function tpTour() {                    // from the help menu: every tip of this screen, one after the other
+  const list = TIPS.filter(x => x.tab == TAB && tpVisible(document.querySelector(x.sel)));
+  if (!list.length) return toast(t('No tips for this page.'));
+  TP.queue = list.slice(1); tpShow(list[0], true);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-tipa]');
+  if (b) {
+    const a = b.dataset.tipa;
+    if (a == 'off') { const v = TP.get(); v.off = true; TP.put(v); tpClose(); TP.queue = []; return }
+    if (a == 'next') { const n = TP.queue.shift(); if (n && tpShow(n, true)) return }
+    return tpClose();
+  }
+  const m = document.getElementById('tipm');
+  if (e.target.closest && e.target.closest('#hlp')) { if (m) return m.remove(); return tpMenu() }
+  if (m && !e.target.closest('#tipm')) m.remove();
+  const act = e.target.closest && e.target.closest('[data-tpm]');
+  if (act) {
+    const k = act.dataset.tpm; if (m) m.remove();
+    if (k == 'tour') return tpTour();
+    if (k == 'reset') { const v = TP.get(); v.seen = {}; v.off = false; TP.put(v); toast(t('Tips will show again.')); return setTimeout(tpAuto, 300) }
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.id != 'tpauto') return;
+  const v = TP.get(); v.off = !e.target.checked; TP.put(v); if (v.off) tpClose(); else setTimeout(tpAuto, 300);
+});
+function tpMenu() {
+  const m = document.createElement('div'), h = document.getElementById('hlp').getBoundingClientRect(); m.id = 'tipm';
+  m.innerHTML = `<button data-tpm="tour">${ic('eye')} ${t('Show tips for this page')}</button><label><input type="checkbox" id="tpauto"${TP.get().off ? '' : ' checked'}> ${t('Show help tips automatically')}</label><button data-tpm="reset">${ic('check')} ${t('Reset all tips')}</button>`;
+  document.body.appendChild(m); m.style.top = (h.bottom + 8) + 'px'; m.style.left = Math.max(8, Math.min(h.left, innerWidth - m.offsetWidth - 8)) + 'px';
+}
+(function () {
+  const anchor = document.getElementById('thm') || document.getElementById('cc'); if (!anchor) return;
+  anchor.insertAdjacentHTML('afterend', '<button class="hbtn" id="hlp" type="button" aria-label="Help">?</button>');
+  const h = document.getElementById('hlp'); h.title = t('Help');
+})();
+const _rTip = render;
+render = function () {
+  _rTip.apply(this, arguments);
+  setTimeout(() => { if (TP.cur && TP.cur.tab == TAB && document.querySelector(TP.cur.sel)) return tpPlace(); tpClose(); tpAuto() }, 500);
+};
+addEventListener('resize', () => tpPlace());
+addEventListener('scroll', () => tpPlace(), true);
+document.addEventListener('keydown', e => {
+  if (e.key != 'Escape') return; const m = document.getElementById('tipm'); if (m) return m.remove();
+  if (TP.cur && !(typeof PAL != 'undefined' && PAL.on)) tpClose();
+});
+</script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
