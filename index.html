@@ -299,7 +299,8 @@ const assignedOf = (c, s) => {
 const classSubjects = c => [...new Set(S.asg.filter(r => r[0] == c && !/^n/i.test(r[5])).map(r => r[1]))].sort(natural);
 
 /* ---------- i18n (English UI + Arabic toggle with full RTL) ---------- */
-const t = s => (HL == 'ar' && AR[s]) || s;
+let TX = null;                             // per-screen label overrides (activity timetables)
+const t = s => { if (TX && TX[s]) s = TX[s]; return (HL == 'ar' && AR[s]) || s };
 function applyLang() {
   document.documentElement.lang = HL; document.documentElement.dir = HL == 'ar' ? 'rtl' : 'ltr'; document.body.dir = HL == 'ar' ? 'rtl' : 'ltr';
   $('#langt').textContent = HL == 'ar' ? 'English' : 'العربية';
@@ -2734,7 +2735,20 @@ Object.assign(AR, {
   'Details': 'التفاصيل', 'Duties': 'المهام', 'Issued': 'تاريخ الإصدار', 'Session ': 'الفترة ', 'more sheets': 'صفحات أخرى', 'Nothing here yet.': 'لا يوجد شيء بعد.', 'Delete this timetable with its exams and assignments?': 'حذف هذا الجدول مع امتحاناته وتوزيعه؟', 'Delete': 'حذف', 'Duplicate': 'تكرار', 'Duplicate this row (change the room only)': 'تكرار الصف بنفس البيانات (غيّر الغرفة فقط)', 'Save': 'حفظ', 'Cancel': 'إلغاء'
 });
 const EX = { bk: null, id: null, sub: 'exams', D: null, loading: false, form: null, imp: null, sel: null, ses: null, rules: null, prev: null, res: null, filt: { date: '', teacher: '', q: '' }, rep: { k: 'sig', date: '', key: '', teacher: '', por: true }, rp: null };
-const EX_TYPES = [['exam', 'Examination'], ['term', 'Term examination'], ['semester', 'Semester schedule'], ['quarter', 'Quarterly examination'], ['special', 'Special examination'], ['other', 'Other custom timetable']];
+const EX_TYPES = [['exam', 'Examination'], ['term', 'Term examination'], ['semester', 'Semester schedule'], ['quarter', 'Quarterly examination'], ['special', 'Special examination'], ['activity', 'Activity'], ['revision', 'Revision session'], ['event', 'Event / trip'], ['training', 'Training'], ['other', 'Other custom timetable']];
+/* Group 5: a timetable that is not an examination (activity, revision, event...) - same screens, its own words, a free "location", participants and an availability check */
+const EX_EXAM_TYPES = ['exam', 'term', 'semester', 'quarter', 'special'];
+const exIsAct = x => !!x && !EX_EXAM_TYPES.includes(x.type);
+const EX_ACT_MAP = { 'Examination period': 'Period', 'Examination Period': 'Period', 'Exams': 'Schedule', 'Exam schedule': 'Activity schedule', 'Subject': 'Activity', 'Room / committee': 'Location', 'Room': 'Location', 'Grade / class': 'Participants', 'Save exam rows': 'Save rows', '＋ Add another subject…': '＋ Add another activity…',
+  'Main Invigilator': 'Supervisor', 'Reserve ': 'Reserve supervisor', 'Invigilator Attendance & Signature Sheet': 'Attendance & Signature Sheet', 'Invigilator Name': 'Supervisor Name', 'Daily invigilation schedule': 'Daily supervision schedule', 'Main invigilators': 'Supervisors', 'Reserve invigilators': 'Reserve supervisors',
+  'Main invigilators list': 'Supervisors list', 'Reserve invigilators list': 'Reserve supervisors list', 'Room assignment sheets': 'Location assignment sheets', 'Main invigilators per room': 'Supervisors per activity', 'Reserve invigilators per session': 'Reserve supervisors per session', 'Max duties per teacher (0 = no limit)': 'Max assignments per teacher (0 = no limit)', 'Max duties per day (0 = no limit)': 'Max assignments per day (0 = no limit)',
+  'When a main invigilator is replaced, a reserve of that session takes the room first': 'When a supervisor is replaced, a reserve of that session takes the place first' };
+Object.assign(AR, Object.fromEntries(Object.entries({ 'Activity': 'نشاط', 'Revision session': 'حصة مراجعة', 'Event / trip': 'فعالية / رحلة', 'Training': 'تدريب', 'Period': 'الفترة', 'Schedule': 'الجدول', 'Activity schedule': 'جدول الأنشطة', 'Location': 'المكان', 'Participants': 'المشاركون', 'Save rows': 'حفظ الصفوف', 'rows': 'صفوف', '＋ Add another activity…': '＋ إضافة نشاط آخر…',
+  'Supervisor': 'مشرف', 'Reserve supervisor': 'مشرف احتياطي', 'Attendance & Signature Sheet': 'كشف الحضور والتوقيع', 'Supervisor Name': 'اسم المشرف', 'Daily supervision schedule': 'جدول الإشراف اليومي', 'Supervisors': 'المشرفون', 'Reserve supervisors': 'المشرفون الاحتياطيون', 'Supervisors list': 'قائمة المشرفين', 'Reserve supervisors list': 'قائمة المشرفين الاحتياطيين', 'Location assignment sheets': 'كشوف المكان',
+  'Supervisors per activity': 'عدد المشرفين لكل نشاط', 'Reserve supervisors per session': 'عدد المشرفين الاحتياطيين لكل فترة', 'Max assignments per teacher (0 = no limit)': 'أقصى عدد تكليفات للمدرس (0 = بلا حد)', 'Max assignments per day (0 = no limit)': 'أقصى عدد تكليفات يوميًا (0 = بلا حد)', 'When a supervisor is replaced, a reserve of that session takes the place first': 'عند استبدال مشرف، يأخذ مكانه أولًا احتياطي من نفس الفترة',
+  'Stages': 'المراحل', 'Grades': 'الصفوف', 'Departments': 'الأقسام', 'Groups': 'مجموعات',
+  'busyLesson': 'لديه حصة في جدوله الدراسي في هذا الوقت', 'busyBlocked': 'وقت محظور أو غير متاح له', 'busyOther': 'مُعيّن في جدول مخصص آخر في نفس الوقت',
+  'Availability is checked against the teacher\'s school timetable, his blocked times and the other timetables. A busy teacher can still be assigned after you confirm the warning.': 'يتم فحص توفر المدرس مقابل جدوله الدراسي وأوقاته المحظورة والجداول الأخرى. ويمكنك تعيين مدرس مشغول بعد تأكيد التحذير.' }).filter(([k]) => !(k in AR))));
 const exTt = () => EX.D && EX.D.timetables.find(x => x.id == EX.id);
 const exName = id => (EX.D && EX.D.names && EX.D.names[id]) || tname(id) || id;
 const exDay = d => dayName(new Date(d + 'T00:00:00').getDay());
@@ -2780,7 +2794,7 @@ function exList() {
 <label style="grid-column:1/-1">${t('Notes')}<input data-exf="desc" value="${esc(f.desc)}"></label></div>
 <p><button class="b pri" data-exa="saveform">${ic('check')} ${t('Save')}</button> <button class="b" data-exa="cancelform">${t('Cancel')}</button></p></div>` : '';
   return `<div class="card"><h3>${t('Custom Timetables')}</h3><p><button class="b pri" data-exa="new">+ ${t('New timetable')}</button></p>
-${tl.length ? `<div class="tl">${tl.map(x => `<div class="tc"><b>${esc(x.name)}</b><span>${t((EX_TYPES.find(y => y[0] == x.type) || ['', 'Other custom timetable'])[1])} · ${esc(x.year)}${x.period ? ' · ' + esc(x.period) : ''}</span><span>${esc(x.start)} → ${esc(x.end)}</span><span><span class="tag2 ${x.status == 'published' ? 'ok' : ''}">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[x.status] || x.status)}</span>${x.locked ? ` <span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</span><span class="msg">${D.sessions.filter(s => s.tt == x.id).length} ${t('exam rows')}</span><span><button class="b pri" data-exa="open" data-id="${x.id}">${t('Open')}</button> <button class="b" data-exa="edit" data-id="${x.id}">${t('Edit')}</button> <button class="b dng" data-exa="del" data-id="${x.id}">${t('Delete')}</button></span></div>`).join('')}</div>` : `<p class="msg">${t('Nothing here yet.')}</p>`}</div>${form}${exBkGone()}`;
+${tl.length ? `<div class="tl">${tl.map(x => `<div class="tc"><b>${esc(x.name)}</b><span>${t((EX_TYPES.find(y => y[0] == x.type) || ['', 'Other custom timetable'])[1])} · ${esc(x.year)}${x.period ? ' · ' + esc(x.period) : ''}</span><span>${esc(x.start)} → ${esc(x.end)}</span><span><span class="tag2 ${x.status == 'published' ? 'ok' : ''}">${t({ draft: 'Draft', published: 'Published', archived: 'Archived' }[x.status] || x.status)}</span>${x.locked ? ` <span class="tag2 bad">${t('Locked (final)')}</span>` : ''}</span><span class="msg">${D.sessions.filter(s => s.tt == x.id).length} ${t(exIsAct(x) ? 'rows' : 'exam rows')}</span><span><button class="b pri" data-exa="open" data-id="${x.id}">${t('Open')}</button> <button class="b" data-exa="edit" data-id="${x.id}">${t('Edit')}</button> <button class="b dng" data-exa="del" data-id="${x.id}">${t('Delete')}</button></span></div>`).join('')}</div>` : `<p class="msg">${t('Nothing here yet.')}</p>`}</div>${form}${exBkGone()}`;
 }
 /* ---------------- workspace ---------------- */
 function exWork() {
@@ -2792,7 +2806,7 @@ function exWork() {
 <nav class="sub">${subs.map(([k, l]) => `<button class="pill${k == EX.sub ? ' on' : ''}" data-exs="${k}">${t(l)}${k == 'conf' && nc ? ` <span class="tag2 bad">${nc}</span>` : ''}</button>`).join('')}</nav>${tt.locked ? `<div class="lock">${ic('lock')} ${t('The final allocation is locked. Nothing changes by mistake.')}</div>` : ''}</div>${body}`;
 }
 /* ---- exams: import + table ---- */
-const EX_FIELDS = [['date', 'Date', /date|تاريخ|يوم/i], ['session', 'Session', /session|period|فترة|جلسة/i], ['start', 'Start', /start|from|begin|بداية|بدء|^من$/i], ['end', 'End', /end|finish|until|^to$|نهاية|إلى|الى/i], ['time', 'Time range (08:00-10:00)', /time|وقت|ساعة/i], ['subject', 'Subject', /subject|course|مادة|المادة/i], ['room', 'Room / committee', /room|committee|hall|لجنة|قاعة|غرفة|اللجنة/i], ['seats', 'Seats / code', /seat|جلوس|code|كود/i], ['students', 'Students', /student|count|number of|عدد|طلاب/i], ['grade', 'Grade / class', /grade|class|level|stage|صف|فصل|مرحلة/i]];
+const EX_FIELDS = [['date', 'Date', /date|تاريخ|يوم/i], ['session', 'Session', /session|period|فترة|جلسة/i], ['start', 'Start', /start|from|begin|بداية|بدء|^من$/i], ['end', 'End', /end|finish|until|^to$|نهاية|إلى|الى/i], ['time', 'Time range (08:00-10:00)', /time|وقت|ساعة/i], ['subject', 'Subject', /subject|course|activity|مادة|المادة|نشاط/i], ['room', 'Room / committee', /room|committee|hall|location|venue|لجنة|قاعة|غرفة|اللجنة|مكان/i], ['seats', 'Seats / code', /seat|جلوس|code|كود/i], ['students', 'Students', /student|count|number of|عدد|طلاب/i], ['grade', 'Grade / class', /grade|class|level|stage|participant|صف|فصل|مرحلة|مشارك/i]];
 const EX_COLS = ['date', 'session', 'start', 'end', 'subject', 'room', 'grade', 'students', 'seats'];
 const exDigits = s => String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
 const exP2 = n => String(n).padStart(2, '0');
@@ -2868,7 +2882,13 @@ function exOptList(f) {
   return [...new Set([...gr, ...cl, ...EX.extra.grade, ...cur])];
 }
 const exSel = (i, f, cur) => { const L = exOptList(f); return `<select data-exs2="${i}|${f}"><option value=""></option>${L.map(x => `<option value="${esc(x)}"${x == cur ? ' selected' : ''}>${esc(x)}</option>`).join('')}<option value="__new">${t(f == 'subject' ? '＋ Add another subject…' : '＋ Add another session…')}</option></select>` };
-const exGradeCell = (i, r) => `${exGrades(r).map(g => `<span class="chip main" data-exa="rmg" data-i="${i}" data-g="${esc(g)}" title="${t('Remove')}">${esc(g)} ×</span>`).join('')}<select data-exg="${i}"><option value="">${t('+ grade')}</option>${exOptList('grade').filter(g => !exGrades(r).includes(g)).map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('')}<option value="__new">${t('＋ Other…')}</option></select>`;
+function exPartOpts(r) {                 // activity: stages, grades, classes, departments, free groups
+  const have = exGrades(r), cl = (I.classes || []).slice(), gr = [...new Set(cl.map(c => parseInt(String(c).slice(1))).filter(n => !isNaN(n)))].sort((a, b) => a - b).map(n => 'G' + n);
+  const g = (lab, L) => { L = [...new Set(L)].filter(x => x && !have.includes(x)); return L.length ? `<optgroup label="${esc(t(lab))}">${L.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}</optgroup>` : '' };
+  const dep = typeof deptList == 'function' ? deptList() : [];
+  return g('Stages', stages()) + g('Grades', gr) + g('Classes', cl) + g('Departments', dep) + g('Groups', EX.extra.grade);
+}
+const exGradeCell = (i, r) => `${exGrades(r).map(g => `<span class="chip main" data-exa="rmg" data-i="${i}" data-g="${esc(g)}" title="${t('Remove')}">${esc(g)} ×</span>`).join('')}<select data-exg="${i}"><option value="">${t('+ grade')}</option>${exIsAct(exTt()) ? exPartOpts(r) : exOptList('grade').filter(g => !exGrades(r).includes(g)).map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('')}<option value="__new">${t('＋ Other…')}</option></select>`;
 async function exAsk(title) {
   const r = await Swal.fire({ title, input: 'text', showCancelButton: true, confirmButtonText: t('Add'), cancelButtonText: t('Cancel'), heightAuto: false, returnFocus: false, inputValidator: v => !String(v).trim() ? ' ' : null });
   return r.isConfirmed ? String(r.value).trim() : '';
@@ -2882,7 +2902,7 @@ function exExams() {
 /* ---- the Excel template: columns match the importer, drop-down lists inside Excel, an instructions sheet ---- */
 function exTemplate() {
   const tt = exTt(), subj = S.subj.map(r => r[0]).sort(natural), ses = ['Session 1', 'Session 2', 'Session 3', 'Session 4'], cl = (I.classes || []).slice(), gr = [...new Set(cl.map(c => parseInt(String(c).slice(1))).filter(n => !isNaN(n)))].sort((a, b) => a - b).map(n => 'G' + n), grades = [...gr, ...cl];
-  const head = ['Date (التاريخ)', 'Session (الفترة)', 'Start (البداية)', 'End (النهاية)', 'Subject (المادة)', 'Room / committee (اللجنة)', 'Grade / class (الصف)', 'Students (عدد الطلاب)', 'Seats / code (أرقام الجلوس)'], N = 400;
+  const act = exIsAct(tt), head = ['Date (التاريخ)', 'Session (الفترة)', 'Start (البداية)', 'End (النهاية)', act ? 'Activity (النشاط)' : 'Subject (المادة)', act ? 'Location (المكان)' : 'Room / committee (اللجنة)', act ? 'Participants (المشاركون)' : 'Grade / class (الصف)', 'Students (عدد الطلاب)', 'Seats / code (أرقام الجلوس)'], N = 400;
   const mx = Math.max(subj.length, ses.length, grades.length), lists = [['Subjects (المواد)', 'Sessions (الفترات)', 'Grades & classes (الصفوف)']];
   for (let i = 0; i < mx; i++) lists.push([subj[i] || '', ses[i] || '', grades[i] || '']);
   const L = (c, n) => `Lists!$${c}$2:$${c}$${Math.max(n, 1) + 1}`, W = 'Your own value is accepted too. / يمكنك كتابة قيمة أخرى.';
@@ -2942,8 +2962,8 @@ function exRules() {
   return `<div class="card"><h3>${t('Rules & allocation')}</h3>
 <div class="row"><b>${t('Allocation mode')}</b>${[['auto', 'Automatic'], ['semi', 'Semi-automatic'], ['manual', 'Manual']].map(([k, l]) => `<label style="flex-direction:row;align-items:center;gap:5px"><input type="radio" name="exmode" data-exr2="mode" value="${k}"${R.mode == k ? ' checked' : ''}> ${t(l)}</label>`).join('')}</div>
 <div class="grid2">${num('mainPerRoom', 'Main invigilators per room')}${num('reservePerSession', 'Reserve invigilators per session')}${num('maxTotal', 'Max duties per teacher (0 = no limit)')}${num('maxDay', 'Max duties per day (0 = no limit)')}${num('maxConsec', 'Max consecutive sessions (0 = no limit)')}${num('minRest', 'Minimum rest between duties (minutes)')}</div>
-<div style="display:grid;gap:4px;margin:8px 0">${chk('weighted', 'Weighted distribution (use the weights below)')}${chk('avoidOwnSubject', 'Do not assign a teacher to the exam of his own subject')}${chk('avoidOwnClass', 'Do not assign a teacher to the exam of his own classes')}${chk('sameSessionMulti', 'Allow a teacher in several rooms of the same session')}${chk('useAbsences', 'Skip teachers with an approved absence that day')}${chk('promoteReserve', 'When a main invigilator is replaced, a reserve of that session takes the room first')}</div>
-${exPoolBox()}<h4>${t('Teachers')}</h4><div class="tw"><table class="ex"><tr><th>${t('Name')}</th><th>${t('Code')}</th><th>${t('Exclude')}</th><th>${t('Priority')}</th><th>${t('Weight')}</th><th>${t('Unavailable dates (yyyy-mm-dd, comma separated)')}</th></tr>${T.map(id => `<tr><td>${esc(exName(id))}</td><td>${esc(id)}</td><td><input type="checkbox" data-exr3="ex|${esc(id)}"${R.excluded.includes(id) ? ' checked' : ''}></td><td><input type="checkbox" data-exr3="pr|${esc(id)}"${R.priority.includes(id) ? ' checked' : ''}></td><td><input type="number" step="0.5" min="0.5" max="10" style="width:70px" data-exr3="w|${esc(id)}" value="${R.weights[id] || 1}"></td><td><input data-exr3="un|${esc(id)}" value="${esc((R.unavailable[id] || []).join(', '))}"></td></tr>`).join('')}</table></div>
+<div style="display:grid;gap:4px;margin:8px 0">${chk('weighted', 'Weighted distribution (use the weights below)')}${exIsAct(tt) ? '' : chk('avoidOwnSubject', 'Do not assign a teacher to the exam of his own subject') + chk('avoidOwnClass', 'Do not assign a teacher to the exam of his own classes')}${chk('sameSessionMulti', 'Allow a teacher in several rooms of the same session')}${chk('useAbsences', 'Skip teachers with an approved absence that day')}${chk('promoteReserve', 'When a main invigilator is replaced, a reserve of that session takes the room first')}</div>
+${exIsAct(tt) ? `<p class="msg">${t('Availability is checked against the teacher\'s school timetable, his blocked times and the other timetables. A busy teacher can still be assigned after you confirm the warning.')}</p>` : ''}${exPoolBox()}<h4>${t('Teachers')}</h4><div class="tw"><table class="ex"><tr><th>${t('Name')}</th><th>${t('Code')}</th><th>${t('Exclude')}</th><th>${t('Priority')}</th><th>${t('Weight')}</th><th>${t('Unavailable dates (yyyy-mm-dd, comma separated)')}</th></tr>${T.map(id => `<tr><td>${esc(exName(id))}</td><td>${esc(id)}</td><td><input type="checkbox" data-exr3="ex|${esc(id)}"${R.excluded.includes(id) ? ' checked' : ''}></td><td><input type="checkbox" data-exr3="pr|${esc(id)}"${R.priority.includes(id) ? ' checked' : ''}></td><td><input type="number" step="0.5" min="0.5" max="10" style="width:70px" data-exr3="w|${esc(id)}" value="${R.weights[id] || 1}"></td><td><input data-exr3="un|${esc(id)}" value="${esc((R.unavailable[id] || []).join(', '))}"></td></tr>`).join('')}</table></div>
 <p><button class="b" data-exa="saverules">${ic('check')} ${t('Save the rules')}</button> ${man ? `<span class="msg">${t('The mode is Manual: assign teachers yourself in the Assignments tab.')}</span>` : `<button class="b pri" data-exa="gen" data-keep="locked">${t('Generate the allocation')}</button> <button class="b" data-exa="gen" data-keep="all">${t('Fill the gaps only')}</button>`}</p></div>${exPrev()}`;
 }
 function exPrev() {
@@ -3159,7 +3179,7 @@ async function exSaveRulesFirst() {
 }
 document.addEventListener('change', async e => {
   const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return;
-  if (d.exf) { EX.form[d.exf] = el.value; if (d.exf == 'period') { const p = (S.set.examPeriods || []).find(x => x.name == el.value); if (p) { if (p.s) EX.form.start = p.s; if (p.e) EX.form.end = p.e; if (p.year) EX.form.year = p.year; render() } } return }
+  if (d.exf) { EX.form[d.exf] = el.value; if (d.exf == 'type') return render(); if (d.exf == 'period') { const p = (S.set.examPeriods || []).find(x => x.name == el.value); if (p) { if (p.s) EX.form.start = p.s; if (p.e) EX.form.end = p.e; if (p.year) EX.form.year = p.year; render() } } return }
   if (el.id == 'ex-bkfile') {
     const f = el.files[0]; el.value = ''; if (!f) return; let data;
     try { data = JSON.parse(await f.text()) } catch (x) { return toast(t('This file is not a timetable backup.'), 1) }
@@ -3194,7 +3214,11 @@ document.addEventListener('change', async e => {
 });
 document.addEventListener('input', e => { const el = e.target, d = el.dataset; if (TAB != 'ct' || !d) return; if ('expq' in d) { EX.pool.q = el.value; const l = document.getElementById('ex-pl2'); if (l) l.innerHTML = exPoolList(); return } if (d.exfl == 'q') { EX.filt.q = el.value; clearTimeout(EX.qt); EX.qt = setTimeout(render, 350) } });
 /* ---------------- the tab ---------------- */
-function rExam() { if (!EX.D) { exLoad(); return `<p class="msg">${t('Loading...')}</p>` } return `<div class="exu">${EX.id ? exWork() : exList()}</div>` }
+function rExam() {
+  if (!EX.D) { exLoad(); return `<p class="msg">${t('Loading...')}</p>` }
+  TX = exIsAct(EX.id ? exTt() : EX.form) ? EX_ACT_MAP : null;      // the words of an activity timetable (see EX_ACT_MAP)
+  try { return `<div class="exu">${EX.id ? exWork() : exList()}</div>` } finally { TX = null }
+}
 TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'st'), 1), 0, ['ct', 'Custom Timetables', 'grid']);
 const _rEx = render;
 render = function () {
