@@ -3956,7 +3956,7 @@ const acText = (r, u, pw) => {
 };
 async function acShow(r, res, title) {
   const txt = acText(r, res.username, res.pw);
-  const html = `<p class="msg" style="margin:0 0 8px">${esc(t('Send this to the person (the password is shown only now):'))}</p><pre dir="ltr" style="text-align:start;white-space:pre-wrap;background:var(--hl,#eef3f5);padding:10px;border-radius:10px;margin:0;font:inherit;user-select:all">${esc(txt)}</pre>`;
+  const html = `<p class="msg" style="margin:0 0 8px">${esc(t('Send this to the person (the password is shown only now):'))}</p><pre dir="ltr" style="text-align:start;white-space:pre-wrap;background:var(--soft);padding:10px;border-radius:10px;margin:0;font:inherit;user-select:all">${esc(txt)}</pre>`;
   const wa = 'https:' + '/' + '/wa.me/?text=' + encodeURIComponent(txt);
   if (!window.Swal) { prompt(title, txt); return }
   const o = await Swal.fire({ title: title, html: html + `<p style="margin:10px 0 0"><a href="${wa}" target="_blank" rel="noopener">WhatsApp</a>${r[2] ? ` · <a href="mailto:${esc(r[2])}?subject=${encodeURIComponent((S.set && S.set.school) || 'VIA Timetable')}&body=${encodeURIComponent(txt)}">E-mail</a>` : ''}</p>`,
@@ -4085,38 +4085,76 @@ document.addEventListener('click', e => {
 </script>
 <style>
 .ustab{display:flex;gap:6px;margin:0 0 12px;overflow-x:auto;scrollbar-width:none}.ustab::-webkit-scrollbar{display:none}.ustab .pill{flex:0 0 auto;white-space:nowrap}
-.pr.chg{background:var(--hl);border-radius:8px;padding-inline:6px}
+.pr.chg{background:var(--soft);border-radius:8px;padding-inline:6px}
 @media (max-width:640px){.pr{flex-direction:column;align-items:stretch}.pr .sg2{display:flex;width:100%}.pr .sg2 button{flex:1;padding:8px 4px}.pgs{grid-template-columns:1fr}}
 </style>
 
 <style>
-/* Phone layout (Group 12): compact header, one-line welcome bar, tabs that scroll sideways, bigger touch targets, users table as cards. Desktop is untouched. */
+:root{--soft:#e9eff4}:root[data-theme=dark]{--soft:#223540}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--soft:#223540}}
+button.b:hover{background:var(--soft)}button.b.pri:hover,button.pri:hover{background:var(--teal);color:#fff;filter:brightness(1.1)}
+/* Phone experience (Groups 12 + 15): safe-area header, one-line welcome, bottom navigation + "More" sheet, settings as a list you open page by page,
+   cards instead of wide tables, bigger touch targets. Desktop is untouched. */
+#bnav,#msheet,#msov,.stback{display:none}
 @media (max-width:640px){
-  header{gap:8px 10px;padding:8px 12px;justify-content:space-between}
-  header img{height:34px;padding:2px;border-radius:8px}
-  header #lgn{order:0}header .ti{order:1;flex:1 1 0;min-width:0;text-align:start}header #lgv{order:2}
-  header::after{content:'';order:3;flex-basis:100%;height:0}
-  header .ti b{font-size:15px;line-height:1.2}header .ti b .sop{font-size:10px;padding:0 7px;margin-inline-start:6px}
-  header .ti small{font-size:12px}
-  header #rb,header #cc{display:none!important}
-  header #srch,header #thm,header #hlp,header #nb,header .seg{order:4}
-  header #srch{justify-content:center;padding:7px 12px}
-  header #srch kbd,header #srch #srcht{display:none}
-  header .hbtn,header #nb,header .seg button{min-height:38px;min-width:38px;justify-content:center}
-  header #langt{display:none}
-  #wb{padding:8px 12px;gap:4px 10px;flex-wrap:wrap;align-items:center}
-  #wb .av{width:40px;height:40px;font-size:16px}
-  #wb .who{flex:1;min-width:0}#wb .who b{font-size:15px}
-  #wb .who small{font-size:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}
-  #wb .who small .role,#wb .who small .rm{font-size:12px}
-  #wb .who small .rm{padding:4px 0;min-height:30px}
-  #wb .when{width:100%;margin:0;flex-direction:row;flex-wrap:wrap;gap:0 10px;align-items:baseline}
-  #wb .clk{display:none}#wb .when small{font-size:12px}
-  nav.tabs{flex-wrap:nowrap;overflow-x:auto;padding:8px 12px 2px;gap:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  nav.tabs::-webkit-scrollbar{display:none}
-  nav.tabs .pill{flex:0 0 auto;white-space:nowrap;padding:8px 14px;min-height:40px}
+  :root{--bn:62px}
+  html,body{overflow-x:hidden}
+  header{gap:8px;padding:calc(env(safe-area-inset-top,0px) + 6px) 12px 8px;flex-wrap:nowrap;align-items:center;justify-content:flex-start}
+  header>img{height:36px;padding:2px;border-radius:8px;flex:0 0 auto}
+  header>img:last-child{display:none}
+  header .ti{flex:1 1 0;min-width:0;text-align:start}
+  header .ti b{display:block;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .ti b .sop{font-size:10px;padding:0 6px;margin-inline-start:6px}
+  header .ti small{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header #rb,header #cc,header #thm,header #hlp,header .seg{display:none!important}
+  header #srch,header #nb{flex:0 0 auto;width:40px;height:40px;min-width:40px;padding:0;justify-content:center;display:inline-flex;align-items:center}
+  header #srch #srcht,header #srch kbd{display:none}
+  #wb{padding:6px 12px;gap:10px;flex-wrap:nowrap;align-items:center}
+  #wb .av{width:36px;height:36px;font-size:15px;flex:0 0 auto}
+  #wb .who{flex:1;min-width:0}#wb .who b{font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #wb .who small{font-size:0;display:block;line-height:1}#wb .who small .role{font-size:11px}#wb .who small .rm,#wb .when{display:none}
+  nav#tabs{display:none}
+  main#v{padding-bottom:calc(var(--bn) + env(safe-area-inset-bottom,0px) + 18px)}
+  #toast,#nsn,#nsv,#vzb{bottom:calc(var(--bn) + env(safe-area-inset-bottom,0px) + 12px)!important}
   input,select,textarea{font-size:16px}
-  .b{min-height:40px}
+  .b{min-height:42px}
+  /* bottom navigation */
+  #bnav{display:flex;position:fixed;inset-inline:0;bottom:0;z-index:70;background:var(--sf);border-top:1px solid var(--ln);box-shadow:0 -4px 18px rgba(0,0,0,.12);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+  #bnav button{flex:1 1 0;min-width:0;border:0;background:none;color:var(--mut);font:inherit;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:12px;min-height:50px;position:relative;cursor:pointer}
+  #bnav button svg{width:22px;height:22px}#bnav button .mo{font-size:22px;line-height:22px;height:22px}
+  #bnav button.on{color:var(--teal);font-weight:700;background:var(--soft)}
+  #bnav button span.lb{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #bnav button .bd{position:absolute;top:2px;inset-inline-start:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:#d93025;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+  #bnav button .bd.w{background:#f0a31a;color:#222}
+  /* More sheet */
+  #msov{display:block;position:fixed;inset:0;z-index:80;background:rgba(10,20,30,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+  #msheet{display:block;position:fixed;inset-inline:0;bottom:0;z-index:81;background:var(--sf);color:var(--ink);border-radius:20px 20px 0 0;max-height:85vh;overflow:auto;padding:8px 14px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .22s;box-shadow:0 -10px 40px rgba(0,0,0,.3)}
+  body.ms-open #msov{opacity:1;pointer-events:auto}body.ms-open #msheet{transform:none}
+  #msheet .grip{width:42px;height:5px;border-radius:3px;background:var(--ln);margin:4px auto 10px}
+  #msheet .who{display:flex;align-items:center;gap:10px;margin-bottom:10px}#msheet .who .av{width:40px;height:40px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-weight:700}
+  #msheet h4{margin:14px 0 6px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+  #msheet .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #msheet .it{display:flex;align-items:center;gap:10px;width:100%;text-align:start;background:var(--soft);border:0;border-radius:14px;padding:12px;font:inherit;color:inherit;min-height:50px;cursor:pointer}
+  #msheet .it.on{background:var(--teal);color:#fff}#msheet .it svg{width:20px;height:20px;flex:0 0 auto}
+  #msheet .rows .it{margin-bottom:6px;justify-content:space-between}#msheet .it small{color:var(--mut)}
+  #msheet .it.red{color:#b3261e}
+  /* settings: a list first, then one page with a back bar */
+  body[data-stm=list] .sl .scont{display:none}
+  body[data-stm=page] .sl nav.side{display:none}
+  .sl{display:block!important}
+  .sl nav.sub.side{display:block!important;position:static!important;width:auto!important}
+  .sl nav.sub.side .sg{margin-bottom:12px}.sl nav.sub.side .sg small{display:block;margin:6px 4px;color:var(--mut);font-size:12px}
+  .sl nav.sub.side .pill{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:start;margin:0 0 6px;padding:14px;min-height:50px;border-radius:14px;font-size:16px}
+  .sl nav.sub.side .pill::after{content:'\203A';font-size:22px;color:var(--mut);margin-inline-start:auto}
+  html[dir=rtl] .sl nav.sub.side .pill::after{content:'\2039'}
+  .sl nav.sub.side .pill.on{background:var(--sf);color:inherit}
+  body[data-stm=page] .stback{display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:15;background:var(--bg);padding:8px 0;margin:0 0 6px;font-weight:700}
+  .stback button{border:0;background:var(--sf);border:1px solid var(--ln);border-radius:999px;min-height:40px;padding:0 14px;font:inherit;color:inherit}
+  nav.gnav{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;scrollbar-width:none}nav.gnav .pill{flex:0 0 auto;white-space:nowrap}
+  nav.sub:not(.side){flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}nav.sub:not(.side) .pill{flex:0 0 auto;white-space:nowrap}
+  /* wide things stay inside their card */
+  .card{max-width:100%;overflow-x:auto}
+  .card .tag,.card .chip{white-space:normal}
   /* users & links: one card per person instead of a wide table */
   .usr .sc:has(table.ed:not(.rm)){max-height:none!important;overflow:visible}
   .usr table.ed:not(.rm),.usr table.ed:not(.rm) tbody{display:block;width:100%}
@@ -4134,16 +4172,79 @@ document.addEventListener('click', e => {
   html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(1)::before{content:'الاسم'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(2)::before{content:'الإيميل'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(3)::before{content:'الدور'}
   html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(4)::before{content:'النطاق'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(5)::before{content:'يعدّل'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(6)::before{content:'نشط'}
 }
+@media print{#bnav,#msheet,#msov{display:none!important}}
 </style>
 <script>
-/* phone: keep the open tab visible in the sideways-scrolling tab row */
-(function () {
-  const _mr = render;
-  render = function () {
-    _mr();
-    try { if (innerWidth <= 640) { const p = document.querySelector('#tabs .pill.on'); if (p) p.scrollIntoView({ inline: 'center', block: 'nearest' }) } } catch (e) { }
-  };
-})();
+"use strict";
+Object.assign(AR, Object.fromEntries(Object.entries({ 'More': 'المزيد', 'Pages': 'الصفحات', 'Preferences': 'التفضيلات', 'Dark mode': 'الوضع الليلي', 'Light mode': 'الوضع النهاري', 'Language': 'اللغة', 'Back': 'رجوع', 'Account': 'الحساب' }).filter(([k]) => !(k in AR))));
+const MB = () => innerWidth <= 640;
+const MB_MAIN = ['td', 'tt', 'ab', 'cf'], MB_FILL = ['rp', 'ct', 'bm'];
+const MBx = { stm: false, lastTab: '' };
+function mbIds() {                     // the four places of the bottom bar: the usual ones the role can see, then fill with others
+  const have = TABS.map(x => x[0]); let ids = MB_MAIN.filter(x => have.includes(x));
+  MB_FILL.forEach(x => { if (ids.length < 4 && have.includes(x)) ids.push(x) });
+  return ids;
+}
+function mbBar() {
+  if (!S || S.register) { const o = document.getElementById('bnav'); if (o) o.remove(); return }
+  let n = document.getElementById('bnav'); if (!n) { n = document.createElement('nav'); n.id = 'bnav'; n.setAttribute('aria-label', 'Main'); document.body.appendChild(n) }
+  const ids = mbIds(), cnt = (S.conflicts && S.conflicts.counts) || { error: 0, warning: 0 };
+  n.innerHTML = ids.map(id => { const x = TABS.find(y => y[0] == id), bd = id == 'cf' && (cnt.error + cnt.warning) ? `<span class="bd${cnt.error ? '' : ' w'}">${cnt.error + cnt.warning}</span>` : '';
+    return `<button type="button" data-mbt="${id}" class="${TAB == id ? 'on' : ''}">${ic(x[2])}<span class="lb">${esc(t(x[1]))}</span>${bd}</button>` }).join('') +
+    `<button type="button" data-mbm class="${ids.includes(TAB) ? '' : 'on'}"><span class="mo">&#8943;</span><span class="lb">${esc(t('More'))}</span></button>`;
+}
+function mbSheet() {
+  let o = document.getElementById('msov'), s = document.getElementById('msheet');
+  if (!o) { o = document.createElement('div'); o.id = 'msov'; document.body.appendChild(o) }
+  if (!s) { s = document.createElement('div'); s.id = 'msheet'; s.setAttribute('role', 'dialog'); document.body.appendChild(s) }
+  const ids = mbIds(), rest = TABS.filter(x => !ids.includes(x[0])), dark = document.documentElement.dataset.theme == 'dark' || (document.body.classList.contains('dark')),
+    nm = (document.getElementById('wb-g') || {}).textContent || '', me = (S && S.me) || '';
+  const hlp = typeof tpTour == 'function';
+  s.innerHTML = `<div class="grip"></div><div class="who"><span class="av">${esc(String(me || nm || '?').trim().charAt(0).toUpperCase())}</span><div><b>${esc(me || nm)}</b><br><small class="msg">${esc(t((S && S.role) == 'admin' ? 'Admin' : (S && S.role) || ''))}</small></div></div>
+${rest.length ? `<h4>${t('Pages')}</h4><div class="g">${rest.map(x => `<button type="button" class="it${TAB == x[0] ? ' on' : ''}" data-mbt="${x[0]}">${ic(x[2])}<span>${esc(t(x[1]))}</span></button>`).join('')}</div>` : ''}
+<h4>${t('Preferences')}</h4><div class="rows">
+<button type="button" class="it" data-mba="theme"><span>${t(dark ? 'Light mode' : 'Dark mode')}</span><small>${dark ? '☀' : '☾'}</small></button>
+<button type="button" class="it" data-mba="lang"><span>${t('Language')}</span><small>${HL == 'ar' ? 'English' : 'العربية'}</small></button>
+${hlp ? `<button type="button" class="it" data-mba="tips"><span>${t('Show tips for this page')}</span><small>?</small></button><button type="button" class="it" data-mba="tipsreset"><span>${t('Reset all tips')}</span></button>` : ''}
+</div><h4>${t('Account')}</h4><div class="rows">${typeof acOn == 'function' && acOn() ? `<button type="button" class="it" data-mba="pw"><span>${t('Change password')}</span></button>` : ''}<button type="button" class="it red" data-mba="out"><span>${t('Sign out')}</span></button></div>`;
+}
+const mbClose = () => document.body.classList.remove('ms-open');
+function mbSettings() {                // settings on a phone: the list of sections first, a page + back bar after you pick one
+  const m = MB() && TAB == 'st';
+  if (!m) { delete document.body.dataset.stm; return }
+  if (MBx.lastTab != 'st') MBx.stm = false;
+  document.body.dataset.stm = MBx.stm ? 'page' : 'list';
+  const sl = document.querySelector('#v .sl'); if (!sl) return;
+  if (!sl.querySelector('.stback')) { const d = document.createElement('div'); d.className = 'stback'; d.innerHTML = `<button type="button" data-stb>&#8249; ${esc(t('Settings'))}</button>`; sl.insertBefore(d, sl.firstChild) }
+  const sc = document.querySelector('#v .sl nav.side .pill.on'), bk = sl.querySelector('.stback span'); void bk; void sc;
+}
+const _mbr = render;
+render = function () {
+  _mbr();
+  try { mbSettings(); MBx.lastTab = TAB; mbBar(); mbSheet() } catch (e) { }
+};
+document.addEventListener('click', e => {
+  const T = e.target, g = n => T.closest && T.closest(n);
+  if (g('#msov')) return mbClose();
+  const m = g('[data-mbm]'); if (m) { mbSheet(); document.body.classList.add('ms-open'); return }
+  const tb = g('[data-mbt]');
+  if (tb) { mbClose(); const p = document.querySelector('#tabs [data-tab="' + tb.dataset.mbt + '"]'); if (p) p.click(); window.scrollTo(0, 0); return }
+  const a = g('[data-mba]');
+  if (a) {
+    const k = a.dataset.mba; mbClose();
+    if (k == 'theme') { const b = document.getElementById('thm'); if (b) b.click() }
+    else if (k == 'lang') { const b = document.getElementById('lang'); if (b) b.click() }
+    else if (k == 'tips') tpTour();
+    else if (k == 'tipsreset') { const v = TP.get(); v.seen = {}; v.off = false; TP.put(v); toast(t('Tips will show again.')) }
+    else if (k == 'pw') window.showChange(false);
+    else if (k == 'out') window.authLogout();
+    return;
+  }
+  if (g('[data-stb]')) { MBx.stm = false; document.body.dataset.stm = 'list'; window.scrollTo(0, 0); return }
+  const sp = g('.sl nav.side [data-sub]'); if (sp && MB()) { MBx.stm = true; document.body.dataset.stm = 'page'; window.scrollTo(0, 0) }
+}, true);
+document.addEventListener('keydown', e => { if (e.key == 'Escape') mbClose() });
+addEventListener('resize', () => { try { mbBar(); mbSettings() } catch (e) { } });
 </script>
 <script>
 "use strict";
