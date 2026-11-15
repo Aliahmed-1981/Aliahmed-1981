@@ -14,8 +14,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#173B5E;--teal:#26806F;--gold:#C0993F;--violet:#7c5cff;--pink:#ec4899;--sky:#0ea5e9;--amber:#f59e0b;--green:#22a06b;--coral:#ef6a55;
---bg:#f3f6f9;--sf:#fff;--ink:#14262e;--mut:#5c6f77;--ln:#dbe3e8;--hl:#fff6cc;--bad:#d1291f;--bads:#ffe3e0;--wn:#b36b00;--wns:#fff0cf;--sh:0 4px 16px rgba(23,59,94,.10);--r:16px;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1a20;--sf:#16252c;--ink:#e6eef0;--mut:#93a8b0;--ln:#2b3e47;--hl:#3a3516;--bads:#4a2320;--wns:#4d3a12;--sh:0 4px 16px rgba(0,0,0,.4);color-scheme:dark}}
+--bg:#f3f6f9;--sf:#fff;--ink:#14262e;--mut:#5c6f77;--ln:#dbe3e8;--hl:#e9eff4;--bad:#d1291f;--bads:#ffe3e0;--wn:#b36b00;--wns:#fff0cf;--sh:0 4px 16px rgba(23,59,94,.10);--r:16px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1a20;--sf:#16252c;--ink:#e6eef0;--mut:#93a8b0;--ln:#2b3e47;--hl:#223540;--bads:#4a2320;--wns:#4d3a12;--sh:0 4px 16px rgba(0,0,0,.4);color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Poppins,system-ui,sans-serif}
 [dir=rtl] body,body[dir=rtl]{font-family:Cairo,Poppins,sans-serif}
@@ -49,7 +49,7 @@ button.b:hover{background:var(--hl)}button.pri{background:var(--teal);color:#fff
 .sc{overflow:auto}
 table.ed{border-collapse:collapse;width:100%}table.ed th{background:var(--bg);text-align:start;padding:6px 8px;position:sticky;top:0;font-weight:600;font-size:12px}
 table.ed td{border-bottom:1px solid var(--ln);padding:3px 4px}table.ed td input,table.ed td select{width:100%}
-table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
+table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--teal)}
 .msg{color:var(--mut)}
 /* ---------- timetable tables (same design as the PDFs) ---------- */
 .tt{width:100%;table-layout:fixed;border-collapse:collapse;background:#fff;color:#111;font-family:"DejaVu Sans","Liberation Sans",Arial,sans-serif;margin-bottom:12px}
@@ -63,9 +63,9 @@ table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
 .tt tr.ct>td{height:5.6em;font-size:.92em;line-height:1.2;vertical-align:top;padding:.15em}
 .tt tr.ct>td.bk{background:#d9dce1;font-weight:700;letter-spacing:.04em;font-size:.85em;vertical-align:middle}
 .tt td.sel{cursor:pointer}
-.tt td.sel:hover{background:var(--hl);box-shadow:inset 0 -3px 0 var(--amber)}
+.tt td.sel:hover{background:var(--hl);box-shadow:inset 0 -3px 0 var(--teal)}
 .en{position:relative;text-align:start;border-radius:6px;border-inline-start:3px solid var(--sc,#888);background:var(--sb,#f4f4f4);padding:.1em .3em;margin:.12em 0;cursor:grab}
-.en:hover{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
+.en:hover{background:var(--hl);box-shadow:inset 3px 0 0 var(--teal)}
 .en b{display:block;font-size:1.02em;line-height:1.15;color:#000}.en i{display:block;font-style:normal;font-size:.8em;color:#333}
 .en i.un{color:#b42318;font-style:italic}.si{display:inline-block;margin-inline-end:.28em;font-size:1.15em;line-height:1;vertical-align:-.12em}img.si{height:1.3em;width:1.3em;object-fit:contain;border-radius:3px}
 .en small{display:block;font-size:.7em;color:#6b4e00;font-weight:700}
@@ -91,7 +91,7 @@ table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center}
 #toast div{background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;box-shadow:var(--sh)}#toast div.bad{background:var(--bad)}
 .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.cfl{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--ln);padding:9px 4px;flex-wrap:wrap}.cfl:hover{background:var(--hl);box-shadow:inset 3px 0 0 var(--amber)}.cfl .tx{flex:1;min-width:220px}.cfl.ig{opacity:.55}
+.cfl{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--ln);padding:9px 4px;flex-wrap:wrap}.cfl:hover{background:var(--hl);box-shadow:inset 3px 0 0 var(--teal)}.cfl .tx{flex:1;min-width:220px}.cfl.ig{opacity:.55}
 /* ---------- print ---------- */
 #pa{display:none}
 #pa .sheet{box-sizing:border-box;font-size:var(--fs,10.7px);color:#111;background:#fff}
@@ -176,7 +176,8 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
     'Choose a password different from the current one.': 'اختر كلمة سر مختلفة عن الحالية.',
     'Enter your e-mail or username, and your password.': 'اكتب الإيميل أو اسم المستخدم وكلمة السر.',
     'Enter your e-mail or username.': 'اكتب الإيميل أو اسم المستخدم.',
-    'This sign-in has no password. Ask the administrator for an account.': 'الدخول الحالي مش بحساب. اطلب من الإدارة إنشاء حساب لك.'
+    'This sign-in has no password. Ask the administrator for an account.': 'الدخول الحالي مش بحساب. اطلب من الإدارة إنشاء حساب لك.',
+    'The server files are out of date: in Apps Script replace Core.gs (and Roles.gs, Login.gs) with the newest versions, then Deploy > Manage deployments > New version.': 'ملفات السيرفر قديمة: في Apps Script استبدل Core.gs و Roles.gs و Login.gs بآخر نسخة، ثم Deploy > Manage deployments > New version.'
   };
   function amsg(m) {
     m = String(m || '').replace(/^Error:\s*/, '');
@@ -1165,7 +1166,7 @@ body.ro .bar .msg,body.ro .seg:has([data-bmw]){display:none}
 .pgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px}.pg{border:1px solid var(--ln);border-radius:12px;padding:8px 12px;background:var(--sf)}.pg h5{margin:0 0 4px;font-size:14px}
 .pr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--ln);flex-wrap:wrap}.eff{font-size:12px;margin-inline-end:6px}.eff.ok{color:#1a7a52}.eff.no{color:#b3261e}
 .sg2{display:inline-flex;border:1px solid var(--ln);border-radius:999px;overflow:hidden}.sg2 button{border:0;background:var(--sf);color:inherit;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px}.sg2 button.on{background:#1f3a68;color:#fff}.sg2 button.on.al{background:#1a7a52}.sg2 button.on.bl{background:#b3261e}
-table.rm th.gh{background:var(--hl);text-align:start}
+table.rm th.gh{display:table-cell;margin:0;font-size:12px;border-bottom:0;background:var(--hl);text-align:start}
 body.na .bmk,body.na [data-bmk]{display:none}   /* admin-only numbers on the Master sheet */
 body.ro td.sel,body.ro .en{cursor:default}
 body.ro .tt td.sel:hover,body.ro .en:hover{background:inherit;box-shadow:none}
@@ -3613,8 +3614,8 @@ document.addEventListener('click', async e => {
 
 <style>
 /* ---- Group 9: Today page, grouped settings menu, quick search, dark mode toggle, a calmer look ---- */
-:root[data-theme=dark]{--bg:#0e1a20;--sf:#16252c;--ink:#e6eef0;--mut:#93a8b0;--ln:#2b3e47;--hl:#3a3516;--bads:#4a2320;--wns:#4d3a12;--sh:0 4px 16px rgba(0,0,0,.4);color-scheme:dark}
-@media print{:root,:root[data-theme=dark]{--bg:#f3f6f9;--sf:#fff;--ink:#14262e;--mut:#5c6f77;--ln:#dbe3e8;--hl:#fff6cc;--bads:#ffe3e0;--wns:#fff0cf;color-scheme:light}}
+:root[data-theme=dark]{--bg:#0e1a20;--sf:#16252c;--ink:#e6eef0;--mut:#93a8b0;--ln:#2b3e47;--hl:#223540;--bads:#4a2320;--wns:#4d3a12;--sh:0 4px 16px rgba(0,0,0,.4);color-scheme:dark}
+@media print{:root,:root[data-theme=dark]{--bg:#f3f6f9;--sf:#fff;--ink:#14262e;--mut:#5c6f77;--ln:#dbe3e8;--hl:#e9eff4;--bads:#ffe3e0;--wns:#fff0cf;color-scheme:light}}
 .hbtn{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;display:inline-flex;gap:6px;align-items:center;transition:background .15s}
 .hbtn:hover{background:rgba(255,255,255,.28)}
 .hbtn kbd{font:11px/1 inherit;background:rgba(255,255,255,.2);border-radius:5px;padding:2px 5px}
@@ -4306,6 +4307,62 @@ document.addEventListener('click', e => {
 }
 @media print{#vzb{display:none!important}}
 </style>
+<script>
+/* Group 16: (1) head-of-department rows no longer overlap with the general absence rows, (2) Exams & invigilation split into 4 permissions
+   (view / edit / invigilation / print), backups admin only, (3) the exam pages hide what the person may not do (the server refuses it as well). */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'View Exams & invigilation (open the area)': 'عرض الامتحانات والمراقبة (فتح الصفحة)',
+  'Edit exam timetables, sittings, periods and Excel import': 'تعديل جداول الامتحانات والفترات والاستيراد من Excel',
+  'Invigilation: rules, generate, replace, lock': 'المراقبة: القواعد والتوزيع والاستبدال والقفل',
+  'Print and Excel of the exam sheets': 'طباعة وتصدير أوراق الامتحانات (Excel)',
+  'Covered by the Head of department rows': 'مغطّى بصفوف رئيس القسم',
+  'Backup and restore of the exam data: administrators only.': 'النسخ الاحتياطي واستعادة بيانات الامتحانات: للأدمن فقط.',
+  'Exams & invigilation': 'الامتحانات والمراقبة',
+  'You can view this page only.': 'تستطيع عرض هذه الصفحة فقط.'
+}).filter(([k]) => !(k in AR))));
+{
+  const g = PERM_GROUPS.find(x => x[0] == 'Exams & invigilation');
+  if (g) { g[1].length = 0; g[1].push(['ct', 'View Exams & invigilation (open the area)'], ['ct_edit', 'Edit exam timetables, sittings, periods and Excel import'], ['ct_inv', 'Invigilation: rules, generate, replace, lock'], ['ct_export', 'Print and Excel of the exam sheets']); PERM_LIST.splice(0, PERM_LIST.length, ...PERM_GROUPS.flatMap(x => x[1])) }
+}
+/* the HoD column: the two general rows are replaced by the Head of department rows (abs_dept / abs_propose), so nothing is ticked twice */
+const G16_HOD_OVL = ['abs_behalf', 'abs_assign'];
+const _g16rb = usRoleBox;
+usRoleBox = function () {
+  let h = _g16rb();
+  if (US.rp && US.rp.hod) G16_HOD_OVL.forEach(k => { US.rp.hod[k] = false });
+  return h.replace(/<input type="checkbox" data-rp="hod\|(abs_behalf|abs_assign)"[^>]*>/g, `<small class="msg" title="${esc(t('Covered by the Head of department rows'))}">&mdash;</small>`)
+};
+const _g16up = usPanel;
+usPanel = function (r, i) {
+  const role = String(r[3] || '').toLowerCase(), ov = usPerm(r, 'ct'), saved = US.permDefs;
+  if (ov && saved) US.permDefs = saved.map(p => ['ct_edit', 'ct_inv', 'ct_export'].includes(p.k) && !usPerm(r, p.k) ? Object.assign({}, p, { d: Object.assign({}, p.d, { [role]: ov == 'allow' }) }) : p);
+  let h; try { h = _g16up(r, i) } finally { US.permDefs = saved }
+  const tp = document.createElement('template'); tp.innerHTML = h;
+  if (role == 'hod') tp.content.querySelectorAll('.pr').forEach(p => { if (p.querySelector('[data-upb*="|abs_behalf|"],[data-upb*="|abs_assign|"]')) p.remove() });
+  tp.content.querySelectorAll('.pg').forEach(p => { const h5 = p.querySelector('h5'); if (h5 && h5.textContent.trim() == t('Exams & invigilation')) { const n = document.createElement('p'); n.className = 'msg'; n.textContent = t('Backup and restore of the exam data: administrators only.'); p.appendChild(n) } });
+  return tp.innerHTML
+};
+/* ---- the exam pages: hide what this person may not do ---- */
+const G16_NEED = {
+  ct_edit: ['new', 'saveform', 'edit', 'del', 'addrow', 'delrow', 'duprow', 'saverows', 'impprev', 'impcheck', 'impgo', 'tpl', 'rmg'],
+  ct_inv: ['saverules', 'gen', 'approve', 'discard', 'fix', 'rep', 'rw', 'sw', 'pm', 'lk', 'rm', 'unsel', 'lock', 'poolo', 'pools'],
+  ct_export: ['print', 'xlsx'],
+  admin: ['bknow', 'bkdl', 'bkrs']
+};
+function exCan(k) { return !S || S.role == 'admin' || !!(S.perms && S.perms[k]) }
+const _g16ex = rExam;
+rExam = function () {
+  const h = _g16ex();
+  if (!S || S.role == 'admin') return h;
+  const tp = document.createElement('template'); tp.innerHTML = h; const R = tp.content;
+  Object.keys(G16_NEED).forEach(k => { if (exCan(k)) return; G16_NEED[k].forEach(a => R.querySelectorAll('[data-exa="' + a + '"]').forEach(x => x.remove())) });
+  if (!exCan('ct_edit')) { R.querySelectorAll('#ex-file').forEach(x => { const c = x.closest('.card'); if (c) c.remove() }); R.querySelectorAll('table.ex input,table.ex select,[data-exg],[data-exf]').forEach(x => { x.disabled = true }) }
+  if (!exCan('ct_inv')) { R.querySelectorAll('#ex-poolbox input,#ex-poolbox select,[data-exr],[data-exadd],[data-exset],#ex-rw,#ex-sw,#ex-pm,#ex-rt').forEach(x => { x.disabled = true }); R.querySelectorAll('[data-exa="sel"]').forEach(x => x.disabled = true) }
+  R.querySelectorAll('[data-exs="bk"],[data-exa="top"][data-k="periods"]').forEach(x => x.remove());
+  if (!exCan('ct_edit') && !exCan('ct_inv')) { const f = R.querySelector('.exu'); if (f) { const n = document.createElement('p'); n.className = 'msg'; n.textContent = t('You can view this page only.'); f.insertBefore(n, f.firstChild) } }
+  return tp.innerHTML
+};
+</script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
