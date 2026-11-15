@@ -112,9 +112,8 @@ window.APP_BASE = new URL('./', location.href).href;      /* folder the app live
 window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if (q) localStorage.setItem('tok', q); window.TOK = q || localStorage.getItem('tok') || ''; } catch (e) { }
 /* installed app: start from an address that carries the token, so the installed icon opens straight into the person's own timetable */
 (function () {
-  if (!window.TOK) return;
   try {
-    var o = window.APP_BASE, m = { id: o, name: 'VIA Timetable', short_name: 'Timetable', start_url: o + '?k=' + encodeURIComponent(window.TOK), scope: o, display: 'standalone', background_color: '#173B5E', theme_color: '#173B5E',
+    var o = window.APP_BASE, m = { id: o, name: 'VIA Timetable', short_name: 'Timetable', start_url: (window.TOK && window.TOK.indexOf('s.') !== 0) ? o + '?k=' + encodeURIComponent(window.TOK) : o, scope: o, display: 'standalone', background_color: '#173B5E', theme_color: '#173B5E',
       icons: [{ src: o + 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: o + 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: o + 'icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }] };
     document.getElementById('mf').href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
   } catch (e) { }
@@ -146,6 +145,7 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
           if (ok) ok(d);
         } else {
           var msg = (j && j.error) || 'Error';
+          if (/MUST_CHANGE/.test(msg)) { window.showChange(true); return }
           if (/Access denied/i.test(msg)) showLogin(msg);
           if (no) no(new Error(msg));
         }
@@ -163,19 +163,116 @@ window.TOK = ''; try { var q = new URLSearchParams(location.search).get('k'); if
     } });
   }
   window.google = { script: { run: mk() } };
+  /* ---- sign in with username/e-mail + password (replaces the old "paste your link" box) ---- */
+  var AMSG = {
+    'Wrong username or password.': 'اسم المستخدم أو كلمة السر غير صحيحة.',
+    'Access denied. Please sign in.': 'انتهت الجلسة أو الدخول غير مسموح. سجّل الدخول من جديد.',
+    'Access denied. Open the app with your personal link.': 'سجّل الدخول من جديد.',
+    'This account is disabled. Please contact the administrator.': 'الحساب موقوف. تواصل مع الإدارة.',
+    'The password must be at least 8 characters.': 'كلمة السر لازم تكون 8 حروف على الأقل.',
+    'The password must not be the same as the username or e-mail.': 'كلمة السر لازم تختلف عن اسم المستخدم والإيميل.',
+    'That password is too easy to guess.': 'كلمة السر سهلة التخمين، اختر غيرها.',
+    'The current password is wrong.': 'كلمة السر الحالية غير صحيحة.',
+    'Choose a password different from the current one.': 'اختر كلمة سر مختلفة عن الحالية.',
+    'Enter your e-mail or username, and your password.': 'اكتب الإيميل أو اسم المستخدم وكلمة السر.',
+    'Enter your e-mail or username.': 'اكتب الإيميل أو اسم المستخدم.',
+    'This sign-in has no password. Ask the administrator for an account.': 'الدخول الحالي مش بحساب. اطلب من الإدارة إنشاء حساب لك.'
+  };
+  function amsg(m) {
+    m = String(m || '').replace(/^Error:\s*/, '');
+    if (AMSG[m]) return AMSG[m] + '\n' + m;
+    var x = m.match(/^Too many wrong attempts\. Try again in (\d+) minute/);
+    if (x) return 'محاولات كتير غلط. جرّب بعد ' + x[1] + ' دقيقة أو اطلب من الإدارة.\n' + m;
+    if (/locked for 10 minutes/.test(m)) return 'تم قفل الحساب 10 دقائق بعد محاولات غلط كتير.\n' + m;
+    return m;
+  }
+  function lgCard(inner) {
+    var d = document.getElementById('lg-ov');
+    if (!d) { d = document.createElement('div'); d.id = 'lg-ov'; d.style.cssText = 'position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg,#f3f6f8);padding:16px;overflow:auto'; document.body.appendChild(d) }
+    d.innerHTML = '<form class="card" id="lg-f" style="max-width:420px;width:100%;margin:auto" autocomplete="on">' + inner + '</form>';
+    return d;
+  }
+  var LGI = 'width:100%;box-sizing:border-box;padding:11px;border:1px solid var(--ln,#ccd);border-radius:10px;font:inherit;direction:ltr;background:var(--sf,#fff);color:inherit';
+  var LGL = 'display:block;text-align:start;margin:10px 0 4px;font-size:13px;color:var(--mut,#5c6f77)';
+  function lgMsg(m, good) { var e = document.getElementById('lg-m'); if (!e) return; e.style.color = good ? 'var(--ok,#26806F)' : 'var(--bad,#c33)'; e.style.whiteSpace = 'pre-line'; e.textContent = m || '' }
+  function pwField(id, label, auto) {
+    return '<label style="' + LGL + '" for="' + id + '">' + label + '</label><div style="position:relative"><input id="' + id + '" type="password" autocomplete="' + auto + '" style="' + LGI + ';padding-inline-end:46px">' +
+      '<button type="button" data-eye="' + id + '" tabindex="-1" aria-label="show" style="position:absolute;inset-inline-end:6px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;font-size:18px;padding:4px 8px">&#128065;</button></div>';
+  }
   window.showLogin = function (msg) {
-    if (document.getElementById('lg-ov')) { if (msg) document.getElementById('lg-m').textContent = msg; return }
-    var d = document.createElement('div'); d.id = 'lg-ov';
-    d.style.cssText = 'position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg,#f3f6f8);padding:16px';
-    d.innerHTML = '<div class="card" style="max-width:440px;width:100%;text-align:center"><h3 style="margin:0 0 6px">VIA Timetable</h3><p style="margin:0 0 12px">الصق لينكك الشخصي<br>Paste your personal link</p><input id="lg-i" placeholder="https:' + '/' + '/.../?k=..." style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--ln,#ccd);border-radius:10px;font:inherit;direction:ltr"><p id="lg-m" style="color:var(--bad,#c33);min-height:20px;margin:8px 0"></p><button class="b" id="lg-b" style="padding:9px 22px">OK</button></div>';
-    document.body.appendChild(d);
-    if (msg) document.getElementById('lg-m').textContent = msg;
-    document.getElementById('lg-b').onclick = function () {
-      var v = document.getElementById('lg-i').value.trim(), m = v.match(/[?&]k=([^&#\s]+)/), t = m ? decodeURIComponent(m[1]) : v;
-      if (!/^[A-Za-z0-9_-]{16,}$/.test(t)) { document.getElementById('lg-m').textContent = 'Invalid link / اللينك غير صحيح'; return }
-      try { localStorage.setItem('tok', t) } catch (e) { }
-      location.href = location.pathname + '?k=' + encodeURIComponent(t);
+    if (document.getElementById('lg-u')) { if (msg) lgMsg(amsg(msg)); return }
+    lgCard('<h3 style="margin:0 0 2px">VIA Timetable</h3><p style="margin:0 0 6px;color:var(--mut,#5c6f77)">تسجيل الدخول &middot; Sign in</p>' +
+      '<label style="' + LGL + '" for="lg-u">البريد الإلكتروني أو اسم المستخدم &middot; E-mail or username</label><input id="lg-u" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" style="' + LGI + '">' +
+      pwField('lg-p', 'كلمة السر &middot; Password', 'current-password') +
+      '<p id="lg-m" role="alert" style="min-height:20px;margin:10px 0"></p>' +
+      '<button class="b pri" id="lg-b" type="submit" style="padding:10px 26px;width:100%">دخول &middot; Sign in</button>' +
+      '<p style="margin:12px 0 0"><a href="#" id="lg-fg">نسيت كلمة السر؟ &middot; Forgot password?</a></p>' +
+      '<p style="margin:8px 0 0;font-size:12px"><a href="#" id="lg-lk" style="color:var(--mut,#5c6f77)">لدي لينك شخصي قديم &middot; I have a personal link</a></p><div id="lg-lb" style="display:none;margin-top:8px"><input id="lg-li" placeholder="...?k=..." style="' + LGI + '"><button class="b" id="lg-lg" type="button" style="margin-top:6px">OK</button></div>');
+    if (msg) lgMsg(amsg(msg));
+    var f = document.getElementById('lg-f'), $i = function (x) { return document.getElementById(x) };
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var u = $i('lg-u').value.trim(), p = $i('lg-p').value; if (!u || !p) return lgMsg('اكتب الإيميل أو اسم المستخدم وكلمة السر.\nEnter your username and password.');
+      $i('lg-b').disabled = true; lgMsg('...', true);
+      var dev = (navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/[\d.]+/) || [''])[0] + ' ' + (/Mobile|Android|iPhone/.test(navigator.userAgent) ? 'mobile' : 'desktop');
+      window.TOK = '';
+      post('api_login', [u, p, dev]).then(function (j) {
+        $i('lg-b').disabled = false;
+        if (!(j && j.ok)) return lgMsg(amsg(j && j.error || 'Error'));
+        try { localStorage.setItem('tok', j.data.st) } catch (x) { }
+        window.TOK = j.data.st;
+        if (j.data.must) window.showChange(true); else location.replace(location.pathname);
+      }, function () { $i('lg-b').disabled = false; lgMsg('مشكلة في الاتصال. اتأكد من الإنترنت وجرب تاني.\nConnection problem.') });
     };
+    f.onclick = function (e) {
+      var t = e.target;
+      if (t.dataset && t.dataset.eye) { var i = $i(t.dataset.eye); i.type = i.type == 'password' ? 'text' : 'password'; return }
+      if (t.id == 'lg-lk') { e.preventDefault(); var b = $i('lg-lb'); b.style.display = b.style.display == 'none' ? '' : 'none'; return }
+      if (t.id == 'lg-lg') {
+        var v = $i('lg-li').value.trim(), m = v.match(/[?&]k=([^&#\s]+)/), k = m ? decodeURIComponent(m[1]) : v;
+        if (!/^[A-Za-z0-9_-]{16,}$/.test(k)) return lgMsg('اللينك غير صحيح\nInvalid link');
+        try { localStorage.setItem('tok', k) } catch (x) { } location.href = location.pathname + '?k=' + encodeURIComponent(k); return
+      }
+      if (t.id == 'lg-fg') {
+        e.preventDefault(); var u = $i('lg-u').value.trim(); if (!u) return lgMsg('اكتب الإيميل أو اسم المستخدم أولًا ثم اضغط "نسيت كلمة السر".\nType your username first.');
+        post('api_forgot', [u]).then(function (j) { lgMsg(j && j.ok ? 'تم إرسال طلبك للإدارة. هتتواصل معاك بكلمة سر جديدة.\nYour request was sent to the administrator.' : amsg(j && j.error), j && j.ok) }, function () { lgMsg('مشكلة في الاتصال.\nConnection problem.') });
+      }
+    };
+    setTimeout(function () { try { $i('lg-u').focus() } catch (e) { } }, 50);
+  };
+  /* change password: forced after a temporary password, or from the welcome bar */
+  window.showChange = function (forced) {
+    lgCard('<h3 style="margin:0 0 2px">' + (forced ? 'اختر كلمة سر جديدة' : 'تغيير كلمة السر') + '</h3><p style="margin:0 0 6px;color:var(--mut,#5c6f77)">' + (forced ? 'دي كلمة سر مؤقتة. اختر كلمة سر خاصة بك للمتابعة.<br>Choose your own password to continue.' : 'Change password') + '</p>' +
+      pwField('cp-o', forced ? 'كلمة السر المؤقتة &middot; Temporary password' : 'كلمة السر الحالية &middot; Current password', 'current-password') +
+      pwField('cp-n', 'كلمة السر الجديدة (8 حروف على الأقل) &middot; New password', 'new-password') +
+      pwField('cp-r', 'أعد كتابتها &middot; Repeat', 'new-password') +
+      '<p id="lg-m" role="alert" style="min-height:20px;margin:10px 0"></p><button class="b pri" id="cp-b" type="submit" style="padding:10px 26px;width:100%">حفظ &middot; Save</button>' +
+      (forced ? '<p style="margin:12px 0 0"><a href="#" id="cp-x">خروج &middot; Sign out</a></p>' : '<p style="margin:12px 0 0"><a href="#" id="cp-c">إلغاء &middot; Cancel</a></p>'));
+    var f = document.getElementById('lg-f'), $i = function (x) { return document.getElementById(x) };
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var o = $i('cp-o').value, n = $i('cp-n').value, r = $i('cp-r').value;
+      if (n !== r) return lgMsg('كلمتا السر غير متطابقتين.\nThe passwords do not match.');
+      $i('cp-b').disabled = true;
+      post('api_changePw', [o, n]).then(function (j) {
+        $i('cp-b').disabled = false;
+        if (!(j && j.ok)) return lgMsg(amsg(j && j.error || 'Error'));
+        if (forced) return location.replace(location.pathname);
+        document.getElementById('lg-ov').remove(); if (window.toast) window.toast(ar() ? 'تم تغيير كلمة السر' : 'Password changed');
+      }, function () { $i('cp-b').disabled = false; lgMsg('مشكلة في الاتصال.\nConnection problem.') });
+    };
+    f.onclick = function (e) {
+      var t = e.target;
+      if (t.dataset && t.dataset.eye) { var i = $i(t.dataset.eye); i.type = i.type == 'password' ? 'text' : 'password'; return }
+      if (t.id == 'cp-c') { e.preventDefault(); document.getElementById('lg-ov').remove() }
+      if (t.id == 'cp-x') { e.preventDefault(); window.authLogout() }
+    };
+    setTimeout(function () { try { $i('cp-o').focus() } catch (e) { } }, 50);
+  };
+  window.authLogout = function () {
+    var done = function () { try { localStorage.removeItem('tok') } catch (e) { } window.TOK = ''; location.replace(location.pathname) };
+    if (!window.TOK) return done();
+    post('api_logout', []).then(done, done);
   };
   document.addEventListener('DOMContentLoaded', function () { if (!window.TOK) showLogin('') });
 })();
@@ -3785,6 +3882,240 @@ document.addEventListener('keydown', e => {
   if (e.key != 'Escape') return; const m = document.getElementById('tipm'); if (m) return m.remove();
   if (TP.cur && !(typeof PAL != 'undefined' && PAL.on)) tpClose();
 });
+</script>
+<script>
+"use strict";
+/* Accounts UI: sign out / change password in the welcome bar, and the administrator's tools in Users & links (create account, reset, unlock, sign out everywhere, switch old links off). Needs RolesUI + ProfileUI. */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Account': 'الحساب', 'Accounts': 'الحسابات', 'Create account': 'إنشاء حساب', 'Username': 'اسم المستخدم', 'Reset password': 'إعادة تعيين كلمة السر',
+  'Change password': 'تغيير كلمة السر', 'Sign out': 'خروج', 'Sign out everywhere': 'تسجيل الخروج من كل الأجهزة', 'Unlock': 'فك القفل', 'Remove account': 'حذف الحساب',
+  'Save the user first (Save button), then create the account.': 'احفظ المستخدم أولًا (زر حفظ) ثم أنشئ الحساب.', 'No account yet': 'لا يوجد حساب بعد', 'Temporary password, not changed yet': 'كلمة سر مؤقتة لم تُغيَّر بعد',
+  'Locked': 'مقفول', 'Last sign-in': 'آخر دخول', 'Devices signed in': 'أجهزة مسجّلة', 'Asked for a new password': 'طلب كلمة سر جديدة', 'Never': 'لم يدخل',
+  'Account created': 'تم إنشاء الحساب', 'New password set': 'تم تعيين كلمة سر جديدة', 'Send this to the person (the password is shown only now):': 'أرسل هذه البيانات للشخص (كلمة السر تظهر الآن فقط):',
+  'Copy message': 'نسخ الرسالة', 'Message copied': 'تم نسخ الرسالة', 'Close': 'إغلاق', 'Site address': 'عنوان الموقع', 'Temporary password': 'كلمة السر المؤقتة',
+  'Reset the password of': 'إعادة تعيين كلمة سر', 'The old password stops working and the person is signed out everywhere.': 'كلمة السر القديمة تتوقف وتُسجَّل خروجه من كل الأجهزة.',
+  'Yes, reset': 'نعم، أعد التعيين', 'Create the account and show the temporary password': 'أنشئ الحساب وأظهر كلمة السر المؤقتة',
+  'Old personal links': 'اللينكات الشخصية القديمة', 'are ON': 'تعمل', 'are OFF': 'متوقفة', 'Turn off old links': 'إيقاف اللينكات القديمة', 'Turn on old links': 'تشغيل اللينكات القديمة',
+  'People sign in with username/e-mail + password. The old personal links still work until you turn them off (do this after everyone has an account).': 'الناس بتدخل بالإيميل أو اسم المستخدم + كلمة السر. اللينكات القديمة لسه شغالة لحد ما توقفها (اعمل ده بعد ما كل واحد يبقى له حساب).',
+  'Turn off the old links?': 'إيقاف اللينكات القديمة؟', 'Anyone who still opens the app with a link will be asked to sign in. Make sure everyone has an account first.': 'أي حد لسه بيفتح بالينك هيُطلب منه تسجيل الدخول. اتأكد إن كل واحد له حساب.',
+  'accounts': 'حساب', 'password requests': 'طلب كلمة سر', 'Remove the account of': 'حذف حساب', 'The person can no longer sign in with a password (the personal link stays).': 'الشخص مش هيقدر يدخل بكلمة سر (اللينك الشخصي يفضل زي ما هو).',
+  'Yes, remove': 'نعم، احذف', 'Done': 'تم', 'Open Users & links': 'افتح المستخدمين واللينكات', 'asked for a new password': 'طلبوا كلمة سر جديدة', 'Account saved': 'تم الحفظ',
+  'Hello': 'مرحبًا', 'Your account on': 'حسابك على', 'Username / e-mail': 'اسم المستخدم / الإيميل', 'Please change the password after your first sign-in.': 'من فضلك غيّر كلمة السر بعد أول دخول.'
+}).filter(([k]) => !(k in AR))));
+const acOn = () => window.TOK && String(window.TOK).indexOf('s.') === 0;
+/* welcome bar: change password + sign out */
+const _acWb = wbDraw;
+wbDraw = function () {
+  _acWb();
+  const sm = document.querySelector('#wb .who small'); if (!sm || document.getElementById('wb-out')) return;
+  sm.insertAdjacentHTML('beforeend', (acOn() ? ` <button class="rm" id="wb-pw" type="button" style="color:var(--ink)">${esc(t('Change password'))}</button>` : '') + ` <button class="rm" id="wb-out" type="button">${esc(t('Sign out'))}</button>`);
+};
+document.addEventListener('click', e => {
+  const c = e.target.closest && e.target.closest('#wb-pw,#wb-out'); if (!c) return;
+  if (c.id == 'wb-pw') window.showChange(false); else window.authLogout();
+});
+/* admin: one-time toast when someone asked for a new password */
+let acToldReq = 0;
+const _acRender = render;
+render = function () {
+  _acRender();
+  if (S && S.role == 'admin' && S.resetReq && !acToldReq) { acToldReq = 1; toast(S.resetReq + ' ' + t('asked for a new password') + ' — ' + t('Open Users & links')) }
+};
+const acInfo = r => (US && US.acct && r[0] && US.acct[r[0]]) || null;
+const acText = (r, u, pw) => {
+  const site = US.base || window.APP_BASE || '';
+  return `${t('Hello')} ${r[1] || ''}\n${t('Your account on')} ${(S.set && S.set.school) || 'VIA Timetable'}\n${t('Site address')}: ${site}\n${t('Username / e-mail')}: ${u}${r[2] ? ' / ' + r[2] : ''}\n${t('Temporary password')}: ${pw}\n${t('Please change the password after your first sign-in.')}`;
+};
+async function acShow(r, res, title) {
+  const txt = acText(r, res.username, res.pw);
+  const html = `<p class="msg" style="margin:0 0 8px">${esc(t('Send this to the person (the password is shown only now):'))}</p><pre dir="ltr" style="text-align:start;white-space:pre-wrap;background:var(--hl,#eef3f5);padding:10px;border-radius:10px;margin:0;font:inherit;user-select:all">${esc(txt)}</pre>`;
+  const wa = 'https:' + '/' + '/wa.me/?text=' + encodeURIComponent(txt);
+  if (!window.Swal) { prompt(title, txt); return }
+  const o = await Swal.fire({ title: title, html: html + `<p style="margin:10px 0 0"><a href="${wa}" target="_blank" rel="noopener">WhatsApp</a>${r[2] ? ` · <a href="mailto:${esc(r[2])}?subject=${encodeURIComponent((S.set && S.set.school) || 'VIA Timetable')}&body=${encodeURIComponent(txt)}">E-mail</a>` : ''}</p>`,
+    showCancelButton: true, confirmButtonText: t('Copy message'), cancelButtonText: t('Close'), heightAuto: false, returnFocus: false, confirmButtonColor: '#26806F', width: 520 });
+  if (o.isConfirmed) { try { await navigator.clipboard.writeText(txt); toast(t('Message copied')) } catch (x) { prompt(t('Copy message'), txt) } }
+}
+function acPanel(r, i) {
+  const a = acInfo(r), nm = esc(r[1] || r[2] || '');
+  if (!r[0]) return `<tr class="usp"><td colspan="9"><p class="msg">${t('Save the user first (Save button), then create the account.')}</p></td></tr>`;
+  if (!a) {
+    const sug = (r[2] ? r[2].split('@')[0] : String(r[1] || '').trim().split(/\s+/)[0]) || '';
+    return `<tr class="usp"><td colspan="9"><p class="msg">${t('No account yet')} — ${t('Username')} (${t('E-mail')} ${HL == 'ar' ? 'أو' : 'or'} ${t('Username')}):</p>
+<div class="bar" style="position:static;margin:6px 0 0;flex-wrap:wrap"><input id="ac-u" value="${esc(sug)}" dir="ltr" style="min-width:200px" placeholder="${esc(t('Username'))}"><button class="b pri" data-usa="acmk" data-i="${i}">${ic('plus')} ${t('Create the account and show the temporary password')}</button></div></td></tr>`;
+  }
+  const tag = (c, x) => `<span class="tag ${c}" style="margin-inline-end:6px">${x}</span>`;
+  return `<tr class="usp"><td colspan="9"><p class="msg" style="margin:0 0 6px"><b dir="ltr">${esc(a.u)}</b> · ${t('Last sign-in')}: ${esc(a.last || t('Never'))} · ${t('Devices signed in')}: ${a.n}</p>
+<p style="margin:0 0 8px">${a.must ? tag('w', t('Temporary password, not changed yet')) : ''}${a.locked ? tag('b', t('Locked')) : ''}${a.req ? tag('b', t('Asked for a new password') + ' · ' + esc(a.req)) : ''}</p>
+<div class="bar" style="position:static;margin:0;flex-wrap:wrap"><button class="b pri" data-usa="acrs" data-i="${i}">${t('Reset password')}</button>${a.locked ? `<button class="b" data-usa="acul" data-i="${i}">${t('Unlock')}</button>` : ''}${a.n ? `<button class="b" data-usa="acso" data-i="${i}">${t('Sign out everywhere')}</button>` : ''}<button class="b dng" data-usa="acrm" data-i="${i}">${ic('trash')} ${t('Remove account')}</button></div></td></tr>`;
+}
+function acBox() {
+  const n = Object.keys(US.acct || {}).length, rq = Object.values(US.acct || {}).filter(x => x.req).length;
+  return `<div class="card"><h3 style="margin:0 0 6px">${t('Accounts')} <small class="msg">(${n} ${t('accounts')}${rq ? ' · <b style="color:var(--bad)">' + rq + ' ' + t('password requests') + '</b>' : ''})</small></h3><p class="msg">${t('People sign in with username/e-mail + password. The old personal links still work until you turn them off (do this after everyone has an account).')}</p>
+<p style="margin:6px 0 0">${t('Old personal links')}: <b>${US.linksOn ? t('are ON') : t('are OFF')}</b> <button class="b${US.linksOn ? '' : ' pri'}" data-usa="aclk">${US.linksOn ? t('Turn off old links') : t('Turn on old links')}</button></p></div>`;
+}
+/* hook: put the account button, panel and box into the users table */
+const _acUsers = rUsers;
+rUsers = function () {
+  const h = _acUsers(); if (!US || !US.rows) return h;
+  let k = -1;
+  const out = h.replace(/(<button class="b dng" data-usa="del" data-i="(\d+)">)/g, (m, b, i) => {
+    const r = US.rows[+i], a = acInfo(r);
+    return `<button class="b${a && a.req ? ' pri' : ''}" data-usa="acct" data-i="${i}" title="${esc(t('Account'))}">&#128273; ${a ? esc(a.u) : t('Create account')}${a && a.req ? ' ⚠' : ''}</button> ` + b;
+  });
+  return acBox() + out.replace(/(<\/tr>)(<tr class="usp">|<tr><td><input data-ue="\d+\|1")/g, (m, a, b) => m);   // table kept as is
+};
+/* panel rows: appended right after the row of the person (US.ai) */
+const _acRow = rUsers;
+rUsers = function () {
+  let h = _acRow(); if (!US || !US.rows || US.ai == null || US.ai < 0) return h;
+  const r = US.rows[US.ai]; if (!r) return h;
+  const mark = `data-usa="acct" data-i="${US.ai}"`, p = h.indexOf(mark); if (p < 0) return h;
+  const end = h.indexOf('</tr>', p); return end < 0 ? h : h.slice(0, end + 5) + acPanel(r, US.ai) + h.slice(end + 5);
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-usa]'); if (!b || !US) return;
+  const a = b.dataset.usa; if (!/^ac/.test(a)) return;
+  const i = +b.dataset.i, r = US.rows[i], typed = (document.getElementById('ac-u') || {}).value;
+  const put = res => { US.acct = res.acct; US.linksOn = res.linksOn };
+  try {
+    if (a == 'acct') US.ai = US.ai === i ? -1 : i;
+    else if (a == 'acmk') { const res = await srv('api_usrAccount', r[0], typed); put(res.users); render(); await acShow(r, res, t('Account created')); return }
+    else if (a == 'acrs') { if (!(await UX.ask(t('Reset the password of') + ' ' + (r[1] || r[2]) + '?', esc(t('The old password stops working and the person is signed out everywhere.')), { danger: true, yes: t('Yes, reset') }))) return; const res = await srv('api_usrAccount', r[0], acInfo(r).u); put(res.users); render(); await acShow(r, res, t('New password set')); return }
+    else if (a == 'acul') put(await srv('api_usrUnlock', r[0]));
+    else if (a == 'acso') { put(await srv('api_usrSignOut', r[0])); toast(t('Done')) }
+    else if (a == 'acrm') { if (!(await UX.ask(t('Remove the account of') + ' ' + (r[1] || r[2]) + '?', esc(t('The person can no longer sign in with a password (the personal link stays).')), { danger: true, yes: t('Yes, remove') }))) return; put(await srv('api_usrRemoveAcct', r[0])); US.ai = -1 }
+    else if (a == 'aclk') { if (US.linksOn && !(await UX.ask(t('Turn off the old links?'), esc(t('Anyone who still opens the app with a link will be asked to sign in. Make sure everyone has an account first.')), { danger: true, yes: t('Turn off old links') }))) return; put(await srv('api_usrLinks', !US.linksOn)) }
+  } catch (x) { return }
+  render();
+}, true);
+</script><script>
+"use strict";
+/* Group 13: Users & links in three sub-tabs (People | Role defaults | Accounts) and a clearer per-person permission panel:
+   changed options first, the rest folded, the source of every option written under it, head of department in one place.
+   Editing lessons is controlled only by the "Can edit" column. Needs RolesUI + AuthUI. */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'People': 'الأشخاص', 'Role defaults': 'الأدوار الافتراضية', 'Report his own absence': 'تسجيل غياب نفسه', 'Report an absence for any teacher in his scope': 'تسجيل غياب أي مدرس داخل نطاقه',
+  'Absence & substitutes': 'الغياب والبدلاء', 'From the role': 'من الدور', 'Changed for this person': 'معدّل لهذا الشخص', 'Automatic: he heads departments': 'تلقائي: لأنه يرأس أقسامًا',
+  'All options': 'كل الخيارات', 'Allowed': 'مسموح', 'Blocked': 'ممنوع', 'changed': 'معدّل', 'of': 'من', 'Nothing changed: this person gets exactly what the role gets.': 'لا يوجد تغيير: هذا الشخص يأخذ ما يأخذه الدور بالضبط.',
+  'Because he heads departments, these three options are on automatically unless you block them.': 'لأنه يرأس أقسامًا، هذه الخيارات الثلاثة تعمل تلقائيًا ما لم تمنعها.', 'Open': 'فتح',
+  'Nobody has an account yet. Open a person and press the key button.': 'لا يوجد حسابات بعد. افتح شخصًا واضغط زر المفتاح.', 'Editing lessons: use the Can edit column of the person.': 'تعديل الحصص: من عمود «Can edit» الخاص بالشخص.',
+  'Reset to the role': 'إعادة للدور'
+}).filter(([k]) => !(k in AR))));
+/* editing lessons is only the "Can edit" column: take it out of the lists; clearer names for the two absence options */
+(function () {
+  const g0 = PERM_GROUPS[0]; g0[1] = g0[1].filter(x => x[0] != 'edit'); const i = PERM_LIST.findIndex(x => x[0] == 'edit'); if (i >= 0) PERM_LIST.splice(i, 1);
+  PERM_GROUPS.forEach(g => g[1].forEach(x => { if (x[0] == 'abs_report') x[1] = 'Report his own absence'; if (x[0] == 'abs_behalf') x[1] = 'Report an absence for any teacher in his scope' }));
+})();
+const US_HOD_KEYS = ['abs_dept', 'abs_prelim', 'abs_propose'];
+function usEff(r, k, role) {
+  const P = US.permDefs || [], auto = role != 'hod' && US_HOD_KEYS.includes(k) && usHeadSet(r).size > 0;
+  const d = !!(P.find(x => x.k == k) || { d: {} }).d[role] || auto, v = usPerm(r, k);
+  return { d, v, auto, eff: v == 'allow' ? true : v == 'block' ? false : d };
+}
+function usRow(r, i, k, l, role) {
+  const e = usEff(r, k, role), src = e.v ? t('Changed for this person') : e.auto ? t('Automatic: he heads departments') : t('From the role');
+  return `<div class="pr${e.v ? ' chg' : ''}"><span>${t(l)}<small class="msg" style="display:block">${src}</small></span><span><span class="eff ${e.eff ? 'ok' : 'no'}">${e.eff ? '✓ ' + t('Allowed') : '✕ ' + t('Blocked')}</span> <span class="sg2"><button data-upb="${i}|${k}|" class="${e.v == '' ? 'on' : ''}">${t('Default')} (${t(e.d ? 'Allowed' : 'Blocked')})</button><button data-upb="${i}|${k}|allow" class="al${e.v == 'allow' ? ' on' : ''}">${t('Allow')}</button><button data-upb="${i}|${k}|block" class="bl${e.v == 'block' ? ' on' : ''}">${t('Block')}</button></span></span></div>`;
+}
+usPanel = function (r, i) {
+  const role = String(r[3] || '').toLowerCase();
+  if (role == 'admin') return `<tr class="usp"><td colspan="9"><p class="msg">${t('Admin links always have every option.')}</p></td></tr>`;
+  const all = PERM_LIST, on = all.filter(([k]) => usEff(r, k, role).eff).length, ch = usChanged(r), changed = all.filter(([k]) => usPerm(r, k));
+  const rest = ([gn, L]) => {
+    const isH = gn == 'Head of department', rows = L.filter(([k]) => !usPerm(r, k));
+    if (!rows.length && !isH) return '';
+    const heads = isH ? usHeadBox(r, i).replace('<div class="pg" style="margin-top:10px"><h5>' + t('Head of department') + '</h5>', '<div style="margin-top:8px">') : '';
+    const note = isH && role != 'hod' && usHeadSet(r).size ? `<p class="msg">${t('Because he heads departments, these three options are on automatically unless you block them.')}</p>` : '';
+    return `<div class="pg"><h5>${t(gn)}</h5>${note}${rows.map(([k, l]) => usRow(r, i, k, l, role)).join('')}${heads}</div>`;
+  };
+  const top = changed.length ? `<div class="pg" style="border-color:var(--teal)"><h5>${t('Changed for this person')} (${changed.length})</h5>${changed.map(([k, l]) => usRow(r, i, k, l, role)).join('')}<button class="b" style="margin-top:6px" data-upb="${i}|*|">${t('Reset to the role')}</button></div>` : `<p class="msg">${t('Nothing changed: this person gets exactly what the role gets.')}</p>`;
+  return `<tr class="usp"><td colspan="9"><p class="msg" style="margin:0 0 6px"><b>${t('Allowed')}: ${on} ${t('of')} ${all.length}</b> · ${t('changed')}: ${ch} · ${t('Editing lessons: use the Can edit column of the person.')}</p>${top}
+<details data-pdt="${i}" style="margin-top:8px"${US.pdo && US.pdo[i] ? ' open' : ''}><summary style="cursor:pointer;font-weight:600;padding:6px 0">${t('All options')}</summary><div class="pgs" style="margin-top:6px">${PERM_GROUPS.map(rest).join('')}</div></details>
+<p class="msg">${t('Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.')}</p></td></tr>`;
+};
+document.addEventListener('toggle', e => { const d = e.target; if (d && d.dataset && d.dataset.pdt != null && US) { US.pdo = US.pdo || {}; US.pdo[d.dataset.pdt] = d.open } }, true);
+/* sub-tabs */
+function usAcctList() {
+  const rows = US.rows.map((r, i) => [r, i, acInfo(r)]).filter(x => x[2]).sort((a, b) => (b[2].req ? 1 : 0) - (a[2].req ? 1 : 0));
+  if (!rows.length) return `<div class="card"><p class="msg">${t('Nobody has an account yet. Open a person and press the key button.')}</p></div>`;
+  return `<div class="card">${rows.map(([r, i, a]) => `<div class="pr"><span><b>${esc(r[1] || r[2])}</b> <small class="msg" dir="ltr">${esc(a.u)}</small><small class="msg" style="display:block">${t('Last sign-in')}: ${esc(a.last || t('Never'))} · ${t('Devices signed in')}: ${a.n}</small></span><span>${a.must ? `<span class="tag w">${t('Temporary password, not changed yet')}</span> ` : ''}${a.locked ? `<span class="tag b">${t('Locked')}</span> ` : ''}${a.req ? `<span class="tag b">${t('Asked for a new password')}</span> ` : ''}<button class="b${a.req ? ' pri' : ''}" data-usgo="${i}">${t('Open')}</button></span></div>`).join('')}</div>`;
+}
+const _g13 = rUsers;
+rUsers = function () {
+  if (!US || !US.rows) return _g13();
+  const rb = usRoleBox, ab = acBox; let h;
+  usRoleBox = () => ''; acBox = () => '';
+  try { h = _g13() } finally { usRoleBox = rb; acBox = ab }
+  const sub = US.sub || 'p', rq = Object.values(US.acct || {}).filter(x => x.req).length;
+  const bar = `<div class="ustab" role="tablist">${[['p', 'People'], ['r', 'Role defaults'], ['a', 'Accounts']].map(([k, l]) => `<button class="pill${sub == k ? ' on' : ''}" data-ust="${k}">${t(l)}${k == 'a' && rq ? ` <span class="tag b">${rq}</span>` : ''}</button>`).join('')}</div>`;
+  return bar + (sub == 'r' ? rb() : sub == 'a' ? ab() + usAcctList() : h);
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-ust],[data-usgo]'); if (!b || !US) return;
+  if (b.dataset.ust) US.sub = b.dataset.ust; else { US.sub = 'p'; US.ai = +b.dataset.usgo }
+  render(); window.scrollTo(0, 0);
+});
+</script>
+<style>
+.ustab{display:flex;gap:6px;margin:0 0 12px;overflow-x:auto;scrollbar-width:none}.ustab::-webkit-scrollbar{display:none}.ustab .pill{flex:0 0 auto;white-space:nowrap}
+.pr.chg{background:var(--hl);border-radius:8px;padding-inline:6px}
+@media (max-width:640px){.pr{flex-direction:column;align-items:stretch}.pr .sg2{display:flex;width:100%}.pr .sg2 button{flex:1;padding:8px 4px}.pgs{grid-template-columns:1fr}}
+</style>
+
+<style>
+/* Phone layout (Group 12): compact header, one-line welcome bar, tabs that scroll sideways, bigger touch targets, users table as cards. Desktop is untouched. */
+@media (max-width:640px){
+  header{gap:8px 10px;padding:8px 12px;justify-content:space-between}
+  header img{height:34px;padding:2px;border-radius:8px}
+  header #lgn{order:0}header .ti{order:1;flex:1 1 0;min-width:0;text-align:start}header #lgv{order:2}
+  header::after{content:'';order:3;flex-basis:100%;height:0}
+  header .ti b{font-size:15px;line-height:1.2}header .ti b .sop{font-size:10px;padding:0 7px;margin-inline-start:6px}
+  header .ti small{font-size:12px}
+  header #rb,header #cc{display:none!important}
+  header #srch,header #thm,header #hlp,header #nb,header .seg{order:4}
+  header #srch{justify-content:center;padding:7px 12px}
+  header #srch kbd,header #srch #srcht{display:none}
+  header .hbtn,header #nb,header .seg button{min-height:38px;min-width:38px;justify-content:center}
+  header #langt{display:none}
+  #wb{padding:8px 12px;gap:4px 10px;flex-wrap:wrap;align-items:center}
+  #wb .av{width:40px;height:40px;font-size:16px}
+  #wb .who{flex:1;min-width:0}#wb .who b{font-size:15px}
+  #wb .who small{font-size:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}
+  #wb .who small .role,#wb .who small .rm{font-size:12px}
+  #wb .who small .rm{padding:4px 0;min-height:30px}
+  #wb .when{width:100%;margin:0;flex-direction:row;flex-wrap:wrap;gap:0 10px;align-items:baseline}
+  #wb .clk{display:none}#wb .when small{font-size:12px}
+  nav.tabs{flex-wrap:nowrap;overflow-x:auto;padding:8px 12px 2px;gap:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs .pill{flex:0 0 auto;white-space:nowrap;padding:8px 14px;min-height:40px}
+  input,select,textarea{font-size:16px}
+  .b{min-height:40px}
+  /* users & links: one card per person instead of a wide table */
+  .usr .sc:has(table.ed:not(.rm)){max-height:none!important;overflow:visible}
+  .usr table.ed:not(.rm),.usr table.ed:not(.rm) tbody{display:block;width:100%}
+  .usr table.ed:not(.rm) tr:first-child{display:none}
+  .usr table.ed:not(.rm) tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;padding:12px;margin-bottom:10px;border:1px solid var(--ln);border-radius:12px;background:var(--sf)}
+  .usr table.ed:not(.rm) td{display:block;padding:0;border:0;min-width:0}
+  .usr table.ed:not(.rm) td input,.usr table.ed:not(.rm) td select{width:100%;min-width:0!important;box-sizing:border-box}
+  .usr table.ed:not(.rm) td:nth-child(1),.usr table.ed:not(.rm) td:nth-child(2),.usr table.ed:not(.rm) td:nth-child(4),.usr table.ed:not(.rm) td:nth-child(8){grid-column:1/-1}
+  .usr table.ed:not(.rm) td:nth-child(7):empty{display:none}
+  .usr table.ed:not(.rm) td:nth-child(8){white-space:normal!important;display:flex;flex-wrap:wrap;gap:6px}
+  .usr table.ed:not(.rm) tr.usp{display:block}.usr table.ed:not(.rm) tr.usp td{display:block}
+  .usr table.ed:not(.rm) td:nth-child(-n+6)::before{display:block;font-size:11px;color:var(--mut);margin-bottom:2px}
+  .usr table.ed:not(.rm) td:nth-child(1)::before{content:'Name'}.usr table.ed:not(.rm) td:nth-child(2)::before{content:'Email'}.usr table.ed:not(.rm) td:nth-child(3)::before{content:'Role'}
+  .usr table.ed:not(.rm) td:nth-child(4)::before{content:'Scope'}.usr table.ed:not(.rm) td:nth-child(5)::before{content:'Can edit'}.usr table.ed:not(.rm) td:nth-child(6)::before{content:'Active'}
+  html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(1)::before{content:'الاسم'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(2)::before{content:'الإيميل'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(3)::before{content:'الدور'}
+  html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(4)::before{content:'النطاق'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(5)::before{content:'يعدّل'}html[dir=rtl] .usr table.ed:not(.rm) td:nth-child(6)::before{content:'نشط'}
+}
+</style>
+<script>
+/* phone: keep the open tab visible in the sideways-scrolling tab row */
+(function () {
+  const _mr = render;
+  render = function () {
+    _mr();
+    try { if (innerWidth <= 640) { const p = document.querySelector('#tabs .pill.on'); if (p) p.scrollIntoView({ inline: 'center', block: 'nearest' }) } } catch (e) { }
+  };
+})();
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
