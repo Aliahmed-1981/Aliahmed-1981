@@ -105,6 +105,66 @@ table.ed tr:hover td{background:var(--hl);box-shadow:inset 3px 0 0 var(--teal)}
 @media (max-width:700px){main{padding:10px}header .ti{order:3;flex-basis:100%}}
 </style>
 
+<script>try{var l=localStorage.getItem('sopLook');document.documentElement.dataset.look=/^[abc]$/.test(l)?l:'a'}catch(e){document.documentElement.dataset.look='a'}</script>
+<style id="g21css">
+/* Group 21: three looks (a = warm & calm, b = fresh sea, c = bright & playful), each with its dark version.
+   Every colour is a token, so the whole app follows. Light values on :root[data-look], dark values in the two dark blocks. */
+:root[data-look=a]{--bg:#F7F3EC;--sf:#FFFFFF;--ink:#1F2A33;--mut:#5B6B75;--ln:#E8E1D6;--hl:#EFE9DF;--soft:#EFE9DF;--navy:#17415F;--teal:#0B8579;--bad:#C62A1F;--bads:#FFE3DE;--wn:#8F5200;--wns:#FFF0D6;--violet:#6D5CF0;--pink:#D6336C;--sky:#2766C2;--amber:#E08A00;--green:#1F7A4D;--coral:#C8432C;--gold:#8F6A17;--sh:0 6px 18px rgba(31,42,51,.08);--r:18px;--hg:linear-gradient(100deg,#17415F,#0B8579);--glass:rgba(255,255,255,.9);--ia1:#0B8579;--it1:#D9F0ED;--ia2:#2F7FE0;--it2:#E1EDFD;--ia3:#D9482F;--it3:#FDE6E0;--ia4:#6D5CF0;--it4:#ECE9FD;--tc:#0B8579}
+:root[data-look=b]{--bg:#EAF6F9;--sf:#FFFFFF;--ink:#12303D;--mut:#4F6B78;--ln:#D3E6EC;--hl:#DDF0F5;--soft:#DDF0F5;--navy:#0B3C5D;--teal:#0A7EA4;--bad:#C62A1F;--bads:#FFE3DE;--wn:#8F5200;--wns:#FFF0D6;--violet:#5666F0;--pink:#D6336C;--sky:#0A7EA4;--amber:#E08A00;--green:#287A44;--coral:#C8432C;--gold:#8F6A17;--sh:0 6px 18px rgba(11,60,93,.09);--r:14px;--hg:linear-gradient(100deg,#0B3C5D,#0A7EA4 60%,#1FB5C9);--glass:rgba(255,255,255,.9);--ia1:#0A7EA4;--it1:#D2EBF4;--ia2:#0E9F90;--it2:#D5F5F1;--ia3:#D9482F;--it3:#FFE5E0;--ia4:#5666F0;--it4:#E6E9FF;--tc:#0A7EA4}
+:root[data-look=c]{--bg:#FFF7EE;--sf:#FFFFFF;--ink:#2A2340;--mut:#645C7C;--ln:#F0E3D3;--hl:#F8EBDD;--soft:#F8EBDD;--navy:#3A2FB8;--teal:#5B4CF0;--bad:#C21F4F;--bads:#FFE1EA;--wn:#8F4900;--wns:#FFEBD6;--violet:#6A47F0;--pink:#CC2F61;--sky:#0B72B8;--amber:#E07A00;--green:#0A786E;--coral:#C8432C;--gold:#8F6A17;--sh:0 8px 20px rgba(58,47,184,.11);--r:24px;--hg:linear-gradient(100deg,#3A2FB8,#5B4CF0 55%,#12B5A6);--glass:rgba(255,255,255,.9);--ia1:#5B4CF0;--it1:#E6E3FF;--ia2:#0C8C81;--it2:#D7F4F0;--ia3:#E0386B;--it3:#FFE1EA;--ia4:#D96F00;--it4:#FFEBD6;--tc:#5B4CF0}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme=light])[data-look=a]{--bg:#14181C;--sf:#1D2328;--ink:#EDF1F3;--mut:#A4B2BA;--ln:#2D363D;--hl:#273037;--soft:#273037;--navy:#1F5C86;--teal:#0B8579;--bad:#FF7A6E;--bads:#4A2320;--wn:#F5B84D;--wns:#4D3A12;--sh:0 6px 18px rgba(0,0,0,.4);--glass:rgba(29,35,40,.9);--it1:#1D3B3A;--it2:#1F3150;--it3:#4A2A24;--it4:#2D2850;--ia1:#4FD0C2;--ia2:#6AA6FF;--ia3:#FF8D78;--ia4:#9C8FFF;color-scheme:dark}
+:root:not([data-theme=light])[data-look=b]{--bg:#0C1B22;--sf:#132830;--ink:#E6F2F6;--mut:#9DB8C3;--ln:#25414C;--hl:#1B3540;--soft:#1B3540;--navy:#14608A;--teal:#0A7EA4;--bad:#FF7A6E;--bads:#4A2320;--wn:#F5B84D;--wns:#4D3A12;--sh:0 6px 18px rgba(0,0,0,.4);--glass:rgba(19,40,48,.9);--it1:#17384A;--it2:#14403C;--it3:#4A2A24;--it4:#24295A;--ia1:#5CC4E6;--ia2:#4FD6C5;--ia3:#FF8D78;--ia4:#8E9BFF;color-scheme:dark}
+:root:not([data-theme=light])[data-look=c]{--bg:#171326;--sf:#221C38;--ink:#F2EFFB;--mut:#B0A8CC;--ln:#3A3158;--hl:#2D2547;--soft:#2D2547;--navy:#4B3FD6;--teal:#6757F2;--bad:#FF7596;--bads:#4A1F30;--wn:#FFB866;--wns:#4D3412;--sh:0 8px 20px rgba(0,0,0,.45);--glass:rgba(34,28,56,.9);--it1:#2E2762;--it2:#14403C;--it3:#4A1F30;--it4:#4A3012;--ia1:#A79CFF;--ia2:#4FD6C5;--ia3:#FF86A6;--ia4:#FFB45E;color-scheme:dark}
+}
+:root[data-theme=dark][data-look=a]{--bg:#14181C;--sf:#1D2328;--ink:#EDF1F3;--mut:#A4B2BA;--ln:#2D363D;--hl:#273037;--soft:#273037;--navy:#1F5C86;--teal:#0B8579;--bad:#FF7A6E;--bads:#4A2320;--wn:#F5B84D;--wns:#4D3A12;--sh:0 6px 18px rgba(0,0,0,.4);--glass:rgba(29,35,40,.9);--it1:#1D3B3A;--it2:#1F3150;--it3:#4A2A24;--it4:#2D2850;--ia1:#4FD0C2;--ia2:#6AA6FF;--ia3:#FF8D78;--ia4:#9C8FFF;color-scheme:dark}
+:root[data-theme=dark][data-look=b]{--bg:#0C1B22;--sf:#132830;--ink:#E6F2F6;--mut:#9DB8C3;--ln:#25414C;--hl:#1B3540;--soft:#1B3540;--navy:#14608A;--teal:#0A7EA4;--bad:#FF7A6E;--bads:#4A2320;--wn:#F5B84D;--wns:#4D3A12;--sh:0 6px 18px rgba(0,0,0,.4);--glass:rgba(19,40,48,.9);--it1:#17384A;--it2:#14403C;--it3:#4A2A24;--it4:#24295A;--ia1:#5CC4E6;--ia2:#4FD6C5;--ia3:#FF8D78;--ia4:#8E9BFF;color-scheme:dark}
+:root[data-theme=dark][data-look=c]{--bg:#171326;--sf:#221C38;--ink:#F2EFFB;--mut:#B0A8CC;--ln:#3A3158;--hl:#2D2547;--soft:#2D2547;--navy:#4B3FD6;--teal:#6757F2;--bad:#FF7596;--bads:#4A1F30;--wn:#FFB866;--wns:#4D3412;--sh:0 8px 20px rgba(0,0,0,.45);--glass:rgba(34,28,56,.9);--it1:#2E2762;--it2:#14403C;--it3:#4A1F30;--it4:#4A3012;--ia1:#A79CFF;--ia2:#4FD6C5;--ia3:#FF86A6;--ia4:#FFB45E;color-scheme:dark}
+:root[data-look] header{background:var(--hg)}
+:root[data-look] #cc .e,:root[data-look] .cb.e{background:#C62A1F;color:#fff}
+:root[data-look] #bnav{background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+:root[data-look] .card,:root[data-look] .kpi,:root[data-look] .bar{border-radius:var(--r)}
+:root[data-look=b] .pill,:root[data-look=b] #cc{border-radius:14px}
+:root[data-look=c] .pill{border:2px solid var(--ln);box-shadow:none}
+:root[data-look=c] .pill.on{border-color:var(--navy);box-shadow:0 6px 14px rgba(91,76,240,.35)}
+:root[data-look=c] header img{transform:rotate(-4deg)}
+/* tab icons: a tinted round chip behind the icon; the active tab shows a filled icon */
+:root[data-look] nav.tabs .pill .ic{box-sizing:content-box;width:16px;height:16px;padding:5px;border-radius:50%;vertical-align:middle;margin-inline-start:-6px;transition:transform .2s}
+:root[data-look] nav.tabs .pill:nth-child(4n+1) .ic{color:var(--ia1);background:var(--it1)}
+:root[data-look] nav.tabs .pill:nth-child(4n+2) .ic{color:var(--ia2);background:var(--it2)}
+:root[data-look] nav.tabs .pill:nth-child(4n+3) .ic{color:var(--ia3);background:var(--it3)}
+:root[data-look] nav.tabs .pill:nth-child(4n) .ic{color:var(--ia4);background:var(--it4)}
+:root[data-look] nav.tabs .pill.on .ic{color:#fff;background:rgba(255,255,255,.22);fill:rgba(255,255,255,.28)}
+:root[data-look] nav.tabs .pill:hover .ic{transform:rotate(-8deg) scale(1.08)}
+:root[data-look] #bnav [data-mbt] .ic{box-sizing:content-box;padding:4px 14px;border-radius:999px}
+:root[data-look] #bnav .on .ic{background:var(--it1);color:var(--ia1);fill:var(--it1)}
+/* motion: small and calm */
+.pill,button.b,.kpi,.card{transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+.pill:active,button.b:active,.kpi:active{transform:scale(.96)}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.12)}
+@keyframes g21in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes g21pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@keyframes g21ring{0%{box-shadow:0 0 0 0 var(--green)}100%{box-shadow:0 0 0 22px transparent}}
+main>.kpis,main>.card,main>.bar{animation:g21in .28s ease both}
+/* a friendly empty state when there is nothing to fix */
+.empty.ok{padding:34px 10px;color:var(--ink)}
+.empty.ok .ic{width:30px;height:30px;padding:16px;border-radius:50%;background:var(--green);color:#fff;stroke-width:2.6;animation:g21pop .5s cubic-bezier(.2,1.4,.4,1) both,g21ring 1.2s ease-out .4s 2}
+.empty.ok p{font-weight:700;font-size:16px;margin:12px 0 0}
+@media (prefers-reduced-motion:reduce){main>.kpis,main>.card,main>.bar,.empty.ok .ic{animation:none}.pill,button.b,.kpi{transition:none}}
+/* look picker */
+#lkb{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:50%;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+#lkb:hover{background:rgba(255,255,255,.28)}#lkb svg{width:20px;height:20px}
+#lkm{position:fixed;inset:0;z-index:120;background:rgba(10,20,30,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+#lkm .lkc{background:var(--sf);color:var(--ink);border-radius:var(--r);box-shadow:0 20px 50px rgba(0,0,0,.35);padding:20px;max-width:640px;width:100%;max-height:92vh;overflow:auto}
+#lkm h3{margin:0 0 4px;font-size:19px}#lkm .lkg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.lko{border:2px solid var(--ln);background:var(--bg);color:var(--ink);border-radius:var(--r);padding:10px;cursor:pointer;font:inherit;text-align:start;display:flex;flex-direction:column;gap:6px}
+.lko[aria-pressed=true]{border-color:var(--teal);box-shadow:0 0 0 3px var(--hl)}
+.lko b{font-size:14px}.lko small{color:var(--mut);font-size:12px;line-height:1.35}
+.lkp{display:block;border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,.08)}
+.lkp i{display:block}.lkp .h{height:16px}.lkp .c{margin:8px;border-radius:9px;padding:7px;display:flex;gap:6px;justify-content:center}.lkp u{display:block;width:16px;height:16px;border-radius:50%}
+.lkf{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:640px){#lkm{align-items:flex-end;padding:0}#lkm .lkc{border-radius:var(--r) var(--r) 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}#lkm .lkg{grid-template-columns:1fr}.lko{flex-direction:row;align-items:center}.lkp{width:92px;flex:none}header #lkb{display:none}}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -4501,6 +4561,10 @@ button[data-wr].on{background:var(--hl)}
 .thsync{margin-top:12px;padding:10px 12px;border:1px solid var(--ln);border-radius:12px;background:var(--bg);text-align:start}
 .thsync small{display:block;margin:4px 0}.thsync ul{margin:6px 0 0;max-height:160px;overflow:auto;padding-inline-start:18px;font-size:13px}
 @media (max-width:820px){body.hasback #bkb{display:inline-flex}}
+@media (max-width:640px){
+  body[data-stm=page] .sl nav.sub.side{display:none!important}
+  body[data-stm=list] .sl .scont{display:none!important}
+}
 @media (max-width:700px){
   header #rfs,header #bkb{width:34px;height:34px}
   header{gap:8px}
@@ -4680,6 +4744,77 @@ document.addEventListener('click', e => {
 /* ---- the zoom bar sits in the page (above the table), not floating over it ---- */
 const _g20vz = vzBar;
 vzBar = function () { _g20vz(); const b = document.getElementById('vzb'), v = document.getElementById('v'); if (b && v && b.parentNode !== v) v.insertAdjacentElement('afterbegin', b) };
+</script>
+<script>
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Look & colours': 'الشكل والألوان',
+  'Choose the look that feels best. It is saved with your account.': 'اختر الشكل الذي يريحك. يُحفظ مع حسابك.',
+  'Warm & calm': 'دافئ هادئ', 'Fresh sea': 'منعش مائي', 'Bright & playful': 'مرح بألوان أوضح',
+  'Soft sand background with teal and warm touches': 'خلفية رملية ناعمة مع تركواز ولمسات دافئة',
+  'Sea and sky blues, light and fresh': 'درجات البحر والسماء، خفيفة ومنعشة',
+  'Bolder colours and rounder corners': 'ألوان أوضح وزوايا أكثر استدارة',
+  'Use as the school default': 'اعتمده كشكل افتراضي للمدرسة',
+  'School default saved.': 'تم حفظ الشكل الافتراضي للمدرسة.', 'Look saved': 'تم حفظ الشكل',
+  'Close': 'إغلاق'
+}).filter(([k]) => !(k in AR))));
+const G21_LOOKS = [
+  { id: 'a', n: 'Warm & calm', d: 'Soft sand background with teal and warm touches', bg: '#F7F3EC', hg: 'linear-gradient(100deg,#17415F,#0B8579)', c: ['#0B8579', '#2F7FE0', '#E5533A', '#6D5CF0'] },
+  { id: 'b', n: 'Fresh sea', d: 'Sea and sky blues, light and fresh', bg: '#EAF6F9', hg: 'linear-gradient(100deg,#0B3C5D,#0A7EA4 60%,#1FB5C9)', c: ['#0A7EA4', '#0E9F90', '#E0553F', '#5666F0'] },
+  { id: 'c', n: 'Bright & playful', d: 'Bolder colours and rounder corners', bg: '#FFF7EE', hg: 'linear-gradient(100deg,#3A2FB8,#5B4CF0 55%,#12B5A6)', c: ['#5B4CF0', '#0C8C81', '#E0386B', '#D96F00'] }
+];
+const G21_KEY = 'sopLook', g21Ok = v => /^[abc]$/.test(String(v || ''));
+const g21Store = { get() { try { return localStorage.getItem(G21_KEY) } catch (e) { return null } }, put(v) { try { localStorage.setItem(G21_KEY, v) } catch (e) { } } };
+function g21Prof() { try { return (typeof PROF !== 'undefined' && PROF) || (S && S.profile) || null } catch (e) { return null } }
+function g21Cur() { const p = g21Prof() || {}; return [p.look, g21Store.get(), p.schoolLook].find(g21Ok) || 'a' }
+function g21Apply() {
+  const l = g21Cur(), p = g21Prof();
+  if (p && g21Ok(p.look) && g21Store.get() !== p.look) g21Store.put(p.look);
+  if (document.documentElement.dataset.look !== l) document.documentElement.dataset.look = l;
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = { a: '#17415F', b: '#0B3C5D', c: '#3A2FB8' }[l];
+  document.querySelectorAll('.lko').forEach(b => b.setAttribute('aria-pressed', b.dataset.lko == l ? 'true' : 'false'));
+}
+function g21Save(l) {
+  g21Store.put(l); const p = g21Prof(); if (p) p.look = l; g21Apply();
+  try { UX.srv0('api_saveMyLook', l).then(r => { if (r && typeof r == 'object' && !Array.isArray(r) && 'role' in r) { if (typeof PROF !== 'undefined') PROF = r; if (S) S.profile = r } }).catch(() => { }) } catch (e) { }
+}
+function g21Close() { const m = document.getElementById('lkm'); if (m) m.remove() }
+function g21Open() {
+  g21Close();
+  const cur = g21Cur(), admin = !!(S && S.role == 'admin');
+  const cards = G21_LOOKS.map(k => `<button type="button" class="lko" data-lko="${k.id}" aria-pressed="${k.id == cur}"><span class="lkp" style="background:${k.bg}"><i class="h" style="background:${k.hg}"></i><i class="c" style="background:#fff">${k.c.map(c => `<u style="background:${c}"></u>`).join('')}</i></span><span><b>${esc(t(k.n))}</b><small>${esc(t(k.d))}</small></span></button>`).join('');
+  document.body.insertAdjacentHTML('beforeend', `<div id="lkm" role="dialog" aria-modal="true" aria-label="${esc(t('Look & colours'))}"><div class="lkc"><h3>${esc(t('Look & colours'))}</h3><p class="msg">${esc(t('Choose the look that feels best. It is saved with your account.'))}</p><div class="lkg">${cards}</div><div class="lkf">${admin ? `<button type="button" class="b" data-lkdef>${esc(t('Use as the school default'))}</button>` : ''}<button type="button" class="b pri" data-lkx>${esc(t('Close'))}</button></div></div></div>`);
+  const f = document.querySelector('#lkm .lko[aria-pressed=true]'); if (f) f.focus();
+}
+document.addEventListener('click', e => {
+  const T = e.target, g = n => T.closest && T.closest(n);
+  if (g('#lkb') || g('[data-lkr]')) { if (typeof mbClose == 'function') try { mbClose() } catch (x) { } return g21Open() }
+  if (g('[data-lkx]') || (g('#lkm') && !g('.lkc'))) return g21Close();
+  const o = g('.lko'); if (o) { g21Save(o.dataset.lko); toast(t('Look saved')); return }
+  if (g('[data-lkdef]')) { const l = g21Cur(); try { UX.srv0('api_saveSchoolLook', l).then(r => { if (r && S) { S.profile = Object.assign({}, S.profile || {}, { schoolLook: l, look: l }) } toast(t('School default saved.')) }).catch(x => toast(String((x && x.message) || x))) } catch (x) { } }
+});
+document.addEventListener('keydown', e => { if (e.key == 'Escape') g21Close() });
+(function () {
+  const sp = document.getElementById('i-up');
+  if (sp && !document.getElementById('i-palette')) sp.parentNode.insertAdjacentHTML('beforeend', '<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></symbol>');
+  const h = document.querySelector('header'), th = document.getElementById('thm');
+  if (h && !document.getElementById('lkb')) {
+    const b = document.createElement('button'); b.id = 'lkb'; b.type = 'button'; b.title = t('Look & colours'); b.setAttribute('aria-label', t('Look & colours')); b.innerHTML = '<svg class="ic"><use href="#i-palette"/></svg>';
+    if (th && th.parentNode) th.parentNode.insertBefore(b, th); else h.appendChild(b);
+  }
+})();
+const _g21ms = mbSheet;
+mbSheet = function () {
+  _g21ms.apply(this, arguments);
+  const s = document.getElementById('msheet'); if (!s || s.querySelector('[data-lkr]')) return;
+  const row = s.querySelector('[data-hg]') || s.querySelector('[data-mba="tips"]') || s.querySelector('[data-mba="theme"]'); if (!row) return;
+  row.insertAdjacentHTML('beforebegin', `<button type="button" class="it" data-lkr><span>${esc(t('Look & colours'))}</span><small>&#9679;</small></button>`);
+};
+const _g21r = render;
+render = function () {
+  _g21r.apply(this, arguments);
+  try { g21Apply(); document.querySelectorAll('#v .empty').forEach(e => { if (e.querySelector('use[href="#i-check"]')) e.classList.add('ok') }) } catch (e) { }
+};
+g21Apply();
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
