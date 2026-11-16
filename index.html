@@ -2162,12 +2162,20 @@ UX_PRE.api_autoApply = a => {
 .mvd .ar{color:var(--mut,#667)}
 .mvd .bad{color:var(--bad)}
 .mvd .main{background:var(--hl);border-radius:10px;padding:8px 12px}
+.mvd .mvo{display:block;border:1.5px solid var(--ln,#d5dde2);border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer}
+.mvd .mvo:has(input:checked){border-color:var(--teal,#26806F);background:var(--hl)}
+.mvd .mvo .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600}
+.mvd .mvo input{margin:0;accent-color:var(--teal,#26806F);width:18px;height:18px}
+.mvd .mvo .tg{font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--hl);color:var(--ink)}
+.mvd .mvo .tg.ok{background:#dff3ea;color:#14573f}
+.mvd .mvo .tg.w{background:#fde7e4;color:#8f1d14}
+.mvd .mvo ul{margin-top:6px;font-weight:400}
 </style>
 <script>
 "use strict";
 /* Move assistant. Before a lesson is moved / swapped the server (api_moveCheck, Move.gs) says what it would take:
    ok = just do it | soft = possible but breaks subject rules | plan = other lessons must move too | break = a hard rule stands in the way.
-   The person approves (Apply / Move anyway) or rejects (Cancel). Needs Scripts.html + Ux.html. */
+   When other lessons must move, the server sends up to 3 different ways (options): the person picks one and applies it, or cancels. Needs Scripts.html + Ux.html. */
 Object.assign(AR, {
   'Checking...': 'جارٍ الفحص...', 'to': 'إلى', 'max': 'الحد الأقصى',
   'To put this lesson there, other lessons must move too': 'لتثبيت هذه الحصة في المكان الجديد يجب تحريك حصص أخرى',
@@ -2182,7 +2190,9 @@ Object.assign(AR, {
   'Max per day': 'الحد الأقصى في اليوم', 'Same class, same day': 'نفس الفصل في اليوم الواحد', 'Placement': 'التوقيت', 'Priority': 'الأولوية',
   'Together (double period)': 'متصلة (حصتان متتاليتان)', 'Separate (never next to each other)': 'منفصلة (ليست متتالية)', 'Before the break': 'قبل الاستراحة', 'After the break': 'بعد الاستراحة',
   'Highest': 'الأعلى', 'Normal': 'عادية', 'Lowest': 'الأدنى', 'Print without teacher names': 'الطباعة بدون أسماء المدرسين',
-  'Subject rules help the auto distribution and the move assistant. A blank cell means no rule. A double period = two lessons right after each other, never across the break. When rules clash, the subject with the higher priority wins.': 'قواعد المواد يستخدمها التوزيع التلقائي ومساعد النقل. الخانة الفارغة تعني بلا قيد. الحصة المزدوجة = حصتان متتاليتان لا يفصلهما الاستراحة. عند تعارض القواعد تفوز المادة ذات الأولوية الأعلى.'
+  'Subject rules help the auto distribution and the move assistant. A blank cell means no rule. A double period = two lessons right after each other, never across the break. When rules clash, the subject with the higher priority wins.': 'قواعد المواد يستخدمها التوزيع التلقائي ومساعد النقل. الخانة الفارغة تعني بلا قيد. الحصة المزدوجة = حصتان متتاليتان لا يفصلهما الاستراحة. عند تعارض القواعد تفوز المادة ذات الأولوية الأعلى.',
+  'Choose one of these ways to do it': 'اختر طريقة من هذه الطرق لتنفيذ النقل', 'Option': 'الخيار', 'Best': 'الأفضل', 'No rule is broken': 'لا يكسر أي قاعدة', 'Apply this option': 'نفّذ هذا الخيار',
+  'Only one way was found': 'لم أجد غير طريقة واحدة', 'other lessons move': 'حصص أخرى تتحرك', 'other lesson moves': 'حصة أخرى تتحرك', 'rules broken': 'قواعد مكسورة', 'rule broken': 'قاعدة مكسورة', 'No other lessons move': 'لا حصص أخرى تتحرك'
 });
 const mvP = (c, d, p) => {
   const sch = (S.cls.find(r => r[0] == c) || [])[1], r = S.sch.find(x => x[0] == sch && +x[1] == +d && +x[2] == +p);
@@ -2210,29 +2220,45 @@ function mvBreak(b) {
     default: return t('Both moves are needed at once');
   }
 }
+const mvMove = m => mvL({ s: m.s, c: m.from.c, d: m.from.d, p: m.from.p, t: m.t }) + ' <span class="ar">' + t('to') + '</span> ' + mvAt(m.c, m.d, m.p);
+/** one way of doing it, as a selectable card */
+function mvOpt(o, i, first) {
+  const ex = o.moves.filter(m => !m.intent), sf = o.soft || [];
+  return '<label class="mvo"><div class="hd"><input type="radio" name="mvo" value="' + i + '"' + (i == 0 ? ' checked' : '') + '><span>' + t('Option') + ' ' + (i + 1) + '</span>' +
+    (i == 0 ? '<span class="tg ok">' + t('Best') + '</span>' : '') +
+    '<span class="tg">' + (ex.length ? ex.length + ' ' + t(ex.length == 1 ? 'other lesson moves' : 'other lessons move') : t('No other lessons move')) + '</span>' +
+    (sf.length ? '<span class="tg w">' + sf.length + ' ' + t(sf.length == 1 ? 'rule broken' : 'rules broken') + '</span>' : '<span class="tg ok">' + t('No rule is broken') + '</span>') + '</div>' +
+    (ex.length ? '<ul>' + ex.map(m => '<li>' + mvMove(m) + '</li>').join('') + '</ul>' : '') +
+    (sf.length ? '<ul class="bad">' + sf.map(v => '<li>' + mvSoft(v) + '</li>').join('') + '</ul>' : '') + '</label>';
+}
 /** resolves 'go' (do the plain move), 'done' (a rearrangement was written, state is updated) or 'cancel' */
 async function mvGuard(fn, args) {
   let r;
   UX.label = t('Checking...');
   try { r = await _uxSrv('api_moveCheck', fn, args) } catch (e) { return 'go' }
   if (!r || r.status == 'ok') return 'go';
-  const st = r.status, moves = r.moves || [], intent = moves.filter(m => m.intent), extra = moves.filter(m => !m.intent), soft = r.soft || [], br = r.breaks || [];
+  const st = r.status, opts = r.options && r.options.length > 1 ? r.options : null, br = r.breaks || [];
+  let moves = r.moves || [], soft = r.soft || [];
+  const intent = moves.filter(m => m.intent), extra = moves.filter(m => !m.intent);
   let h = '<div class="mvd">';
-  if (intent.length) h += '<h4>' + t('The move you asked for') + '</h4><div class="main">' + intent.map(m => mvL({ s: m.s, c: m.from.c, d: m.from.d, p: m.from.p, t: m.t }) + ' <span class="ar">' + t('to') + '</span> ' + mvAt(m.c, m.d, m.p)).join('<br>') + '</div>';
-  if (extra.length) h += '<h4>' + t('These lessons must move too') + '</h4><ul>' + extra.map(m => '<li>' + mvL({ s: m.s, c: m.from.c, d: m.from.d, p: m.from.p, t: m.t }) + ' <span class="ar">' + t('to') + '</span> ' + mvAt(m.c, m.d, m.p) + '</li>').join('') + '</ul>';
+  if (intent.length) h += '<h4>' + t('The move you asked for') + '</h4><div class="main">' + intent.map(mvMove).join('<br>') + '</div>';
+  if (opts) h += '<h4>' + t('Choose one of these ways to do it') + '</h4>' + opts.map((o, i) => mvOpt(o, i)).join('');
+  else if (extra.length) h += '<h4>' + t('These lessons must move too') + '</h4><ul>' + extra.map(m => '<li>' + mvMove(m) + '</li>').join('') + '</ul>';
   if (br.length) h += '<h4 class="bad">' + t('What stands in the way') + '</h4><ul>' + br.map(b => '<li>' + mvBreak(b) + '</li>').join('') + '</ul>';
-  if (soft.length) h += '<h4 class="bad">' + t('Rules that will be broken') + '</h4><ul>' + soft.map(v => '<li>' + mvSoft(v) + '</li>').join('') + '</ul>';
+  if (!opts && soft.length) h += '<h4 class="bad">' + t('Rules that will be broken') + '</h4><ul>' + soft.map(v => '<li>' + mvSoft(v) + '</li>').join('') + '</ul>';
   h += '</div>';
   const plan = st == 'plan';
   const res = await Swal.fire({
     icon: 'warning', title: t(plan ? 'To put this lesson there, other lessons must move too' : st == 'soft' ? 'This move breaks some rules' : 'This move cannot be done without breaking a hard rule'), html: h, width: 640,
-    showConfirmButton: true, confirmButtonText: t(plan ? 'Apply the rearrangement' : 'Move anyway'), confirmButtonColor: plan ? '#26806F' : '#d1291f',
+    showConfirmButton: true, confirmButtonText: t(opts ? 'Apply this option' : plan ? 'Apply the rearrangement' : 'Move anyway'), confirmButtonColor: plan ? '#26806F' : '#d1291f',
     showDenyButton: plan, denyButtonText: t('Only move this lesson'), denyButtonColor: '#d1291f',
-    showCancelButton: true, cancelButtonText: t('Cancel'), cancelButtonColor: '#5c6f77', heightAuto: false, returnFocus: false, focusCancel: !plan
+    showCancelButton: true, cancelButtonText: t('Cancel'), cancelButtonColor: '#5c6f77', heightAuto: false, returnFocus: false, focusCancel: !plan,
+    preConfirm: () => { const c = opts && Swal.getPopup().querySelector('input[name="mvo"]:checked'); return c ? +c.value : 0 }
   });
   if (res.isDenied) return 'go';
   if (!res.isConfirmed) return 'cancel';
   if (!plan) return 'go';
+  if (opts) moves = (opts[res.value] || opts[0]).moves;
   const out = await srv('api_applyMoves', moves.map(m => ({ id: m.id, c: m.c, d: m.d, p: m.p })));
   S.lessons = out.lessons; S.conflicts = out.conflicts; index(); toast(t('Rearranged'));
   return 'done';
@@ -4209,7 +4235,7 @@ ${rest.length ? `<h4>${t('Pages')}</h4><div class="g">${rest.map(x => `<button t
 ${hlp ? `<button type="button" class="it" data-mba="tips"><span>${t('Show tips for this page')}</span><small>?</small></button><button type="button" class="it" data-mba="tipsreset"><span>${t('Reset all tips')}</span></button>` : ''}
 </div><h4>${t('Account')}</h4><div class="rows">${typeof acOn == 'function' && acOn() ? `<button type="button" class="it" data-mba="pw"><span>${t('Change password')}</span></button>` : ''}<button type="button" class="it red" data-mba="out"><span>${t('Sign out')}</span></button></div>`;
 }
-const mbClose = () => document.body.classList.remove('ms-open');
+function mbClose() { document.body.classList.remove('ms-open') }
 function mbSettings() {                // settings on a phone: the list of sections first, a page + back bar after you pick one
   const m = MB() && TAB == 'st';
   if (!m) { delete document.body.dataset.stm; return }
@@ -4362,6 +4388,103 @@ rExam = function () {
   if (!exCan('ct_edit') && !exCan('ct_inv')) { const f = R.querySelector('.exu'); if (f) { const n = document.createElement('p'); n.className = 'msg'; n.textContent = t('You can view this page only.'); f.insertBefore(n, f.firstChild) } }
   return tp.innerHTML
 };
+</script>
+<style>
+@media (max-width:640px){
+  header #thm{display:inline-flex!important;flex:0 0 auto;width:40px;height:40px;min-width:40px;padding:0;justify-content:center;align-items:center}
+  header #thm span,header #thm kbd{display:none}
+  #msheet .shd{display:flex;align-items:center;gap:10px;margin-bottom:10px}#msheet .shd .who{flex:1;margin:0}
+  #msheet .xb{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer}
+  #msheet .grip{padding:10px 0;background-clip:content-box;height:25px;box-sizing:border-box;touch-action:none}
+  #msheet{transition:transform .25s,opacity .25s}
+  .ttw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .ttw>table{margin:0}
+  .ttw table.tt tr>*:first-child,#v .sc table.tt:not(.bm) tr>*:first-child{position:sticky;inset-inline-start:0;z-index:2;box-shadow:1px 0 0 var(--ln)}
+  .ttw table.tt td:first-child:not([class*=sel]),#v .sc table.tt:not(.bm) td:first-child:not([class*=sel]){background-color:var(--sf)}
+  #vzb{bottom:calc(var(--bn) + env(safe-area-inset-bottom,0px) + 70px)!important}
+}
+</style>
+<script>
+/* Group 17 (phone): tables fit the screen on open, the bottom sheet closes by X / swipe / back, dark-mode button back in the header */
+Object.assign(AR, Object.fromEntries(Object.entries({ 'Close': 'إغلاق', 'Fit to screen': 'ملاءمة الشاشة' }).filter(([k]) => !(k in AR))));
+function vzUser() { try { const s = localStorage.getItem('vz'); return s ? Math.min(2, Math.max(.5, +s || 1)) : null } catch (e) { return null } }
+function vzFit() {
+  const v = document.getElementById('v'), tb = v ? [...v.querySelectorAll('table.tt:not(.bm),table.ex,table.ivt')] : [];
+  if (!tb.length || !(typeof MB == 'function' && MB())) return 1;
+  v.style.setProperty('--vz', 1);
+  const w = Math.max(...tb.map(x => x.getBoundingClientRect().width)), W = document.documentElement.clientWidth - 16;
+  return w > W ? Math.max(.5, Math.floor(W / w * 20) / 20) : 1;
+}
+vzApply = function () {
+  const v = document.getElementById('v'); if (!v) return;
+  const u = vzUser(); VZ = u != null ? u : vzFit();
+  v.style.setProperty('--vz', VZ);
+  const b = document.getElementById('vzb'); if (b) { const p = b.querySelector('[data-vzp]'); p.textContent = Math.round(VZ * 100) + '%'; p.title = t('Fit to screen') }
+};
+function ttWrap() {
+  if (!(typeof MB == 'function' && MB())) return;
+  document.querySelectorAll('#v table.tt:not(.bm),#v table.ex,#v table.ivt').forEach(tb => {
+    if (tb.closest('.sc,.tw,.ttw')) return;
+    const d = document.createElement('div'); d.className = 'ttw'; tb.parentNode.insertBefore(d, tb); d.appendChild(tb)
+  })
+}
+const _g17r = render;
+render = function () { _g17r(); try { ttWrap(); vzApply(); mbSheetX() } catch (e) { } };
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('#vzb [data-vzp]'); if (b) setTimeout(() => { try { localStorage.removeItem('vz') } catch (x) { } vzApply() }, 0) }, true);
+window.addEventListener('resize', () => { try { vzApply() } catch (e) { } });
+/* bottom sheet: X button, swipe down on the top part, device back button */
+function mbSheetX() {
+  const s = document.getElementById('msheet'); if (!s || s.querySelector('.shd')) return;
+  const w = s.querySelector('.who'); if (!w) return;
+  const d = document.createElement('div'); d.className = 'shd'; w.parentNode.insertBefore(d, w); d.appendChild(w);
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'xb'; x.setAttribute('aria-label', t('Close')); x.dataset.msx = '1'; x.innerHTML = '&#10005;'; d.appendChild(x)
+}
+const _mbs2 = mbSheet; mbSheet = function () { _mbs2(); mbSheetX() };
+const _mbClose2 = mbClose;
+mbClose = function () { const was = document.body.classList.contains('ms-open'); _mbClose2(); const s = document.getElementById('msheet'); if (s) s.style.transform = ''; if (was && history.state && history.state.msh) { try { history.back() } catch (e) { } } };
+document.addEventListener('click', e => {
+  const T = e.target;
+  if (T.closest && T.closest('[data-msx]')) { mbClose(); return }
+  if (T.closest && T.closest('[data-mbm]')) { try { if (!(history.state && history.state.msh)) history.pushState({ msh: 1 }, '') } catch (x) { } }
+}, true);
+window.addEventListener('popstate', () => { if (document.body.classList.contains('ms-open')) { document.body.classList.remove('ms-open'); const s = document.getElementById('msheet'); if (s) s.style.transform = '' } });
+(function () {
+  let y0 = null, dy = 0, el = null;
+  document.addEventListener('touchstart', e => { const s = e.target.closest && e.target.closest('#msheet'); if (!s || !document.body.classList.contains('ms-open')) return; if (s.scrollTop > 0 && !e.target.closest('.grip,.shd')) return; el = s; y0 = e.touches[0].clientY; dy = 0 }, { passive: true });
+  document.addEventListener('touchmove', e => { if (y0 == null) return; dy = e.touches[0].clientY - y0; if (dy > 0) { el.style.transition = 'none'; el.style.transform = 'translateY(' + dy + 'px)' } }, { passive: true });
+  document.addEventListener('touchend', () => { if (y0 == null) return; el.style.transition = ''; if (dy > 80) mbClose(); else el.style.transform = ''; y0 = null; dy = 0 });
+})();
+</script>
+<script>
+/* Group 19: a link to the full help guide (help.html) in the "?" menu of the header and in the More sheet on a phone */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Open the full help guide': 'دليل المساعدة الكامل',
+  'Help guide': 'دليل المساعدة'
+}).filter(([k]) => !(k in AR))));
+const HELP_URL = 'help.html';
+(function () {
+  const st = document.createElement('style');
+  st.textContent = '#tipm a.hg,#msheet a.hg{display:flex;gap:8px;align-items:center;width:100%;text-align:start;color:inherit;text-decoration:none;font:inherit;padding:8px 10px;border-radius:10px;cursor:pointer;box-sizing:border-box}#tipm a.hg:hover{background:var(--hl)}#tipm a.hg+*{border-top:1px solid var(--ln);margin-top:4px;padding-top:12px}';
+  document.head.appendChild(st);
+})();
+const _g19tm = tpMenu;
+tpMenu = function () {
+  _g19tm();
+  const m = document.getElementById('tipm'); if (!m || m.querySelector('a.hg')) return;
+  m.insertAdjacentHTML('afterbegin', `<a class="hg" href="${HELP_URL}" target="_blank" rel="noopener" data-hg>${ic('eye')} ${esc(t('Open the full help guide'))}</a>`);
+};
+const _g19ms = mbSheet;
+mbSheet = function () {
+  _g19ms.apply(this, arguments);
+  const s = document.getElementById('msheet'); if (!s || s.querySelector('[data-hg]')) return;
+  const row = s.querySelector('[data-mba="tips"]') || s.querySelector('[data-mba="theme"]'); if (!row) return;
+  row.insertAdjacentHTML('beforebegin', `<a class="it hg" href="${HELP_URL}" target="_blank" rel="noopener" data-hg><span>${esc(t('Help guide'))}</span><small>?</small></a>`);
+};
+document.addEventListener('click', e => {
+  if (!(e.target.closest && e.target.closest('[data-hg]'))) return;
+  const m = document.getElementById('tipm'); if (m) m.remove();
+  mbClose();
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
