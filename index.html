@@ -4486,6 +4486,201 @@ document.addEventListener('click', e => {
   mbClose();
 });
 </script>
+<style>
+#rfs,#bkb{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font:inherit}
+#rfs:hover,#bkb:hover{background:rgba(255,255,255,.3)}
+#rfs svg{width:20px;height:20px}
+#rfs.spin svg{animation:g20sp .8s linear infinite}@keyframes g20sp{to{transform:rotate(360deg)}}
+#bkb{display:none;font-size:28px;line-height:1}
+html[dir=rtl] #bkb span{display:inline-block;transform:scaleX(-1)}
+.wrp>td{background:var(--bg);padding:10px 12px!important}
+.wrp .wrg{display:inline-flex;align-items:center;gap:6px;margin:3px 6px 3px 0;padding:4px 8px;border:1px solid var(--ln);border-radius:10px;background:var(--sf)}
+.wrp .wrg input{width:58px}
+.wrp h5{margin:0 0 6px;font-size:14px}
+button[data-wr].on{background:var(--hl)}
+.thsync{margin-top:12px;padding:10px 12px;border:1px solid var(--ln);border-radius:12px;background:var(--bg);text-align:start}
+.thsync small{display:block;margin:4px 0}.thsync ul{margin:6px 0 0;max-height:160px;overflow:auto;padding-inline-start:18px;font-size:13px}
+@media (max-width:820px){body.hasback #bkb{display:inline-flex}}
+@media (max-width:700px){
+  header #rfs,header #bkb{width:34px;height:34px}
+  header{gap:8px}
+  body.hasback header #lgn{display:none}
+  #v .seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));overflow:visible;width:100%;height:auto;border-radius:14px}
+  #v .seg button{justify-content:center;white-space:normal;min-height:40px}
+  #v .card{overflow-x:auto}
+  #v .bar{flex-wrap:wrap}#v .bar>*{max-width:100%}
+  #v select,#v input:not([type=checkbox]):not([type=radio]):not([type=color]){max-width:100%}
+  #v #vzb{display:flex;position:static!important;inset:auto!important;bottom:auto!important;margin:0 0 8px;width:max-content;box-shadow:none}
+  .swal2-html-container{overflow-x:auto}
+}
+</style>
+<script>
+/* Group 20: (1) saving teachers/assignments offers to update the lessons in the timetables, (2) weekly requirements per subject,
+   (3) Import / Export cleanup + Split MFL moves to Subjects, (4) import/export arrows, (5) Refresh button, (6) phone: back button, zoom bar in the page, no clipped rows. */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Update the timetables too': 'حدّث الجداول أيضًا (الفصول والمدرسين والماستر)',
+  'lessons will follow the new assignments, so they do not show up as conflicts.': 'حصة ستتغير لتتوافق مع التكليفات الجديدة، فلا تظهر كتعارضات.',
+  'Show the lessons': 'عرض الحصص',
+  'lessons updated': 'حصة تم تحديثها',
+  'Refresh': 'تحديث', 'Refreshed': 'تم التحديث', 'Back': 'رجوع',
+  'Refresh and discard unsaved changes?': 'التحديث سيلغي التغييرات غير المحفوظة. هل تريد المتابعة؟',
+  'Weekly requirements per grade': 'المتطلبات الأسبوعية لكل صف',
+  'Lessons per week': 'حصص في الأسبوع',
+  'Grade': 'الصف', 'Requirements': 'المتطلبات',
+  'Applied to the timetables': 'تم تطبيقها على الجداول'
+}).filter(([k]) => !(k in AR))));
+
+/* ---- arrows: import points down, export points up (the two symbols swap their shapes; the Excel export button of the exams is switched back) ---- */
+(function () {
+  try {
+    const u = document.querySelector('#i-up path'), d = document.querySelector('#i-down path');
+    if (u && d) { const a = u.getAttribute('d'); u.setAttribute('d', d.getAttribute('d')); d.setAttribute('d', a) }
+    const sp = document.getElementById('i-up'); if (sp && !document.getElementById('i-refresh')) sp.parentNode.insertAdjacentHTML('beforeend', '<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></symbol>');
+  } catch (e) { }
+})();
+const _g20ex = rExam;
+rExam = function () { return _g20ex().replace(/(data-exa="xlsx"[^>]*>)<svg class="ic"><use href="#i-up"\/>/g, '$1<svg class="ic"><use href="#i-down"/>') };
+
+/* ---- weekly requirements move into the Subjects tab ---- */
+{ const i = SUBS.findIndex(x => x[0] == 'req'); if (i >= 0) SUBS.splice(i, 1) }
+const G20_WRO = new Set();
+const g20Grade = c => { const n = parseInt(String(c).slice(1), 10); return n > 10 ? c : 'G' + n };
+const g20Grades = () => [...new Set(I.classes.map(g20Grade))].sort(natural);
+const g20Req = (s, g) => { const r = ed('WeeklyReq').find(x => x[0] == g && lc(x[1]) == lc(s)); return r ? r[2] : '' };
+function g20Panel(ri, cols) {
+  const r = ed('Subjects')[ri]; if (!r) return '';
+  const nm = r[2] || r[0], extra = ed('WeeklyReq').filter(x => lc(x[1]) == lc(nm)).map(x => x[0]), gs = [...new Set(g20Grades().concat(extra))].sort(natural);
+  return `<tr class="wrp" data-wrp="${ri}"><td colspan="${cols}"><h5>${t('Weekly requirements per grade')} — ${esc(r[0] || nm)}</h5><p class="msg">${t('Lessons per week per grade (G11 and G12: per class). This is the source of truth for the weekly requirement check.')}</p>${gs.map(g => `<label class="wrg"><b>${esc(g)}</b><input type="number" min="0" inputmode="numeric" data-wrs="${esc(nm)}" data-wrg="${esc(g)}" value="${esc(g20Req(nm, g))}" title="${t('Lessons per week')}"></label>`).join('')}</td></tr>`;
+}
+const g20MflCard = () => `<div class="card"><h3>${t('MFL: French / German')}</h3><p class="msg">${t('Splits every MFL lesson into one entry per language (group French / German) using the Language set for each teacher.')}</p><button class="b" data-a="splitmfl">${ic('users')} ${t('Split MFL by teacher language')}</button></div>`;
+const _g20rs = rSettings;
+rSettings = function () {
+  let h = _g20rs();
+  if (SUB == 'subjects') {
+    h = h.replace(/<tr>((?:(?!<\/tr>)[\s\S])*?)<td>(<button class="b dng" data-a="rowdel" data-n="Subjects" data-r="(\d+)">)([\s\S]*?)<\/tr>/g, (m, pre, btn, ri, rest) => {
+      const r = ed('Subjects')[+ri] || [], nm = r[2] || r[0], n = ed('WeeklyReq').filter(x => lc(x[1]) == lc(nm) && String(x[2]).trim() !== '').length, on = G20_WRO.has(+ri);
+      const cols = (pre.match(/<td>/g) || []).length + 2;
+      return `<tr>${pre}<td><button class="b${on ? ' on' : ''}" type="button" data-wr="${ri}" title="${esc(t('Weekly requirements'))}">${ic('grid')} ${t('Weekly requirements')}${n ? ' (' + n + ')' : ''}</button> ${btn}${rest}</tr>` + (on ? g20Panel(+ri, cols) : '');
+    });
+    h = h.replace(/(<div class="scont">[\s\S]*)<\/div>\s*<\/div>\s*$/, (m, a) => a + g20MflCard() + '</div></div>');
+  }
+  if (SUB == 'io') h = h.replace(/<div class="card"><h3>[^<]*MFL[^<]*<\/h3>[\s\S]*?data-a="splitmfl">[\s\S]*?<\/button><\/div>/, '');
+  return h;
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-wr]'); if (!b || TAB !== 'st') return;
+  const i = +b.dataset.wr; G20_WRO.has(i) ? G20_WRO.delete(i) : G20_WRO.add(i); render();
+});
+document.addEventListener('input', e => {
+  const el = e.target; if (!el.dataset || el.dataset.wrs == null) return;
+  const s = el.dataset.wrs, g = el.dataset.wrg, R = ed('WeeklyReq'), v = el.value.trim(), k = R.findIndex(r => r[0] == g && lc(r[1]) == lc(s));
+  if (k >= 0) { if (v === '') R.splice(k, 1); else R[k][2] = +v } else if (v !== '') R.push([g, s, +v]);
+  const tr = el.closest('tr.wrp'), btn = tr && tr.previousElementSibling && tr.previousElementSibling.querySelector('[data-wr]');
+  if (btn) { const n = R.filter(r => lc(r[1]) == lc(s) && String(r[2]).trim() !== '').length; btn.innerHTML = ic('grid') + ' ' + t('Weekly requirements') + (n ? ' (' + n + ')' : '') }
+});
+const _g20sv = saveTbl;
+saveTbl = async function (n) {
+  if (n == 'Subjects' && ed('WeeklyReq') && JSON.stringify(ed('WeeklyReq')) != JSON.stringify(UX.stateOf('WeeklyReq'))) {
+    const oldR = UX.stateOf('WeeklyReq'), rows = ed('WeeklyReq').filter(r => String(r[0]).trim() && String(r[1]).trim() && String(r[2]).trim() !== '');
+    const keep = {}; Object.keys(ED).forEach(k => { if (k != 'WeeklyReq') keep[k] = ED[k] });
+    try { UX.label = t('Saving...'); UX.hl++; UX.mute++; S = await srv('api_saveTable', 'WeeklyReq', rows) } catch (x) { return } finally { UX.hl--; UX.mute-- }
+    index(); ED = keep;
+    UX.stack.push({ title: t('Saved') + ' · ' + t('Weekly requirements'), at: new Date(), undo: async () => { S = await UX.srv0('api_saveTable', 'WeeklyReq', oldR); ED = {}; index(); render() } }); UX.bar();
+  }
+  return _g20sv(n);
+};
+
+/* ---- teachers / assignments: offer to update the lessons in the timetables ---- */
+function g20Plan(oldA, T, A) {
+  const act = r => !/^n/i.test(r[5] || ''), ids = new Set(T.map(r => r[0]));
+  const sets = rows => { const m = new Map(); rows.filter(act).forEach(r => { const k = r[0] + '|' + lc(r[1]); if (!m.has(k)) m.set(k, []); m.get(k).push(r) }); m.forEach(v => v.sort((a, b) => (/^y/i.test(b[4]) ? 1 : 0) - (/^y/i.test(a[4]) ? 1 : 0))); return m };
+  const O = sets(oldA), N = sets(A), out = [];
+  S.lessons.forEach(l => {
+    if (l.l) return;
+    const k = l.c + '|' + lc(l.s), o = (O.get(k) || []).map(r => r[2]), n = (N.get(k) || []).map(r => r[2]);
+    const dropped = o.filter(x => !n.includes(x));
+    const gone = l.t.filter(x => dropped.includes(x) || !ids.has(x)), added = n.filter(x => !o.includes(x) && ids.has(x));
+    const keep = l.t.filter(x => !gone.includes(x));
+    let nt = keep;
+    if (added.length && (gone.length || !keep.length)) nt = keep.concat(added.filter(x => !keep.includes(x)).slice(0, Math.max(1, gone.length)));
+    if (nt.join(',') != l.t.join(',')) out.push({ l, from: l.t.slice(), to: nt });
+  });
+  return out;
+}
+const g20Row = l => [l.id, l.c, l.d, l.p, l.s, (l.t || []).join(','), l.g || '', l.r || '', l.l ? '1' : '', l.sh || ''];
+const g20Nm = a => a.length ? a.map(x => esc(tname(x))).join(' + ') : '—';
+function g20Ask(items, plan) {
+  const html = UX.diffHtml(items) + (plan.length ? `<div class="thsync"><label><input type="checkbox" id="thsync" checked> <b>${t('Update the timetables too')}</b></label>
+    <small>${plan.length} ${t('lessons will follow the new assignments, so they do not show up as conflicts.')}</small>
+    <details><summary>${t('Show the lessons')}</summary><ul>${plan.slice(0, 60).map(p => `<li>${esc(p.l.c)} · ${esc(dayName(p.l.d))} · P${p.l.p} · ${esc(p.l.s)}: ${g20Nm(p.from)} → <b>${g20Nm(p.to)}</b></li>`).join('')}${plan.length > 60 ? `<li>+${plan.length - 60}</li>` : ''}</ul></details></div>` : '');
+  if (!window.Swal) return Promise.resolve({ ok: confirm(t('Save changes?') + '\n' + uxPlain(html)), sync: plan.length > 0 });
+  return Swal.fire({ icon: 'question', title: t('Save changes?'), html, showCancelButton: true, confirmButtonText: t('Save'), cancelButtonText: t('Cancel'), confirmButtonColor: '#26806F', cancelButtonColor: '#5c6f77', reverseButtons: true, heightAuto: false, returnFocus: false,
+    preConfirm: () => { const c = document.getElementById('thsync'); return { sync: !!(c && c.checked) } } }).then(r => ({ ok: !!r.isConfirmed, sync: !!(r.value && r.value.sync) }));
+}
+thSave = async function () {
+  const { T, A, B } = thRows(), ids = T.map(r => r[0]), dup = ids.find((x, i) => ids.indexOf(x) !== i);
+  if (dup) return UX.error(t('Duplicate teacher ID') + ': ' + dup);
+  const oldT = UX.stateOf('Teachers'), oldA = UX.stateOf('Assignments'), oldB = UX.stateOf('Blocked');
+  const items = [['Teachers', UX.diff('Teachers', oldT, T)], ['Assignments', UX.diff('Assignments', oldA, A)], ['Blocked', UX.diff('Blocked', oldB, B)]];
+  if (!items.some(x => x[1].any)) return toast(t('No changes'));
+  const plan = g20Plan(oldA, T, A), ans = await g20Ask(items, plan);
+  if (!ans.ok) return;
+  const oldRows = ans.sync ? plan.map(p => g20Row(p.l)) : [], cells = ans.sync ? plan.map(p => [p.l.c, p.l.d, p.l.p]) : [];
+  UX.label = t('Saving...'); UX.hl++; UX.mute++;
+  try {
+    S = await srv('api_saveTeacherHub', T, A, B);
+    if (ans.sync && plan.length) S = await srv('api_syncLessons', plan.map(p => ({ id: p.l.id, t: p.to })));
+  } catch (e) { return } finally { UX.hl--; UX.mute-- }
+  ED = {}; index(); render();
+  UX.done(t('Saved') + (ans.sync && plan.length ? ' · ' + plan.length + ' ' + t('lessons updated') : ''), async () => {
+    if (oldRows.length) await UX.srv0('api_restoreCells', cells, oldRows);
+    S = await UX.srv0('api_saveTeacherHub', oldT, oldA, oldB); ED = {}; index(); render();
+  });
+};
+
+/* ---- Refresh button (next to the program name) and the in-app Back button (phones without a back key) ---- */
+const g20Dirty = () => { try { return Object.keys(ED).some(n => SRC[n] && JSON.stringify(ED[n]) != JSON.stringify(UX.stateOf(n))) } catch (e) { return false } };
+async function g20Refresh() {
+  const b = document.getElementById('rfs'); if (!b || b.classList.contains('spin') || !S) return;
+  if (g20Dirty() && !(await UX.ask(t('Refresh and discard unsaved changes?'), '', { yes: t('Refresh') }))) return;
+  b.classList.add('spin');
+  try { S = await srv('api_boot'); ED = {}; roleDone = false; index(); render(); toast(t('Refreshed')) } catch (e) { } finally { b.classList.remove('spin') }
+}
+const NAVH = []; let g20Last = null, g20Skip = false;
+const g20Key = () => TAB + '|' + (TAB == 'tt' && typeof VIEW != 'undefined' ? VIEW : '') + '|' + (TAB == 'st' && !MB() ? SUB : '');
+function g20Back() {
+  if (MB() && TAB == 'st' && MBx.stm) { MBx.stm = false; return render() }
+  const k = NAVH.pop(); if (!k) return;
+  const [tab, view, sub] = k.split('|'); g20Skip = true; TAB = tab; if (view && typeof VIEW != 'undefined') VIEW = view; if (sub) SUB = sub; render(); window.scrollTo(0, 0);
+}
+(function () {
+  const h = document.querySelector('header'), ti = h && h.querySelector('.ti'); if (!h || !ti || document.getElementById('rfs')) return;
+  ti.insertAdjacentHTML('beforebegin', `<button id="rfs" type="button" title="${esc(t('Refresh'))}" aria-label="${esc(t('Refresh'))}"><svg class="ic"><use href="#i-refresh"/></svg></button>`);
+  const lg = document.getElementById('lgn'); (lg || h.firstChild).insertAdjacentHTML('beforebegin', `<button id="bkb" type="button" title="${esc(t('Back'))}" aria-label="${esc(t('Back'))}"><span>&#8249;</span></button>`);
+})();
+const _g20r = render;
+render = function () {
+  _g20r.apply(this, arguments);
+  try {
+    const k = g20Key(), tabChanged = g20Last && g20Last.split('|')[0] != k.split('|')[0];
+    if (g20Last && k != g20Last && !g20Skip && NAVH[NAVH.length - 1] != g20Last) { NAVH.push(g20Last); if (NAVH.length > 30) NAVH.shift() }
+    g20Skip = false; g20Last = k;
+    document.body.classList.toggle('hasback', NAVH.length > 0 || (MB() && TAB == 'st' && !!MBx.stm));
+    if (tabChanged && MB()) window.scrollTo(0, 0);
+    const lt = document.getElementById('rfs'); if (lt) lt.title = t('Refresh');
+  } catch (e) { }
+};
+document.addEventListener('click', e => {
+  const T = e.target, g = n => T.closest && T.closest(n);
+  if (g('#rfs')) return g20Refresh();
+  if (g('#bkb')) return g20Back();
+  if (MB() && g('[data-csev],[data-ctype]')) setTimeout(() => { const el = document.querySelector('#v .bar'); if (el) el.scrollIntoView({ block: 'start' }) }, 80);
+});
+
+/* ---- the zoom bar sits in the page (above the table), not floating over it ---- */
+const _g20vz = vzBar;
+vzBar = function () { _g20vz(); const b = document.getElementById('vzb'), v = document.getElementById('v'); if (b && v && b.parentNode !== v) v.insertAdjacentElement('afterbegin', b) };
+</script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
