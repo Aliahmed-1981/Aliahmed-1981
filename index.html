@@ -193,6 +193,57 @@ main>.kpis,main>.card,main>.bar{animation:g21in .28s ease both}
 #v .tt:not(.bm) tr.h.dd1>th.dy{background:var(--db)}
 #v .tt:not(.bm) tr.h.dd1>th.hd:not(.brk){background:var(--pb)}
 </style>
+<style id="g23css">
+.cal .dh .s{display:none}@media(max-width:640px){.cal .dh .f{display:none}.cal .dh .s{display:inline}.cal .dh{font-size:11px;overflow:hidden;white-space:nowrap}}
+/* G23 - school calendar */
+.cal{display:flex;flex-direction:column;gap:12px}
+.cal .cbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cal .cbar .grow{flex:1 1 auto}
+.cal .mn{font-weight:800;font-size:18px;min-width:150px;text-align:center}
+.cal .cnav{width:36px;height:36px;border-radius:50%;border:1px solid var(--ln);background:var(--sf);color:var(--ink);cursor:pointer;font:inherit;font-size:20px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.cal .cnav:hover{background:var(--soft)}
+html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
+.cal .cfl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cal .cfl button{border:1px solid var(--ln);background:var(--sf);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cal .cfl button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.cal .cfl i{width:10px;height:10px;padding:0;border-radius:50%;display:inline-block}
+.cal .cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .cg .dh{text-align:center;font-weight:700;color:var(--mut);font-size:12px;padding:4px 0}
+.cal .cg .dc{min-height:88px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);padding:4px;display:flex;flex-direction:column;gap:3px;overflow:hidden;min-width:0}
+.cal .cg .dc.o{opacity:.45}
+.cal .cg .dc.today{outline:2px solid var(--teal);outline-offset:-1px}
+.cal .cg .dc.hol{background:var(--bads)}
+.cal .cg .dc.add{cursor:pointer}.cal .cg .dc.add:hover{border-color:var(--teal)}
+.cal .cg .dc .n{font-size:12px;font-weight:700;color:var(--ink)}
+.cal .cg .dc small.msg{font-size:11px}
+.cev{display:block;font-size:11px;line-height:1.35;border-radius:6px;padding:1px 6px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cev.holiday,.cty.holiday{background:#C62A1F}.cev.exam,.cty.exam{background:#6E4BD8}.cev.trip,.cty.trip{background:#1B6FB5}.cev.other,.cty.other{background:#8A5A00}
+.cty{display:inline-block;color:#fff;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600}
+.cal .cl{display:flex;flex-direction:column;gap:8px}
+.cal .cr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--ln);border-inline-start:6px solid var(--ln);border-radius:12px;background:var(--sf);padding:8px 12px}
+.cal .cr.holiday{border-inline-start-color:#C62A1F}.cal .cr.exam{border-inline-start-color:#6E4BD8}.cal .cr.trip{border-inline-start-color:#1B6FB5}.cal .cr.other{border-inline-start-color:#8A5A00}
+.cal .cr .grow{flex:1 1 200px;min-width:0}
+.cal .cr .grow b{display:block}
+.cal .cr .btns{display:flex;gap:6px}
+.calbn{display:flex;align-items:center;gap:10px;border-radius:14px;padding:10px 14px;margin-bottom:10px;color:#fff;font-weight:600}
+.calbn.holiday{background:#C62A1F}.calbn.exam{background:#6E4BD8}.calbn.trip{background:#1B6FB5}.calbn.other{background:#8A5A00}
+.calbn svg{width:22px;height:22px;flex:none}
+.calw{margin-top:6px;border-radius:10px;padding:6px 10px;background:var(--wns);color:var(--ink);font-size:13px}
+.cimp table{width:100%;border-collapse:collapse;font-size:13px}
+.cimp th,.cimp td{border-bottom:1px solid var(--ln);padding:4px 6px;text-align:start}
+.cimp .scr{max-height:46vh;overflow:auto}
+.cimp tr.bad td{color:var(--bad)}
+.cfm{display:grid;gap:8px;text-align:start}
+.cfm label{display:grid;gap:3px;font-size:13px;font-weight:600}
+.cfm input,.cfm select{font:inherit;padding:7px 9px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:var(--ink);width:100%;box-sizing:border-box}
+.cfm .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:640px){
+  .cal .cg .dc{min-height:60px;padding:2px}
+  .cal .cev{font-size:10px;padding:0 3px}
+  .cal .mn{min-width:0;font-size:16px}
+  .cfm .two{grid-template-columns:1fr}
+}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -4867,6 +4918,316 @@ function g22Tag(){
   }catch(e){}
 }
 {const _r22=render;render=function(){const r=_r22.apply(this,arguments);g22Tag();return r}}
+</script>
+<script>
+"use strict";
+/* Group 23: the school calendar. Events live in settings.academic.holidays (the old "Holidays and official breaks" list):
+   { id, name, s, e, type: holiday | exam | trip | other, scope: '' (whole school) | stage | grade (G9) | class, note }.
+   Old holidays have no type / scope: they stay whole-school holidays. Only the admin edits; everybody reads what concerns him. */
+Object.assign(AR, {
+  'Calendar': 'التقويم', 'School calendar': 'تقويم المدرسة', 'Holiday': 'عطلة', 'Exam': 'امتحان', 'Trip / activity': 'رحلة أو نشاط', 'Other': 'أخرى', 'All': 'الكل',
+  'Add event': 'إضافة حدث', 'Edit event': 'تعديل الحدث', 'Event name': 'اسم الحدث', 'From': 'من', 'To (optional)': 'إلى (اختياري)', 'Type': 'النوع', 'Applies to': 'يسري على',
+  'The whole school': 'كل المدرسة', 'Stage': 'المرحلة', 'Grade': 'الصف', 'Class': 'الفصل', 'Note': 'ملاحظة', 'Notify the people concerned': 'إشعار المعنيين بالتغيير',
+  'Import from Excel': 'استيراد من Excel', 'Excel template': 'قالب Excel', 'Export (.ics)': 'تصدير (.ics)', 'Print': 'طباعة', 'Only what concerns me': 'ما يخصني فقط',
+  'No events this month.': 'لا توجد أحداث في هذا الشهر.', 'Today': 'اليوم', 'day': 'يوم', 'days': 'أيام', 'Enter a name and a start date.': 'اكتب اسم الحدث وتاريخ البداية.',
+  'The end date is before the start date.': 'تاريخ النهاية قبل تاريخ البداية.', 'Delete this event?': 'حذف هذا الحدث؟', 'Calendar saved': 'تم حفظ التقويم', 'Event deleted': 'تم حذف الحدث',
+  'Event added': 'تمت إضافة الحدث', 'Event updated': 'تم تعديل الحدث', 'Events imported': 'تم استيراد الأحداث', 'Add': 'إضافة', 'Add the selected': 'أضف المحدد',
+  'Nothing to add.': 'لا يوجد ما يُضاف.', 'Already in the calendar': 'موجود بالفعل في التقويم', 'Date not understood': 'التاريخ غير مفهوم', 'Unknown scope: whole school': 'نطاق غير معروف: كل المدرسة',
+  'Check the events before adding them': 'راجع الأحداث قبل إضافتها', 'Today is a holiday': 'اليوم عطلة', 'In the calendar today': 'في التقويم اليوم', 'Coming up in the calendar': 'قادم في التقويم',
+  'Open the calendar': 'افتح التقويم', 'This day is a holiday': 'هذا اليوم عطلة', 'Send the absence request anyway?': 'هل تريد إرسال طلب الغياب رغم ذلك؟', 'Send anyway': 'أرسل رغم ذلك',
+  'Calendar events in these dates': 'أحداث في التقويم في هذه التواريخ', 'The school calendar is managed in the Calendar tab.': 'يُدار تقويم المدرسة (العطلات والأحداث) من تبويب التقويم.',
+  'school calendar updated': 'تحديث في تقويم المدرسة', 'Added': 'إضافة', 'Changed': 'تعديل', 'Removed': 'حذف', 'Calendar file': 'ملف التقويم', 'Name': 'الاسم'
+});
+const CAL = { m: '', f: 'all', mine: false };
+const CAL_TY = ['holiday', 'exam', 'trip', 'other'];
+const CAL_LB = { holiday: 'Holiday', exam: 'Exam', trip: 'Trip / activity', other: 'Other' };
+const calAdmin = () => !!S && S.role == 'admin';
+const calAcad = () => (S && S.set && S.set.academic) || {};
+const calAll = () => (calAcad().holidays || []).filter(h => h && h.s).map(h => ({ id: h.id || '', name: String(h.name || ''), s: h.s, e: h.e || h.s, type: CAL_TY.includes(h.type) ? h.type : 'holiday', scope: String(h.scope || ''), note: String(h.note || '') }));
+const calCover = (e, ds) => e.s <= ds && ds <= e.e;
+const calDays = e => Math.round((new Date(e.e + 'T00:00') - new Date(e.s + 'T00:00')) / 864e5) + 1;
+function calHit(e, c) {
+  const sc = String(e.scope || '').trim().toLowerCase(); if (!sc) return true;
+  const cl = String(c).toLowerCase(), st = String(stageOf(c) || '').toLowerCase(), m = sc.match(/^g(\d+)$/);
+  return sc == cl || sc == st || !!(m && new RegExp('^g' + m[1] + '[a-z]*$').test(cl));
+}
+function calMine() {
+  if (calAdmin()) return null;
+  const my = S.myTids || [], set = new Set();
+  (S.lessons || []).forEach(l => { if (!my.length || (l.t || []).some(x => my.includes(x))) set.add(l.c) });
+  return [...set];
+}
+function calRel(e, mine) { return !e.scope || mine === null || mine.some(c => calHit(e, c)) }
+function calVisible() {
+  const mine = CAL.mine ? calMine() : null;
+  return calAll().filter(e => (CAL.f == 'all' || e.type == CAL.f) && (!CAL.mine || calRel(e, mine)));
+}
+const calHolidayOn = ds => calAll().find(e => e.type == 'holiday' && !e.scope && calCover(e, ds));
+const calScopeLabel = s => s ? s : t('The whole school');
+const calFmt = ds => { const d = new Date(ds + 'T00:00'); return d.toLocaleDateString(HL == 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' }) };
+const calRange = e => calFmt(e.s) + (e.e != e.s ? ' → ' + calFmt(e.e) : '') + ' · ' + calDays(e) + ' ' + t(calDays(e) == 1 ? 'day' : 'days');
+function calIcon() {
+  if (document.getElementById('i-cal')) return;
+  const sp = document.getElementById('i-clock'); if (sp && sp.parentNode) sp.parentNode.insertAdjacentHTML('beforeend', '<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></symbol>');
+}
+calIcon();
+
+/* ---------- the tab ---------- */
+function rCal() {
+  const adm = calAdmin(), today = tdDate();
+  if (!CAL.m) CAL.m = today.slice(0, 7);
+  const [Y, M] = CAL.m.split('-').map(Number), evs = calVisible();
+  const first = new Date(Y, M - 1, 1), last = new Date(Y, M, 0), cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push(new Date(Y, M - 1, 1 - first.getDay() + i));
+  for (let d = 1; d <= last.getDate(); d++) cells.push(new Date(Y, M - 1, d));
+  while (cells.length % 7) cells.push(new Date(Y, M - 1, last.getDate() + (cells.length - first.getDay() - last.getDate() + 1)));
+  const mS = CAL.m + '-01', mE = CAL.m + '-' + pad(last.getDate());
+  const list = evs.filter(e => e.s <= mE && e.e >= mS).sort((a, b) => a.s < b.s ? -1 : a.s > b.s ? 1 : a.name < b.name ? -1 : 1);
+  const title = first.toLocaleDateString(HL == 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', { month: 'long', year: 'numeric' });
+  const chips = [['all', 'All']].concat(CAL_TY.map(k => [k, CAL_LB[k]])).map(([k, l]) => `<button type="button" data-cal="f" data-f="${k}" class="${CAL.f == k ? 'on' : ''}">${CAL_TY.includes(k) ? `<i class="cty ${k}"></i>` : ''}${t(l)}</button>`).join('');
+  const grid = DAYS.map((d, i) => `<div class="dh"><span class="f">${esc(t(d))}</span><span class="s">${esc(HL=='ar'?t(d):t(d).slice(0,3))}</span></div>`).join('') + cells.map(d => {
+    const ds = tdDate(d), inM = d.getMonth() == M - 1, ev = evs.filter(e => calCover(e, ds)), hol = ev.some(e => e.type == 'holiday' && !e.scope);
+    return `<div class="dc${inM ? '' : ' o'}${ds == today ? ' today' : ''}${hol ? ' hol' : ''}${adm ? ' add' : ''}"${adm ? ` data-cal="add" data-d="${ds}"` : ''}><span class="n">${d.getDate()}</span>${ev.slice(0, 2).map(e => `<span class="cev ${e.type}" title="${esc(e.name)}">${esc(e.name)}</span>`).join('')}${ev.length > 2 ? `<small class="msg">+${ev.length - 2}</small>` : ''}</div>`;
+  }).join('');
+  const rows = list.length ? list.map(e => `<div class="cr ${e.type}"><span class="cty ${e.type}">${esc(t(CAL_LB[e.type]))}</span><span class="grow"><b>${esc(e.name)}</b><small class="msg">${esc(calRange(e))} · ${esc(calScopeLabel(e.scope))}${e.note ? ' · ' + esc(e.note) : ''}</small></span>${adm ? `<span class="btns"><button class="b" data-cal="edit" data-id="${esc(e.id)}">${t('Edit')}</button><button class="b" data-cal="del" data-id="${esc(e.id)}">${t('Delete')}</button></span>` : ''}</div>`).join('') : `<p class="msg">${t('No events this month.')}</p>`;
+  return `<div class="cal"><div class="cbar"><button class="cnav" data-cal="prev" aria-label="${esc(t('Previous'))}"><span>‹</span></button><span class="mn">${esc(title)}</span><button class="cnav" data-cal="next" aria-label="${esc(t('Next'))}"><span>›</span></button><button class="b" data-cal="now">${t('Today')}</button><span class="grow"></span>
+${adm ? `<button class="b pri" data-cal="add">+ ${t('Add event')}</button><button class="b" data-cal="imp">${ic('up')} ${t('Import from Excel')}</button><button class="b" data-cal="tpl">${ic('down')} ${t('Excel template')}</button>` : ''}<button class="b" data-cal="ics">${ic('down')} ${t('Export (.ics)')}</button><button class="b" data-cal="print">${ic('print')} ${t('Print')}</button></div>
+<div class="cfl">${chips}${adm ? '' : `<label class="tag"><input type="checkbox" data-calmine${CAL.mine ? ' checked' : ''}> ${t('Only what concerns me')}</label>`}</div>
+<div class="cg">${grid}</div><div class="cl">${rows}</div><input type="file" id="calfile" accept=".xlsx,.xls,.csv" hidden></div>`;
+}
+
+/* ---------- save (with Undo) ---------- */
+async function calSave(list, msg, notify) {
+  const prev = JSON.parse(JSON.stringify(calAcad().holidays || []));
+  const put = async (hs, nt) => { S = await srv('api_saveSettingsX', 'academic', Object.assign({}, calAcad(), { holidays: hs }), !!nt); if (typeof SX != 'undefined') SX.ac = null; index(); render() };
+  try { await put(list, notify) } catch (e) { console.error('calSave', e); return false }
+  if (notify) { try { NQ('api_flushPush').catch(() => { }) } catch (e) { } }
+  UX.done(msg, async () => { await put(prev, false) });
+  return true;
+}
+const calRaw = () => JSON.parse(JSON.stringify(calAcad().holidays || []));
+function calScopes(cur) {
+  const grades = [...new Set(I.classes.map(c => (/^G(\d+)/i.exec(c) || [])[0]).filter(Boolean))].sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+  const o = (v, l) => `<option value="${esc(v)}"${v == cur ? ' selected' : ''}>${esc(l)}</option>`;
+  return o('', t('The whole school')) + `<optgroup label="${esc(t('Stage'))}">${stages().map(s => o(s, s)).join('')}</optgroup><optgroup label="${esc(t('Grade'))}">${grades.map(g => o(g, g)).join('')}</optgroup><optgroup label="${esc(t('Class'))}">${I.classes.map(c => o(c, c)).join('')}</optgroup>`;
+}
+function calForm(e) {
+  e = e || {};
+  return `<div class="cfm"><label>${t('Event name')}<input id="cal-n" maxlength="80" value="${esc(e.name || '')}"></label>
+<div class="two"><label>${t('From')}<input id="cal-s" type="date" value="${esc(e.s || '')}"></label><label>${t('To (optional)')}<input id="cal-e" type="date" value="${esc(e.e && e.e != e.s ? e.e : '')}"></label></div>
+<div class="two"><label>${t('Type')}<select id="cal-t">${CAL_TY.map(k => `<option value="${k}"${(e.type || 'holiday') == k ? ' selected' : ''}>${esc(t(CAL_LB[k]))}</option>`).join('')}</select></label><label>${t('Applies to')}<select id="cal-c">${calScopes(e.scope || '')}</select></label></div>
+<label>${t('Note')}<input id="cal-o" maxlength="160" value="${esc(e.note || '')}"></label>
+<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input id="cal-x" type="checkbox" checked style="width:auto"> ${t('Notify the people concerned')}</label></div>`;
+}
+function calRead() {
+  const v = id => (document.getElementById(id) || {}).value || '', n = v('cal-n').trim(), s = v('cal-s'), e = v('cal-e') || s;
+  const x = document.getElementById('cal-x');
+  return { name: n, s, e, type: v('cal-t') || 'holiday', scope: v('cal-c'), note: v('cal-o').trim(), notify: !x || x.checked };
+}
+function calCheck(o) {
+  if (!o.name || !o.s) return t('Enter a name and a start date.');
+  if (o.e < o.s) return t('The end date is before the start date.');
+  return '';
+}
+async function calDialog(title, e) {
+  if (!window.Swal) { const n = prompt(t('Event name'), (e && e.name) || ''); if (!n) return null; const s = prompt(t('From') + ' (yyyy-mm-dd)', (e && e.s) || tdDate()); return s ? { name: n, s, e: s, type: (e && e.type) || 'holiday', scope: (e && e.scope) || '', note: '', notify: true } : null }
+  const r = await Swal.fire({ title, html: calForm(e), showCancelButton: true, confirmButtonText: t('Save'), cancelButtonText: t('Cancel'), confirmButtonColor: '#26806F', cancelButtonColor: '#5c6f77', reverseButtons: true, heightAuto: false, returnFocus: false,
+    preConfirm: () => { const o = calRead(), er = calCheck(o); if (er) { Swal.showValidationMessage(er); return false } return o } });
+  return r.isConfirmed && r.value ? r.value : null;
+}
+async function calAdd(ds) {
+  const o = await calDialog(t('Add event'), ds ? { s: ds } : null); if (!o) return;
+  const list = calRaw(); list.push({ id: '', name: o.name, s: o.s, e: o.e, type: o.type, scope: o.scope, note: o.note });
+  if (await calSave(list, t('Event added'), o.notify)) { CAL.m = o.s.slice(0, 7); render() }
+}
+async function calEdit(id) {
+  const cur = calAll().find(x => x.id == id); if (!cur) return;
+  const o = await calDialog(t('Edit event'), cur); if (!o) return;
+  const list = calRaw().map(h => h.id == id ? Object.assign({}, h, { name: o.name, s: o.s, e: o.e, type: o.type, scope: o.scope, note: o.note }) : h);
+  await calSave(list, t('Event updated'), o.notify);
+}
+async function calDel(id) {
+  const cur = calAll().find(x => x.id == id); if (!cur) return;
+  if (!await UX.ask(t('Delete this event?'), '<b>' + esc(cur.name) + '</b><br>' + esc(calRange(cur)), { danger: true, yes: t('Delete') })) return;
+  await calSave(calRaw().filter(h => h.id != id), t('Event deleted'), true);
+}
+
+/* ---------- Excel import ---------- */
+const calNorm = s => exDigits(String(s == null ? '' : s)).trim();
+const calISO = v => { const d = exNormDate(v); return /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(new Date(d + 'T00:00')) && tdDate(new Date(d + 'T00:00')) == d ? d : '' };
+const CAL_HD = { name: /name|title|event|occasion|subject|اسم|الحدث|المناسب|العنوان|البيان|الإجاز|الاجاز|العطل/i, to: /^\s*(to|end|until|till)\b|إلى|الى|نهاية|انتهاء|حتى|اخر|آخر/i, from: /from|start|begin|date|^\s*من(?![؀-ۿ])|بداية|بدء|تاريخ|يوم/i, type: /type|kind|category|النوع|نوع|التصنيف/i, scope: /scope|stage|grade|class|applies|المرحلة|الصف|الفصل|النطاق|يخص|يسري/i, note: /note|comment|remark|ملاحظ|تفاصيل/i };
+function calType(x, name) {
+  const s = String(x || '') + ' ' + (x ? '' : name || '');
+  if (/exam|test|quiz|امتحان|اختبار|تقييم/i.test(s)) return 'exam';
+  if (/trip|activity|event|visit|party|رحل|نشاط|فعالي|حفل|زيار|احتفال/i.test(s)) return 'trip';
+  if (/holiday|break|vacation|eid|off|عطل|إجاز|اجاز|عيد|راحة/i.test(s)) return 'holiday';
+  return x ? 'other' : 'other';
+}
+function calScopeIn(x) {
+  x = calNorm(x); if (!x || /^(\*|all|school|whole school|كل|الكل|المدرسة|كل المدرسة)$/i.test(x)) return { v: '', ok: true };
+  const known = [...stages(), ...I.classes, ...new Set(I.classes.map(c => (/^G(\d+)/i.exec(c) || [])[0]).filter(Boolean))], hit = known.find(k => String(k).toLowerCase() == x.toLowerCase());
+  return hit ? { v: hit, ok: true } : { v: '', ok: false, raw: x };
+}
+function calParse(rows) {
+  rows = rows.filter(r => r && r.some(c => calNorm(c) !== ''));
+  let hi = -1, map = {};
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const m = {}, used = {};
+    ['name', 'to', 'type', 'scope', 'note', 'from'].forEach(k => rows[i].forEach((c, j) => { if (m[k] == null && !used[j] && typeof c != 'number' && CAL_HD[k].test(String(c))) { m[k] = j; used[j] = 1 } }));
+    if (m.name != null && m.from != null) { hi = i; map = m; break }
+  }
+  let body;
+  if (hi >= 0) body = rows.slice(hi + 1);
+  else {
+    body = rows; const r0 = rows[0] || []; const di = r0.findIndex(c => calISO(c)); const ni = r0.findIndex(c => typeof c == 'string' && !calISO(c));
+    map = { name: ni < 0 ? 0 : ni, from: di < 0 ? 1 : di }; const d2 = r0.findIndex((c, j) => j > map.from && calISO(c)); if (d2 >= 0) map.to = d2;
+  }
+  const have = calAll(), key = e => e.name + '|' + e.s + '|' + e.e;
+  const seen = new Set(have.map(key));
+  return body.map((r, i) => {
+    const name = calNorm(r[map.name]).slice(0, 80), s = calISO(r[map.from]), e = map.to != null ? (calISO(r[map.to]) || (calNorm(r[map.to]) === '' ? s : '')) : s;
+    const ty = map.type != null ? calNorm(r[map.type]) : '', sc = map.scope != null ? calScopeIn(r[map.scope]) : { v: '', ok: true }, note = map.note != null ? calNorm(r[map.note]).slice(0, 160) : '';
+    const o = { name, s, e, type: calType(ty, name), scope: sc.v, note, warn: '', bad: '' };
+    if (!name || !s || !e || e < s) o.bad = t('Date not understood');
+    else if (seen.has(key(o))) o.bad = t('Already in the calendar');
+    else seen.add(key(o));
+    if (!sc.ok) o.warn = t('Unknown scope: whole school') + ': ' + sc.raw;
+    return o;
+  }).filter(o => o.name || o.s);
+}
+async function calImport(file) {
+  let sheets; try { sheets = await XL.read(file) } catch (e) { return toast(t(String(e.message) == 'XLSOFF' ? 'The .xls reader could not be loaded. Check the internet connection, or save the file as .xlsx or CSV.' : 'The file could not be read.'), 1) }
+  sheets = sheets.filter(s => s.rows.length); if (!sheets.length) return toast(t('The file could not be read.'), 1);
+  const items = calParse(sheets[0].rows); if (!items.length) return toast(t('Nothing to add.'), 1);
+  const html = `<div class="cimp"><div class="scr"><table><tr><th></th><th>${t('Name')}</th><th>${t('From')}</th><th>${t('To (optional)')}</th><th>${t('Type')}</th><th>${t('Applies to')}</th></tr>${items.map((o, i) => `<tr class="${o.bad ? 'bad' : ''}"><td><input type="checkbox" data-calpick="${i}"${o.bad ? ' disabled' : ' checked'}></td><td>${esc(o.name)}${o.bad ? '<br><small>' + esc(o.bad) + '</small>' : ''}${o.warn ? '<br><small>' + esc(o.warn) + '</small>' : ''}</td><td>${esc(o.s)}</td><td>${esc(o.e != o.s ? o.e : '')}</td><td>${esc(t(CAL_LB[o.type]))}</td><td>${esc(calScopeLabel(o.scope))}</td></tr>`).join('')}</table></div>
+<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input id="cal-x" type="checkbox"> ${t('Notify the people concerned')}</label></div>`;
+  if (!window.Swal) { if (!confirm(t('Check the events before adding them'))) return; return calImportApply(items.filter(o => !o.bad), false) }
+  const r = await Swal.fire({ title: t('Check the events before adding them'), html, width: 760, showCancelButton: true, confirmButtonText: t('Add the selected'), cancelButtonText: t('Cancel'), confirmButtonColor: '#26806F', cancelButtonColor: '#5c6f77', reverseButtons: true, heightAuto: false, returnFocus: false,
+    preConfirm: () => ({ pick: [...document.querySelectorAll('[data-calpick]')].filter(c => c.checked).map(c => +c.dataset.calpick), notify: !!(document.getElementById('cal-x') || {}).checked }) });
+  if (!r.isConfirmed || !r.value) return;
+  const pick = r.value.pick.map(i => items[i]).filter(Boolean); if (!pick.length) return toast(t('Nothing to add.'), 1);
+  return calImportApply(pick, r.value.notify);
+}
+async function calImportApply(pick, notify) {
+  const list = calRaw().concat(pick.map(o => ({ id: '', name: o.name, s: o.s, e: o.e, type: o.type, scope: o.scope, note: o.note })));
+  if (await calSave(list, t('Events imported') + ': ' + pick.length, notify)) { CAL.m = pick.map(o => o.s).sort()[0].slice(0, 7); render() }
+}
+function calTemplate() {
+  XL.save(t('Calendar file') + ' - ' + (HL == 'ar' ? 'template' : 'template'), [{ name: 'Calendar', rows: [['Name', 'From', 'To', 'Type', 'Applies to', 'Note'], ['Mid-year break', '2026-12-20', '2026-12-24', 'Holiday', '', ''], ['Math exam', '2026-12-10', '', 'Exam', 'G9', ''], ['Museum trip', '2026-12-15', '', 'Trip', 'G4-G10', 'Bring lunch']], bold: [0], widths: [28, 14, 14, 12, 14, 30], colFmt: { 1: 'text', 2: 'text' } },
+    { name: 'Help', rows: [['Type: Holiday / Exam / Trip / Other'], ['Applies to: leave empty for the whole school, or write a stage (e.g. G4-G10), a grade (G9) or a class (G9A).'], ['Dates: yyyy-mm-dd. "To" can stay empty for a single day.']], widths: [110] }]);
+}
+
+/* ---------- ICS + print ---------- */
+function calIcs() {
+  const list = calVisible(), x = s => String(s || '').replace(/[\\;,]/g, '\\$&').replace(/\r?\n/g, '\\n'), nx = ds => { const d = new Date(ds + 'T00:00'); d.setDate(d.getDate() + 1); return tdDate(d).replace(/-/g, '') };
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z'), nm = (S.set.brand && (S.set.brand.nameEn || S.set.brand.nameAr)) || S.set.school || 'School';
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SOP//School calendar//EN', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:' + x(nm + ' - ' + t('School calendar'))];
+  list.forEach((e, i) => L.push('BEGIN:VEVENT', 'UID:' + (e.id || ('e' + i)) + '@sop', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + e.s.replace(/-/g, ''), 'DTEND;VALUE=DATE:' + nx(e.e), 'SUMMARY:' + x(e.name), 'DESCRIPTION:' + x(t(CAL_LB[e.type]) + (e.scope ? ' · ' + e.scope : '') + (e.note ? '\n' + e.note : '')), 'CATEGORIES:' + e.type, 'TRANSP:TRANSPARENT', 'END:VEVENT'));
+  L.push('END:VCALENDAR');
+  dl('school-calendar.ics', new Blob([L.join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' }));
+}
+function calPrint() {
+  const list = calVisible().sort((a, b) => a.s < b.s ? -1 : a.s > b.s ? 1 : 0); if (!list.length) return toast(t('No events this month.'), 1);
+  const tr = list.map((e, i) => `<tr><td>${i + 1}</td><td><b>${esc(e.name)}</b>${e.note ? '<br><small>' + esc(e.note) + '</small>' : ''}</td><td>${esc(e.s)}</td><td>${esc(e.e != e.s ? e.e : '')}</td><td>${calDays(e)}</td><td>${esc(t(CAL_LB[e.type]))}</td><td>${esc(calScopeLabel(e.scope))}</td></tr>`).join('');
+  printHtml(sheet(t('School calendar'), '', `<table class="tt"><tr><th style="width:30px">#</th><th>${t('Event name')}</th><th>${t('From')}</th><th>${t('To (optional)')}</th><th>${t('days')}</th><th>${t('Type')}</th><th>${t('Applies to')}</th></tr>${tr}</table>`), true);
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-cal]'); if (b && TAB == 'cal') {
+    const k = b.dataset.cal;
+    if (k == 'prev' || k == 'next') { const [y, m] = CAL.m.split('-').map(Number), d = new Date(y, m - 1 + (k == 'next' ? 1 : -1), 1); CAL.m = d.getFullYear() + '-' + pad(d.getMonth() + 1); return render() }
+    if (k == 'now') { CAL.m = tdDate().slice(0, 7); return render() }
+    if (k == 'f') { CAL.f = b.dataset.f; return render() }
+    if (k == 'add') { if (!calAdmin()) return; e.stopPropagation(); return calAdd(b.dataset.d) }
+    if (k == 'edit') return calEdit(b.dataset.id);
+    if (k == 'del') return calDel(b.dataset.id);
+    if (k == 'imp') return document.getElementById('calfile').click();
+    if (k == 'tpl') return calTemplate();
+    if (k == 'ics') return calIcs();
+    if (k == 'print') return calPrint();
+  }
+  const g = e.target.closest && e.target.closest('[data-calgo]'); if (g) { TAB = 'cal'; render() }
+});
+document.addEventListener('change', e => {
+  const t0 = e.target; if (!t0 || !t0.matches) return;
+  if (t0.matches('[data-calmine]')) { CAL.mine = t0.checked; render() }
+  else if (t0.id == 'calfile' && t0.files && t0.files[0]) { const f = t0.files[0]; t0.value = ''; calImport(f) }
+  else if (t0.matches('[data-exf="start"],[data-exf="end"]')) calExamWarn();
+});
+
+/* ---------- the tab itself ---------- */
+TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'ab') + 1, TABS.findIndex(x => x[0] == 'rp') + 1, 1), 0, ['cal', 'Calendar', 'cal']);
+const _rCalBase = render;
+render = function () {
+  if (TAB != 'cal') { const r = _rCalBase.apply(this, arguments); try { calAfter() } catch (e) { } return r }
+  const sy = window.scrollY;
+  TAB = 'tt'; try { _rCalBase.apply(this, arguments) } finally { TAB = 'cal' }
+  $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'cal'));
+  $('#v').innerHTML = rCal(); window.scrollTo(0, sy);
+};
+function calAfter() { calExamWarn() }
+
+/* ---------- Today: holiday banner + what is coming ---------- */
+{
+  const _td = rToday;
+  rToday = function () {
+    const ds = tdDate(), hol = calHolidayOn(ds), dow = new Date().getDay(), keep = I.days;
+    let h;
+    if (hol && keep.includes(dow)) I.days = keep.filter(d => d != dow);
+    try { h = _td.apply(this, arguments) } finally { I.days = keep }
+    const mine = calAdmin() ? null : calMine(), rel = calAll().filter(e => calRel(e, mine));
+    const todayEv = rel.filter(e => calCover(e, ds)), end = (() => { const d = new Date(); d.setDate(d.getDate() + 14); return tdDate(d) })();
+    const soon = rel.filter(e => e.e >= ds && e.s <= end && !calCover(e, ds)).sort((a, b) => a.s < b.s ? -1 : 1);
+    let bn = '';
+    if (hol) bn = `<div class="calbn holiday">${ic('cal')}<span>${t('Today is a holiday')}: ${esc(hol.name)}</span></div>`;
+    const other = todayEv.filter(e => e !== hol && !(e.type == 'holiday' && !e.scope));
+    if (other.length) bn += other.slice(0, 3).map(e => `<div class="calbn ${e.type}">${ic('cal')}<span>${t('In the calendar today')}: ${esc(e.name)}${e.scope ? ' · ' + esc(e.scope) : ''}</span></div>`).join('');
+    const card = soon.length ? `<div class="card"><h3>${t('Coming up in the calendar')}</h3>${soon.slice(0, 6).map(e => `<div class="li2"><span class="tm">${esc(calFmt(e.s))}</span><span class="grow"><b>${esc(e.name)}</b> <small class="msg">${esc(t(CAL_LB[e.type]))}${e.scope ? ' · ' + esc(e.scope) : ''}</small></span></div>`).join('')}<p><button class="b" data-tdgo="cal">${ic('cal')} ${t('Open the calendar')}</button></p></div>` : '';
+    h = h.replace('<div class="td">', '<div class="td">' + bn);
+    if (card) h = h.replace('<div class="card"><h3>' + t('Quick actions') + '</h3>', card + '<div class="card"><h3>' + t('Quick actions') + '</h3>');
+    h = h.replace(/(<div class="qa">)/, '$1<button class="b" data-tdgo="cal">' + ic('cal') + ' ' + t('Calendar') + '</button>');
+    return h;
+  };
+}
+
+/* ---------- Absence: warn before reporting on a school holiday ---------- */
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-abx="send"]'); if (!b || TAB != 'ab' || b.dataset.calok) return;
+  const d = typeof ABX != 'undefined' ? ABX.date : '', h = d && calHolidayOn(d); if (!h) return;
+  e.stopPropagation(); e.preventDefault();
+  const ok = await UX.ask(t('This day is a holiday'), '<p><b>' + esc(h.name) + '</b> · ' + esc(calRange(h)) + '</p><p>' + t('Send the absence request anyway?') + '</p>', { yes: t('Send anyway') });
+  if (ok) { b.dataset.calok = '1'; try { b.click() } finally { delete b.dataset.calok } }
+}, true);
+
+/* ---------- Exams: show calendar events inside the dates of the form ---------- */
+function calExamWarn() {
+  const s = document.querySelector('[data-exf="start"]'), en = document.querySelector('[data-exf="end"]'); if (!s || !en) return;
+  let w = document.getElementById('calw'); if (!w) { w = document.createElement('div'); w.id = 'calw'; w.className = 'calw'; (en.closest('label') || en).insertAdjacentElement('afterend', w) }
+  const a = s.value, z = en.value || a, hit = a ? calAll().filter(e => e.type != 'exam' && e.s <= z && e.e >= a) : [];
+  w.hidden = !hit.length; w.innerHTML = hit.length ? '<b>' + t('Calendar events in these dates') + ':</b> ' + hit.slice(0, 5).map(e => esc(e.name) + ' (' + esc(calFmt(e.s)) + (e.e != e.s ? ' → ' + esc(calFmt(e.e)) : '') + ')').join(' · ') : '';
+}
+
+/* ---------- Settings > Academic year: the list moved to the Calendar tab ---------- */
+{
+  const _sA = sAcademic;
+  sAcademic = function () {
+    const h = _sA.apply(this, arguments), a = h.lastIndexOf('<h4>'), z = h.indexOf('<p><button class="b pri" data-sxa="save"');
+    if (a < 0 || z < a) return h;
+    return h.slice(0, a) + `<h4>${t('School calendar')}</h4><p class="msg">${t('The school calendar is managed in the Calendar tab.')}</p><p><button class="b" data-calgo>${ic('cal')} ${t('Open the calendar')}</button></p>` + h.slice(z);
+  };
+}
+
+/* ---------- Notifications: a calendar change ---------- */
+{
+  const _nEv = nEv;
+  nEv = function (n) {
+    const e = n.ev; if (!e || e.k != 'cal') return _nEv(n);
+    const it = e.items || [], A = { add: 'Added', edit: 'Changed', del: 'Removed' };
+    return '<div class="it' + (!n.mine && +n.id > NF.seen ? ' new' : '') + '"><div class="m">' + esc(n.time) + ' · ' + esc(n.by) + ' · ' + esc(t('school calendar updated')) + '</div>' +
+      it.slice(0, 4).map(c => '<div class="l"><b>' + esc(t(A[c.a] || 'Changed')) + '</b> · ' + esc(c.name) + ' · ' + esc(c.s) + (c.e && c.e != c.s ? ' → ' + esc(c.e) : '') + '</div>').join('') + (it.length > 4 ? '<div class="l">+' + (it.length - 4) + ' ' + t('more') + '</div>' : '') + '</div>';
+  };
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
