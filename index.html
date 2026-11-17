@@ -165,6 +165,34 @@ main>.kpis,main>.card,main>.bar{animation:g21in .28s ease both}
 .lkf{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 @media (max-width:640px){#lkm{align-items:flex-end;padding:0}#lkm .lkc{border-radius:var(--r) var(--r) 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}#lkm .lkg{grid-template-columns:1fr}.lko{flex-direction:row;align-items:center}.lkp{width:92px;flex:none}header #lkb{display:none}}
 </style>
+<style id="g22css">
+/* G22 - clear period bar + clear day separators (screen only; printing is untouched) */
+:root{--dvl:#E8590C;--pa:#1D4E89;--pb:#0F766E;--da:#0B2A4A;--db:#08494A;--pbrk:#B45309}
+/* ---- Master sheet ---- */
+#v .tt.bm tr.band>th.hd{background:var(--pa);color:#fff;border-color:rgba(255,255,255,.55);position:sticky;top:40px;z-index:2;font-weight:600}
+#v .tt.bm tr.band>th.hd b{color:#fff}
+#v .tt.bm tr.band>th.hd.brk{background:var(--pbrk);color:#fff}
+#v .tt.bm tr.band>th.dt1:not(.brk),#v .tt.bm tr.band>th.dt3:not(.brk){background:var(--pb)}
+#v .tt.bm tr.band>th.bmc{z-index:4;position:sticky;top:40px}
+#v .tt.bm tr.band>th:not(.hd):not(.bmc){background:var(--pa);position:sticky;top:40px;z-index:2}
+#v .tt.bm tr.band>th.dt1:not(.hd):not(.bmc),#v .tt.bm tr.band>th.dt3:not(.hd):not(.bmc){background:var(--pb)}
+/* day header: dark band per day, alternating */
+#v .tt.bm tr.r1>th.dy.dv{background:var(--da);color:#fff;font-size:13px;letter-spacing:.2px}
+#v .tt.bm tr.r1>th.dy.dv small{color:#d5e4f5}
+#v .tt.bm tr.r1>th.dy.dv.d1,#v .tt.bm tr.r1>th.dy.dv.d3{background:var(--db)}
+/* thick separator between days, full table height */
+#v .tt.bm .dv{border-inline-start:6px solid var(--dvl)}
+#v .tt.bm tr.r1>th.bmc{box-shadow:none}
+/* ---- other timetables (class / teacher / master by day) ---- */
+#v .tt:not(.bm) tr.h>th.hd{background:var(--pa);color:#fff;border-color:rgba(255,255,255,.55)}
+#v .tt:not(.bm) tr.h>th.hd b{color:#fff}
+#v .tt:not(.bm) tr.h>th.hd.brk{background:var(--pbrk)}
+#v .tt:not(.bm) tr.h.dday>*{border-top:5px solid var(--dvl)}
+#v .tt:not(.bm) tr.h>th.dy{background:var(--da);color:#fff}
+#v .tt:not(.bm) tr.h>th.dy small,#v .tt:not(.bm) tr.h>th.dy small b{color:#d5e4f5}
+#v .tt:not(.bm) tr.h.dd1>th.dy{background:var(--db)}
+#v .tt:not(.bm) tr.h.dd1>th.hd:not(.brk){background:var(--pb)}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -4815,6 +4843,30 @@ render = function () {
   try { g21Apply(); document.querySelectorAll('#v .empty').forEach(e => { if (e.querySelector('use[href="#i-check"]')) e.classList.add('ok') }) } catch (e) { }
 };
 g21Apply();
+</script>
+<script>
+/* G22: tag day-header cells with their day index and mark the first row of every day */
+function g22Tag(){
+  try{
+    document.querySelectorAll('#v .tt.bm tr.r1>th.dy.dv').forEach((th,i)=>th.classList.add('d'+(i%5)));
+    document.querySelectorAll('#v .tt.bm').forEach(tb=>{
+      const nd=tb.querySelectorAll('tr.r1>th.dy.dv').length;if(!nd)return;
+      tb.querySelectorAll('tr.band').forEach(tr=>{
+        const cells=[...tr.children].slice(1),tot=cells.reduce((a,c)=>a+(c.colSpan||1),0),Wm=tot/nd;let col=0;
+        cells.forEach(c=>{const d=Math.min(nd-1,Math.floor(col/Wm));c.classList.remove('dt0','dt1','dt2','dt3','dt4');c.classList.add('dt'+(d%5));col+=c.colSpan||1});
+      });
+    });
+    document.querySelectorAll('#v .tt:not(.bm)').forEach(tb=>{
+      let n=0;
+      tb.querySelectorAll('tr.h').forEach(tr=>{
+        const f=tr.firstElementChild;
+        if(f&&f.classList.contains('dy')){tr.classList.add('dday');n++}
+        if(n%2==0)tr.classList.add('dd1');else tr.classList.remove('dd1');
+      });
+    });
+  }catch(e){}
+}
+{const _r22=render;render=function(){const r=_r22.apply(this,arguments);g22Tag();return r}}
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
