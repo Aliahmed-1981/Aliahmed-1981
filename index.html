@@ -244,6 +244,60 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
   .cfm .two{grid-template-columns:1fr}
 }
 </style>
+<style id="g24css">
+.g24 .gh{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.g24 .gh select,.g24 .gh input[type=text]{min-width:140px}
+.g24 .stg{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
+.g24 .stg label,.g24 .rm label{display:inline-flex;flex-direction:row;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--ln);border-radius:999px;background:var(--sf);font-size:13px;cursor:pointer}
+.g24 .stg label:has(input:checked),.g24 .rm label:has(input:checked){border-color:var(--teal);background:var(--soft);font-weight:700}
+.g24 .rm label.tk{border-style:dashed;opacity:.8}
+.g24 .lim{display:grid;grid-template-columns:minmax(120px,200px) 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--ln)}
+.g24 .role{border:1px solid var(--ln);border-radius:12px;padding:10px;margin:10px 0;background:var(--sf)}
+.g24 .role .rt{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.g24 .role .rt label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.g24 .rm{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.g24 .iss{margin:6px 0;padding:8px 10px;border-radius:10px;background:var(--wns);font-size:13px}
+.g24 .iss li{margin:2px 0}
+.g24 .cnt{font-size:12px;color:var(--mut)}
+.g24 .dng{color:var(--bad)}
+@media(max-width:640px){.g24 .lim{grid-template-columns:1fr}.g24 .lim .b{justify-self:start;padding:4px 14px}.g24 .gh select,.g24 .gh input[type=text]{min-width:0;width:100%}}
+</style>
+<style id="g25css">
+.qa .qtop{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.qa .qs{min-width:104px;height:104px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:8px solid var(--teal);background:var(--sf);flex:none}
+.qa .qs b{font-size:30px;line-height:1}.qa .qs small{font-size:11px;color:var(--mut);margin-top:2px}
+.qa .qs.mid{border-color:var(--amber)}.qa .qs.low{border-color:var(--bad)}
+.qa .qt{flex:1;min-width:200px}.qa .qt h3{margin:0 0 4px}
+.qa .qf{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:12px 0 4px}
+.qa .qf label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.qa .qf input[type=number]{width:84px}
+.qa .qf label.ck{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}
+.qa .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.qa .tile{border:1px solid var(--ln);border-radius:12px;padding:10px 12px;background:var(--sf)}
+.qa .tile b{display:block;font-size:24px;line-height:1.1}.qa .tile span{font-size:12px;color:var(--mut)}
+.qa .tile.bad b{color:var(--bad)}.qa .tile.ok b{color:var(--teal)}
+.qa table.ex{width:100%;border-collapse:collapse}.qa table.ex th{font-size:12px;color:var(--mut);text-align:start;padding:8px 10px;border-bottom:2px solid var(--ln);white-space:nowrap}.qa table.ex td{padding:8px 10px;border-bottom:1px solid var(--ln);vertical-align:top}
+.qa table.ex td.n,.qa table.ex th.n{text-align:center;white-space:nowrap}
+.qa .sc{display:inline-block;min-width:38px;text-align:center;padding:1px 8px;border-radius:999px;font-weight:700;font-size:12px;background:var(--soft)}
+.qa .sc.mid{background:var(--wns)}.qa .sc.low{background:var(--bads);color:var(--bad)}
+.qa .fl{display:inline-block;margin:1px 2px;padding:1px 8px;border-radius:999px;font-size:11px;background:var(--wns)}
+.qa .fl.bad{background:var(--bads);color:var(--bad)}
+.qa .det{font-size:12px;color:var(--mut)}
+.qa .bar{height:8px;border-radius:6px;background:var(--teal);min-width:2px}.qa .bar.bad{background:var(--bad)}
+.qa .msg2{color:var(--mut);font-size:13px;margin:6px 0}
+@media(max-width:640px){.qa .qs{min-width:84px;height:84px;border-width:6px}.qa .qs b{font-size:24px}.qa .qf input[type=number]{width:72px}}
+</style>
+<style id="g26css">
+.tpv .tf{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:0 0 10px}
+.tpv .tf label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.tpv input[type=number]{width:64px}
+.tpv .dys{display:flex;gap:4px;flex-wrap:wrap}
+.tpv .dys label{display:inline-flex;flex-direction:row;align-items:center;gap:3px;padding:2px 8px;border:1px solid var(--ln);border-radius:999px;font-size:12px;cursor:pointer;background:var(--sf)}
+.tpv .dys label:has(input:checked){border-color:var(--coral);background:var(--wns);font-weight:700}
+.tpv .dim{color:var(--mut);font-size:12px}
+.tpv .sv{position:sticky;bottom:64px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin-top:10px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+@media(max-width:640px){.tpv .sv{bottom:78px}}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -5228,6 +5282,347 @@ function calExamWarn() {
       it.slice(0, 4).map(c => '<div class="l"><b>' + esc(t(A[c.a] || 'Changed')) + '</b> · ' + esc(c.name) + ' · ' + esc(c.s) + (c.e && c.e != c.s ? ' → ' + esc(c.e) : '') + '</div>').join('') + (it.length > 4 ? '<div class="l">+' + (it.length - 4) + ' ' + t('more') + '</div>' : '') + '</div>';
   };
 }
+</script>
+<script>
+/* ---------- G24: stage limits for invigilators + roles (floor head ...) with the committees under them ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Invigilator stage limits': 'حدود المراقبين حسب المرحلة',
+  'A limited teacher invigilates only the stages you tick. Teachers without a limit can invigilate any stage.': 'المدرس المقيَّد يراقب في المراحل التي تحددها فقط. من ليس له حد يراقب في أي مرحلة.',
+  'Only one stage exists, so there is nothing to limit.': 'توجد مرحلة واحدة فقط، فلا حاجة لتحديد حدود.',
+  'Apply to': 'تطبيق على', 'Teacher': 'المدرس', 'May invigilate only in': 'يراقب في المراحل التالية فقط',
+  'Apply the limit': 'طبّق الحد', 'Limit each teacher to the stages he teaches': 'قيّد كل مدرس بالمراحل التي يدرّسها',
+  'Remove all limits': 'إزالة كل الحدود', 'Teachers with a limit': 'مدرسون لهم حد', 'No limits yet.': 'لا توجد حدود بعد.',
+  'Tick at least one stage.': 'حدد مرحلة واحدة على الأقل.', 'Choose who to limit.': 'اختر من تريد تقييده.',
+  'Stage': 'المرحلة', 'Stage: ': 'مرحلة: ', 'Department: ': 'قسم: ', 'Teachers': 'المدرسون', 'Groups': 'مجموعات',
+  'Remember to press "Save the rules" after changing the limits or roles.': 'لا تنس الضغط على «حفظ القواعد» بعد تعديل الحدود أو الأدوار.',
+  'Roles & committees': 'الأدوار واللجان',
+  'Give a teacher a role such as Floor head and tick the committees (rooms) under his responsibility. A teacher with a role is not assigned as an invigilator unless you allow it below.': 'أعطِ مدرساً دوراً مثل «رئيس الدور» وحدد اللجان (القاعات) التي تحت مسؤوليته. لا يُعيَّن صاحب الدور مراقباً إلا إذا سمحت بذلك أدناه.',
+  'A teacher with a role may also be assigned as an invigilator': 'السماح لصاحب الدور بأن يُعيَّن مراقباً أيضاً',
+  'Add a role': 'إضافة دور', 'Role': 'الدور', 'Committees (rooms)': 'اللجان (القاعات)',
+  'All free rooms': 'كل القاعات غير المسندة', 'Clear rooms': 'إلغاء التحديد', 'Delete role': 'حذف الدور', 'Note': 'ملاحظة',
+  'Choose a teacher': 'اختر مدرساً', 'Floor head': 'رئيس الدور', 'Control head': 'رئيس الكنترول', 'Floor supervisor': 'مشرف الدور', 'Stage coordinator': 'منسق المرحلة',
+  'No roles yet.': 'لا توجد أدوار بعد.', 'no teacher chosen': 'لم يُختر مدرس', 'has no committees': 'ليس له لجان',
+  'Room with no one responsible: ': 'لجنة بلا مسؤول: ', 'Two with the same role in room: ': 'اثنان بنفس الدور في اللجنة: ', 'Room not in this timetable: ': 'لجنة غير موجودة في هذا الجدول: ',
+  'Roles & committees report': 'تقرير الأدوار واللجان', 'Head': 'المسؤول', 'Floor head signature': 'توقيع المسؤول',
+  'Roles under my responsibility': 'أدوار تحت مسؤوليتي', 'Roles': 'الأدوار', 'Committees': 'اللجان',
+  'stage': 'خارج المراحل المسموح بها للمدرس', 'isHead': 'صاحب دور (رئيس دور…) وليس مراقباً', 'roleNoTeacher': 'دور بلا مدرس', 'roleNoRoom': 'لجنة غير موجودة', 'roleEmpty': 'دور بلا لجان', 'roomNoHead': 'لجنة بلا مسؤول', 'roomTwoHeads': 'مسؤولان بنفس الدور'
+}).filter(([k]) => !(k in AR))));
+
+const G24 = { adj: { who: '', st: [] } };
+const g24Stages = () => (typeof stages == 'function' ? stages() : []);
+const g24Rooms = () => [...new Set(exSesRows().map(s => String(s.room || '').trim()).filter(Boolean))].sort(natural);
+const g24Opt = (v, l, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(l)}</option>`;
+const g24Tid = () => Object.keys(EX.D.names).sort((a, b) => natural(exName(a), exName(b)));
+function g24Teaches(id) { const o = new Set(); (S.lessons || []).forEach(l => { if ((l.t || []).includes(id)) { const g = stageOf(l.c); if (g) o.add(g) } }); return [...o] }
+function g24Issues(R) {
+  const out = [], rooms = g24Rooms(), seen = {}, cov = {};
+  (R.roles || []).forEach(r => {
+    if (!r.t) out.push(esc(r.name || t('Role')) + ': ' + t('no teacher chosen'));
+    if (!(r.rooms || []).length) out.push(esc(r.name || t('Role')) + (r.t ? ' – ' + esc(exName(r.t)) : '') + ': ' + t('has no committees'));
+    (r.rooms || []).forEach(m => { if (!rooms.includes(m)) out.push(t('Room not in this timetable: ') + esc(m)); cov[m] = 1; const k = String(r.name).trim().toLowerCase() + '|' + m; seen[k] = (seen[k] || 0) + 1 });
+  });
+  if ((R.roles || []).length) rooms.forEach(m => { if (!cov[m]) out.push(t('Room with no one responsible: ') + esc(m)) });
+  Object.keys(seen).forEach(k => { if (seen[k] > 1) out.push(t('Two with the same role in room: ') + esc(k.split('|').slice(1).join('|'))) });
+  return out;
+}
+function g24Limits(R) {
+  const st = g24Stages(), L = R.stageOnly || (R.stageOnly = {}), ids = Object.keys(L).sort((a, b) => natural(exName(a), exName(b)));
+  if (st.length < 2) return `<h4>${t('Invigilator stage limits')}</h4><p class="msg">${t('Only one stage exists, so there is nothing to limit.')}</p>`;
+  const A = G24.adj, gs = exPoolGroups();
+  const chips = (sel, attr) => `<div class="stg">${st.map(x => `<label><input type="checkbox" ${attr}="${esc(x)}"${sel.includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div>`;
+  return `<h4>${t('Invigilator stage limits')}</h4><p class="msg">${t('A limited teacher invigilates only the stages you tick. Teachers without a limit can invigilate any stage.')}</p>
+<div class="gh"><label>${t('Apply to')}<select data-g24="who"><option value="">—</option><optgroup label="${esc(t('Groups'))}">${gs.map(g => g24Opt('g:' + g[0], (g[2] ? t('Department: ') : t('Stage: ')) + g[0] + ' (' + g[1].length + ')', A.who == 'g:' + g[0])).join('')}</optgroup><optgroup label="${esc(t('Teachers'))}">${g24Tid().map(id => g24Opt('t:' + id, exName(id) + ' (' + id + ')', A.who == 't:' + id)).join('')}</optgroup></select></label></div>
+<div><small>${t('May invigilate only in')}</small>${chips(A.st, 'data-g24st')}</div>
+<div class="gh"><button class="b" data-g24a="apply">${t('Apply the limit')}</button><button class="b" data-g24a="auto">${t('Limit each teacher to the stages he teaches')}</button>${ids.length ? `<button class="b dng" data-g24a="clear">${t('Remove all limits')}</button>` : ''}</div>
+<h4>${t('Teachers with a limit')} <span class="cnt">(${ids.length})</span></h4>${ids.length ? ids.map(id => `<div class="lim"><b>${esc(exName(id))} <span class="cnt">${esc(id)}</span></b><div class="stg">${st.map(x => `<label><input type="checkbox" data-g24l="${esc(id)}|${esc(x)}"${L[id].includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div><button class="b dng" data-g24a="unlim" data-id="${esc(id)}" title="${esc(t('Remove'))}">✕</button></div>`).join('') : `<p class="msg">${t('No limits yet.')}</p>`}`;
+}
+function g24Roles(R) {
+  const rooms = g24Rooms(), roles = R.roles || (R.roles = []), T = g24Tid(), presets = ['Floor head', 'Control head', 'Floor supervisor', 'Stage coordinator'];
+  const taken = {}; roles.forEach(r => (r.rooms || []).forEach(m => taken[m] = (taken[m] || 0) + 1));
+  const iss = g24Issues(R);
+  return `<h4>${t('Roles & committees')}</h4><p class="msg">${t('Give a teacher a role such as Floor head and tick the committees (rooms) under his responsibility. A teacher with a role is not assigned as an invigilator unless you allow it below.')}</p>
+<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-exr2="headsInvigilate"${R.headsInvigilate ? ' checked' : ''}> ${t('A teacher with a role may also be assigned as an invigilator')}</label>
+<datalist id="g24-pre">${presets.map(p => `<option value="${esc(t(p))}">`).join('')}</datalist>
+${roles.length ? roles.map((r, i) => `<div class="role"><div class="rt"><label>${t('Role')}<input type="text" list="g24-pre" data-g24r="${i}|name" value="${esc(r.name)}"></label><label>${t('Teacher')}<select data-g24r="${i}|t"><option value="">${t('Choose a teacher')}</option>${T.map(id => g24Opt(id, exName(id) + ' (' + id + ')', r.t == id)).join('')}</select></label><label style="flex:1;min-width:140px">${t('Note')}<input type="text" data-g24r="${i}|note" value="${esc(r.note || '')}"></label><button class="b dng" data-g24a="delrole" data-i="${i}">${t('Delete role')}</button></div>
+<div class="gh"><small>${t('Committees (rooms)')} <span class="cnt">(${(r.rooms || []).length}/${rooms.length})</span></small><button class="b" data-g24a="free" data-i="${i}">${t('All free rooms')}</button><button class="b" data-g24a="norooms" data-i="${i}">${t('Clear rooms')}</button></div>
+<div class="rm">${rooms.map(m => `<label class="${(r.rooms || []).includes(m) ? '' : taken[m] ? 'tk' : ''}"><input type="checkbox" data-g24m="${i}|${esc(m)}"${(r.rooms || []).includes(m) ? ' checked' : ''}> ${esc(m)}</label>`).join('') || `<span class="msg">—</span>`}</div></div>`).join('') : `<p class="msg">${t('No roles yet.')}</p>`}
+<div class="gh"><button class="b pri" data-g24a="addrole">${ic('check')} ${t('Add a role')}</button></div>${iss.length ? `<ul class="iss">${iss.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}`;
+}
+function g24Card() {
+  const R = EX.rules; if (!R || !EX.D) return '';
+  return `<div class="card g24"><p class="msg">${t('Remember to press "Save the rules" after changing the limits or roles.')}</p>${g24Limits(R)}<hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">${g24Roles(R)}</div>`;
+}
+const _g24Rules = exRules;
+exRules = function () {
+  const keep = EX.prev; EX.prev = null; let h; try { h = _g24Rules() } finally { EX.prev = keep }
+  return h + g24Card() + exPrev();
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-g24a]'); if (!b || TAB != 'ct' || !EX.rules) return;
+  const R = EX.rules, a = b.dataset.g24a, A = G24.adj;
+  if (a == 'apply') {
+    if (!A.who) return toast(t('Choose who to limit.'), 1); if (!A.st.length) return toast(t('Tick at least one stage.'), 1);
+    let ids = []; if (A.who.startsWith('t:')) ids = [A.who.slice(2)]; else { const g = exPoolGroups().find(x => x[0] == A.who.slice(2)); ids = g ? g[1] : [] }
+    R.stageOnly = R.stageOnly || {}; ids.forEach(id => R.stageOnly[id] = A.st.slice()); A.who = ''; A.st = []; return render();
+  }
+  if (a == 'auto') { R.stageOnly = R.stageOnly || {}; let n = 0; g24Tid().forEach(id => { const s = g24Teaches(id); if (s.length) { R.stageOnly[id] = s; n++ } }); return render() }
+  if (a == 'clear') { R.stageOnly = {}; return render() }
+  if (a == 'unlim') { delete (R.stageOnly || {})[b.dataset.id]; return render() }
+  if (a == 'addrole') { (R.roles = R.roles || []).push({ id: 'r' + Math.random().toString(36).slice(2, 8), name: t('Floor head'), t: '', rooms: [], note: '' }); return render() }
+  if (a == 'delrole') { R.roles.splice(+b.dataset.i, 1); return render() }
+  if (a == 'free') { const r = R.roles[+b.dataset.i], used = new Set(); R.roles.forEach(x => (x.rooms || []).forEach(m => used.add(m))); g24Rooms().forEach(m => { if (!used.has(m)) r.rooms.push(m) }); return render() }
+  if (a == 'norooms') { R.roles[+b.dataset.i].rooms = []; return render() }
+});
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset; if (TAB != 'ct' || !d || !EX.rules) return; const R = EX.rules;
+  if (d.g24 == 'who') { G24.adj.who = el.value; return }
+  if (d.g24st !== undefined) { const s = G24.adj.st, i = s.indexOf(d.g24st); if (el.checked && i < 0) s.push(d.g24st); if (!el.checked && i >= 0) s.splice(i, 1); return }
+  if (d.g24l) { const [id, x] = d.g24l.split('|'), L = (R.stageOnly || {})[id]; if (!L) return; const i = L.indexOf(x); if (el.checked && i < 0) L.push(x); if (!el.checked && i >= 0) L.splice(i, 1); if (!L.length) { delete R.stageOnly[id]; render() } return }
+  if (d.g24r) { const [i, k] = d.g24r.split('|'), r = R.roles[+i]; if (r) { r[k] = el.value; if (k == 't') render() } return }
+  if (d.g24m) { const [i, ...m] = d.g24m.split('|'), r = R.roles[+i], room = m.join('|'); if (!r) return; r.rooms = r.rooms || []; const j = r.rooms.indexOf(room); if (el.checked && j < 0) r.rooms.push(room); if (!el.checked && j >= 0) r.rooms.splice(j, 1); return render() }
+});
+
+/* ---- reports: the head of each committee on the room sheets + a report per role ---- */
+EX_REPS.push(['roles', 'Roles & committees report']);
+const _g24Groups = exGroups;
+exGroups = function () {
+  const G = _g24Groups(), R = EX.rep, tt = exTt(), roles = (tt && tt.rules && tt.rules.roles) || [];
+  if (!roles.length) return G;
+  const lab = t('Room');
+  G.forEach(g => {
+    if (!g.sig || !g.info) return; const rm = (g.info.find(x => x[0] == lab) || [])[1]; if (!rm) return;
+    const by = {}; roles.forEach(r => { if ((r.rooms || []).includes(rm) && r.t) (by[r.name] = by[r.name] || []).push(exName(r.t)) });
+    Object.keys(by).forEach(k => g.info.push([k, by[k].join(', ')]));
+  });
+  if (R.k == 'roles') {
+    const A = exAs(), S2 = exSessions().filter(s => (!R.date || s.date == R.date) && (!R.key || s.key == R.key));
+    const inSes = (k, type, slot) => A.filter(a => a.key == k && a.type == type && (type == 'reserve' || a.slot == slot));
+    roles.forEach(r => {
+      if (!r.t || !(r.rooms || []).length || (R.teacher && r.t != R.teacher)) return; const rows = [];
+      S2.forEach(s => s.rows.filter(x => r.rooms.includes(String(x.room || '').trim())).forEach(x => rows.push([s.date, exDay(s.date), s.start + ' - ' + s.end, x.room, x.subject, x.grade || '', x.students || '', inSes(s.key, 'main', x.id).map(a => exName(a.t)).join(', ')])));
+      rows.sort((p, q) => p[0] < q[0] ? -1 : p[0] > q[0] ? 1 : p[2] < q[2] ? -1 : p[2] > q[2] ? 1 : natural(p[3], q[3]));
+      if (rows.length) G.push({ title: r.name + ' – ' + exName(r.t), info: [[t('Examination Period'), tt.period || tt.name], [t('Academic Year'), tt.year], [t('Head'), exName(r.t) + ' (' + r.t + ')'], [t('Committees (rooms)'), r.rooms.slice().sort(natural).join(', ')]].concat(r.note ? [[t('Note'), r.note]] : []), head: [t('Date'), t('Day'), t('Time'), t('Room'), t('Subject'), t('Grade / class'), t('Students'), t('Main invigilators')], rows, foot: `<div class="ctl"><span>${t('Floor head signature')}: ................................</span><span>${t('Date')}: ....................</span></div>` });
+    });
+  }
+  return G;
+};
+
+/* ---- the teacher's own page: the roles under his responsibility ---- */
+const _g24Duty = typeof rDuty == 'function' ? rDuty : null;
+if (_g24Duty) rDuty = function () {
+  const h = _g24Duty(), D = DU.D; if (!D || !(D.roles || []).length) return h;
+  const card = `<div class="card g24"><h3>${t('Roles under my responsibility')} (${D.roles.length})</h3>${D.roles.map(r => `<p><b>${esc(r.role)}</b>${D.hod || D.admin ? ' – ' + esc(r.name) : ''} <span class="cnt">${esc(r.ttName)}</span><br>${t('Committees')}: ${esc((r.rooms || []).slice().sort(natural).join(', ') || '—')}${r.note ? '<br><small>' + esc(r.note) + '</small>' : ''}</p>`).join('')}</div>`;
+  return h.replace('<div class="du">', '<div class="du">' + card);
+};
+</script>
+<script>
+/* ---------- G25: timetable quality report (read-only: nothing here changes the timetable) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Quality': 'جودة الجدول', 'Timetable quality': 'جودة الجدول',
+  'Quality score': 'درجة الجودة', 'Excellent': 'ممتاز', 'Good': 'جيد', 'Needs attention': 'يحتاج انتباه', 'Needs work': 'يحتاج تحسين',
+  'An indicative score from the points below. It only reads the current timetable and changes nothing.': 'درجة إرشادية من النقاط أدناه. التقرير يقرأ الجدول الحالي فقط ولا يغيّر فيه شيئاً.',
+  'Max consecutive lessons': 'أقصى حصص متتالية', 'Max lessons per day': 'أقصى حصص في اليوم', 'Free periods allowed per day': 'فترات فراغ مسموحة في اليوم',
+  'Stage': 'المرحلة', 'All stages': 'كل المراحل', 'Show only issues': 'عرض المشكلات فقط', 'Sort': 'الترتيب', 'Worst first': 'الأسوأ أولاً', 'By name': 'بالاسم', 'Most lessons': 'الأكثر حصصاً',
+  'Teachers': 'المدرسون', 'Classes': 'الفصول', 'Load': 'العبء', 'Print / PDF': 'طباعة / PDF', 'Excel': 'Excel',
+  'Teachers with free periods': 'مدرسون لديهم فترات فراغ', 'Too many in a row': 'حصص متتالية كثيرة', 'Over the daily limit': 'تجاوز حد اليوم',
+  'One-lesson days': 'أيام بحصة واحدة', 'Class issues': 'مشكلات الفصول', 'Everything looks fine.': 'كل شيء يبدو سليماً.',
+  'Lessons': 'الحصص', 'Days': 'الأيام', 'Free periods': 'فترات الفراغ', 'Longest run': 'أطول تتابع', 'Busiest day': 'أثقل يوم', 'Score': 'الدرجة', 'Details': 'التفاصيل', 'Teacher': 'المدرس', 'Class': 'الفصل',
+  'free': 'فراغ', 'in a row': 'متتالية', 'lessons': 'حصص', 'lesson': 'حصة', 'one lesson only': 'حصة واحدة فقط', 'week total': 'مجموع الأسبوع',
+  'split': 'مفصولة', 'free period inside the day': 'فترة فراغ داخل اليوم', 'No lessons to analyse yet.': 'لا توجد حصص لتحليلها بعد.', 'Nothing matches.': 'لا يوجد ما يطابق.',
+  'Same subject twice, not back to back': 'نفس المادة مرتين وغير متتاليتين', 'More than two of the same subject': 'أكثر من حصتين من نفس المادة في اليوم',
+  'Weekly lessons': 'حصص الأسبوع', 'Average': 'المتوسط', 'Lowest': 'الأقل', 'Highest': 'الأعلى', 'Over the weekly limit': 'تجاوز حد الأسبوع',
+  'Timetable quality report': 'تقرير جودة الجدول', 'Free period': 'فراغ', 'Issues': 'المشكلات', 'on a day off': 'يعمل في يوم إجازته المفضّل', 'Works on a preferred day off': 'يعمل في يوم إجازته المفضّل'
+}).filter(([k]) => !(k in AR))));
+
+const QA_SUBS = [['teachers', 'Teachers'], ['classes', 'Classes'], ['load', 'Load']];
+const QA = { run: 4, gaps: 1, md: 0, st: '', only: true, sub: 'teachers', sort: 'score' };
+const qaDays = () => I.days;
+function qaUniverse(groups, d) {      // the teaching periods of those groups on that day, without duplicates
+  const m = {}, out = [];
+  groups.forEach(g => (((I.sch[g] || {})[d]) || []).forEach(x => { if (x.brk) return; const k = x.s + '|' + x.e; if (!m[k]) { m[k] = 1; out.push({ s: x.s, e: x.e }) } }));
+  return out.sort((a, b) => a.s - b.s);
+}
+function qaIv(L) {                    // unique time slots of a list of lessons, in time order
+  const m = {}, out = []; L.forEach(l => { if (!l.sl || l.sl.brk) return; const k = l.sl.s + '|' + l.sl.e; if (!m[k]) { m[k] = 1; out.push({ s: l.sl.s, e: l.sl.e, g: l.c }) } });
+  return out.sort((a, b) => a.s - b.s);
+}
+function qaFree(U, a, b) { return U.filter(u => u.s >= a.e && u.e <= b.s).length }
+const qaScore = v => Math.max(0, Math.min(100, Math.round(v)));
+/** The limits that apply to one teacher: his own max lessons per day / week (Teachers sheet) first, then the school default; run / free periods / days off come from the screen or his preferences (see G26). */
+function qaLimits(id) {
+  const r = (S.tch || []).find(x => x[0] == id) || [];
+  return { md: +r[2] || (QA.md > 0 ? QA.md : (+S.set.maxDay || 8)), mw: +r[3] || +S.set.maxWeek || 0, run: QA.run, gaps: QA.gaps, off: [] };
+}
+function qaCompute() {
+  const md = QA.md > 0 ? QA.md : (+S.set.maxDay || 8), T = [], C = [];
+  const byTeacher = {}; S.lessons.forEach(l => (l.t || []).forEach(x => (byTeacher[x] = byTeacher[x] || []).push(l)));
+  Object.keys(byTeacher).forEach(id => {
+    const lim = qaLimits(id), row = { id, name: tname(id), lim, mw: lim.mw, n: 0, days: 0, gaps: 0, gapDays: 0, run: 0, max: 0, single: 0, pen: 0, det: [], flags: new Set(), st: new Set() };
+    byTeacher[id].forEach(l => { const s = stageOf(l.c); if (s) row.st.add(s) });
+    qaDays().forEach(d => {
+      const L = (I.byT[id + '|' + d] || []), iv = qaIv(L); if (!iv.length) return;
+      const U = qaUniverse([...new Set(L.map(l => stageOf(l.c)).filter(Boolean))], d);
+      let gaps = 0, run = 1, best = 1;
+      for (let i = 1; i < iv.length; i++) { if (iv[i].s < iv[i - 1].e) continue; const f = qaFree(U, iv[i - 1], iv[i]); gaps += f; if (f == 0) { run++; if (run > best) best = run } else run = 1 }
+      row.n += iv.length; row.days++; row.gaps += gaps; row.run = Math.max(row.run, best); row.max = Math.max(row.max, iv.length);
+      const dt = [];
+      if (gaps > lim.gaps) { row.gapDays++; row.pen += (gaps - lim.gaps) * 3; row.flags.add('gap'); dt.push(gaps + ' ' + t('free')) }
+      if (best > lim.run) { row.pen += (best - lim.run) * 5; row.flags.add('run'); dt.push(best + ' ' + t('in a row')) }
+      if (iv.length > lim.md) { row.pen += (iv.length - lim.md) * 5; row.flags.add('day'); dt.push(iv.length + ' ' + t('lessons')) }
+      if ((lim.off || []).includes(d)) { row.off = (row.off || 0) + 1; row.pen += 4; row.flags.add('off'); dt.push(t('on a day off')) }
+      if (iv.length == 1) { row.single++; row.pen += 2; row.flags.add('one'); dt.push(t('one lesson only')) }
+      if (dt.length) row.det.push(dayName(d) + ': ' + dt.join(', '));
+    });
+    if (lim.mw && row.n > lim.mw) { row.pen += (row.n - lim.mw) * 3; row.flags.add('week'); row.det.push(t('week total') + ': ' + row.n + ' / ' + lim.mw) }
+    row.score = qaScore(100 - row.pen * 4); if (row.n) T.push(row);
+  });
+  I.classes.forEach(c => {
+    const row = { c, st: stageOf(c), n: 0, gaps: 0, split: 0, pen: 0, det: [], flags: new Set() }, own = S.lessons.filter(l => l.c == c);
+    qaDays().forEach(d => {
+      const L = own.filter(l => l.d == d && l.sl && !l.sl.brk), iv = qaIv(L); if (!iv.length) return; row.n += iv.length;
+      const U = qaUniverse([stageOf(c)], d), pos = u => U.findIndex(x => x.s == u.s && x.e == u.e), dt = [];
+      const first = iv[0], last = iv[iv.length - 1], free = U.filter(u => u.s >= first.e && u.e <= last.s && !iv.some(v => v.s == u.s && v.e == u.e)).length;
+      if (free) { row.gaps += free; row.pen += free * 4; row.flags.add('gap'); dt.push(free + ' ' + t('free period inside the day')) }
+      const bySub = {}; L.forEach(l => { const k = lc(l.s || ''); if (!k) return; const p = pos(l.sl); (bySub[k] = bySub[k] || { name: l.s, p: new Set() }).p.add(p) });
+      Object.values(bySub).forEach(x => { const p = [...x.p].sort((a, b) => a - b); if (p.length < 2) return; if (p.length > 2) { row.split++; row.pen += 2; row.flags.add('many'); dt.push(x.name + ': ' + t('More than two of the same subject')) } else if (p[1] - p[0] != 1) { row.split++; row.pen += 2; row.flags.add('split'); dt.push(x.name + ' ' + t('split')) } });
+      if (dt.length) row.det.push(dayName(d) + ': ' + dt.join(', '));
+    });
+    row.score = qaScore(100 - row.pen * 5); if (row.n) C.push(row);
+  });
+  const all = T.concat(C), score = all.length ? Math.round(all.reduce((a, x) => a + x.score, 0) / all.length) : 100;
+  const cnt = f => T.filter(x => x.flags.has(f)).length, one = T.reduce((a, x) => a + x.single, 0);
+  const ns = n => n || 0, ld = T.map(x => x.n).sort((a, b) => a - b);
+  return { T, C, score, md, mw: +S.set.maxWeek || 0, tiles: { gap: cnt('gap'), run: cnt('run'), day: cnt('day'), one, cls: C.filter(x => x.flags.size).length }, load: { avg: ld.length ? Math.round(ld.reduce((a, b) => a + b, 0) / ld.length * 10) / 10 : 0, min: ns(ld[0]), max: ns(ld[ld.length - 1]) } };
+}
+const qaCls = s => s >= 85 ? '' : s >= 60 ? 'mid' : 'low';
+const qaLbl = s => t(s >= 85 ? 'Excellent' : s >= 70 ? 'Good' : s >= 50 ? 'Needs attention' : 'Needs work');
+const FL_LB = { gap: 'Free periods', run: 'Too many in a row', day: 'Over the daily limit', one: 'One-lesson days', week: 'Over the weekly limit', off: 'Works on a preferred day off', split: 'Same subject twice, not back to back', many: 'More than two of the same subject' };
+const qaFl = f => [...f].map(k => `<span class="fl${k == 'run' || k == 'day' || k == 'week' || k == 'off' ? ' bad' : ''}">${esc(t(FL_LB[k]))}</span>`).join('');
+function qaRows(D) {
+  const inSt = x => !QA.st || x.st == QA.st || (x.st instanceof Set && x.st.has(QA.st));
+  let T = D.T.filter(inSt), C = D.C.filter(inSt);
+  if (QA.only) { T = T.filter(x => x.flags.size); C = C.filter(x => x.flags.size) }
+  const cmp = QA.sort == 'name' ? (a, b) => natural(a.name || a.c, b.name || b.c) : QA.sort == 'n' ? (a, b) => b.n - a.n : (a, b) => a.score - b.score || natural(a.name || a.c, b.name || b.c);
+  return { T: T.sort(cmp), C: C.sort(cmp) };
+}
+function qaTeachersTable(L) {
+  return L.length ? `<div class="tw"><table class="ex"><tr><th>${t('Teacher')}</th><th class="n">${t('Lessons')}</th><th class="n">${t('Days')}</th><th class="n">${t('Free periods')}</th><th class="n">${t('Longest run')}</th><th class="n">${t('Busiest day')}</th><th class="n">${t('Score')}</th><th>${t('Details')}</th></tr>${L.map(x => `<tr><td><b>${esc(x.name)}</b></td><td class="n">${x.n}</td><td class="n">${x.days}</td><td class="n">${x.gaps}</td><td class="n">${x.run}</td><td class="n">${x.max}</td><td class="n"><span class="sc ${qaCls(x.score)}">${x.score}</span></td><td>${qaFl(x.flags)}<div class="det">${x.det.map(esc).join(' · ')}</div></td></tr>`).join('')}</table></div>` : `<p class="msg">${t(QA.only ? 'Everything looks fine.' : 'Nothing matches.')}</p>`;
+}
+function qaClassesTable(L) {
+  return L.length ? `<div class="tw"><table class="ex"><tr><th>${t('Class')}</th><th>${t('Stage')}</th><th class="n">${t('Lessons')}</th><th class="n">${t('Free periods')}</th><th class="n">${t('Score')}</th><th>${t('Details')}</th></tr>${L.map(x => `<tr><td><b>${esc(x.c)}</b></td><td>${esc(x.st || '')}</td><td class="n">${x.n}</td><td class="n">${x.gaps}</td><td class="n"><span class="sc ${qaCls(x.score)}">${x.score}</span></td><td>${qaFl(x.flags)}<div class="det">${x.det.map(esc).join(' · ')}</div></td></tr>`).join('')}</table></div>` : `<p class="msg">${t(QA.only ? 'Everything looks fine.' : 'Nothing matches.')}</p>`;
+}
+function qaLoadTable(D) {
+  const L = D.T.filter(x => !QA.st || x.st.has(QA.st)).sort((a, b) => b.n - a.n), top = Math.max(1, ...L.map(x => x.n));
+  return L.length ? `<p class="msg2">${t('Average')}: <b>${D.load.avg}</b> · ${t('Lowest')}: <b>${D.load.min}</b> · ${t('Highest')}: <b>${D.load.max}</b></p><div class="tw"><table class="ex"><tr><th>${t('Teacher')}</th><th class="n">${t('Weekly lessons')}</th><th style="width:45%"></th></tr>${L.map(x => `<tr><td>${esc(x.name)}</td><td class="n">${x.n}</td><td><div class="bar${x.mw && x.n > x.mw ? ' bad' : ''}" style="width:${Math.max(2, Math.round(x.n / top * 100))}%"></div></td></tr>`).join('')}</table></div>` : `<p class="msg">${t('Nothing matches.')}</p>`;
+}
+function rQa() {
+  if (!S.lessons.length) return `<div class="qa"><div class="card"><p class="msg">${t('No lessons to analyse yet.')}</p></div></div>`;
+  const D = qaCompute(), R = qaRows(D), tl = D.tiles, st = stages();
+  const tile = (n, l, bad) => `<div class="tile ${n ? bad : 'ok'}"><b>${n}</b><span>${t(l)}</span></div>`;
+  return `<div class="qa"><div class="card"><div class="qtop"><div class="qs ${qaCls(D.score)}"><b>${D.score}</b><small>/ 100</small></div><div class="qt"><h3>${t('Timetable quality')} – ${qaLbl(D.score)}</h3><p class="msg2">${t('An indicative score from the points below. It only reads the current timetable and changes nothing.')}</p></div></div>
+<div class="qf"><label>${t('Max consecutive lessons')}<input type="number" min="1" max="12" data-qa="run" value="${QA.run}"></label><label>${t('Max lessons per day')}<input type="number" min="1" max="14" data-qa="md" value="${D.md}"></label><label>${t('Free periods allowed per day')}<input type="number" min="0" max="8" data-qa="gaps" value="${QA.gaps}"></label>
+${st.length > 1 ? `<label>${t('Stage')}<select data-qa="st"><option value="">${t('All stages')}</option>${st.map(x => `<option value="${esc(x)}"${QA.st == x ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></label>` : ''}
+<label>${t('Sort')}<select data-qa="sort">${[['score', 'Worst first'], ['name', 'By name'], ['n', 'Most lessons']].map(([k, l]) => `<option value="${k}"${QA.sort == k ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label><label class="ck"><input type="checkbox" data-qa="only"${QA.only ? ' checked' : ''}> ${t('Show only issues')}</label>
+<button class="b pri" data-qaa="print">${ic('print')} ${t('Print / PDF')}</button><button class="b" data-qaa="xlsx">${ic('up')} ${t('Excel')}</button></div></div>
+<div class="tiles">${tile(tl.gap, 'Teachers with free periods', 'bad')}${tile(tl.run, 'Too many in a row', 'bad')}${tile(tl.day, 'Over the daily limit', 'bad')}${tile(tl.one, 'One-lesson days', 'bad')}${tile(tl.cls, 'Class issues', 'bad')}</div>
+<nav class="sub">${QA_SUBS.map(([k, l]) => `<button class="pill${QA.sub == k ? ' on' : ''}" data-qaa="sub" data-k="${k}">${t(l)}</button>`).join('')}</nav>
+<div class="card">${QA.sub == 'classes' ? qaClassesTable(R.C) : QA.sub == 'load' ? qaLoadTable(D) : QA.sub == 'limits' && typeof qaLimitsView == 'function' ? qaLimitsView() : qaTeachersTable(R.T)}</div></div>`;
+}
+function qaSheets() {
+  const D = qaCompute(), R = qaRows(D), sub = t('Quality score') + ': ' + D.score + ' / 100 – ' + qaLbl(D.score);
+  const th = (a) => a.map(x => `<th>${x}</th>`).join('');
+  const tt = `<h3>${t('Teachers')}</h3><table class="tt"><tr>${th([t('Teacher'), t('Lessons'), t('Days'), t('Free periods'), t('Longest run'), t('Busiest day'), t('Score'), t('Details')])}</tr>${R.T.map(x => `<tr><td>${esc(x.name)}</td><td>${x.n}</td><td>${x.days}</td><td>${x.gaps}</td><td>${x.run}</td><td>${x.max}</td><td>${x.score}</td><td>${esc([...x.flags].map(k => t(FL_LB[k])).join(', '))}<br><small>${x.det.map(esc).join(' · ')}</small></td></tr>`).join('')}</table>`;
+  const cc = R.C.length ? `<h3>${t('Classes')}</h3><table class="tt"><tr>${th([t('Class'), t('Stage'), t('Lessons'), t('Free periods'), t('Score'), t('Details')])}</tr>${R.C.map(x => `<tr><td>${esc(x.c)}</td><td>${esc(x.st || '')}</td><td>${x.n}</td><td>${x.gaps}</td><td>${x.score}</td><td>${esc([...x.flags].map(k => t(FL_LB[k])).join(', '))}<br><small>${x.det.map(esc).join(' · ')}</small></td></tr>`).join('')}</table>` : '';
+  return sheet(t('Timetable quality report'), sub, tt + cc);
+}
+function qaXlsx() {
+  const D = qaCompute(), R = qaRows(D), nm = (S.set.brand && S.set.brand.nameEn) || S.set.school || 'School';
+  const tr = [[t('Teacher'), t('Lessons'), t('Days'), t('Free periods'), t('Longest run'), t('Busiest day'), t('Score'), t('Issues'), t('Details')]].concat(R.T.map(x => [x.name, x.n, x.days, x.gaps, x.run, x.max, x.score, [...x.flags].map(k => t(FL_LB[k])).join(', '), x.det.join(' | ')]));
+  const cr = [[t('Class'), t('Stage'), t('Lessons'), t('Free periods'), t('Score'), t('Issues'), t('Details')]].concat(R.C.map(x => [x.c, x.st || '', x.n, x.gaps, x.score, [...x.flags].map(k => t(FL_LB[k])).join(', '), x.det.join(' | ')]));
+  XL.save(nm + ' - ' + t('Timetable quality report'), [{ name: t('Teachers'), rows: tr, bold: [0] }, { name: t('Classes'), rows: cr, bold: [0] }]);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-qaa]'); if (!b || TAB != 'qa') return;
+  const a = b.dataset.qaa;
+  if (a == 'sub') { QA.sub = b.dataset.k; return render() }
+  if (a == 'print') { if (!S.lessons.length) return; return printHtml(qaSheets(), false) }
+  if (a == 'xlsx') { if (!S.lessons.length) return; return qaXlsx() }
+});
+document.addEventListener('change', e => {
+  const el = e.target, k = el.dataset && el.dataset.qa; if (!k || TAB != 'qa') return;
+  if (k == 'only') QA.only = el.checked; else if (k == 'st' || k == 'sort') QA[k] = el.value; else { const n = parseInt(el.value, 10); QA[k] = isNaN(n) ? QA[k] : Math.max(k == 'gaps' ? 0 : 1, n) }
+  render();
+});
+(function () {
+  if (!document.getElementById('i-qa')) { const sp = document.getElementById('i-clock'); if (sp && sp.parentNode) sp.parentNode.insertAdjacentHTML('beforeend', '<symbol id="i-qa" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>') }
+})();
+TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'cf') + 1, 1), 0, ['qa', 'Quality', 'qa']);
+const _rQaBase = render;
+render = function () {
+  if (S && S.role && S.role != 'admin') { const i = TABS.findIndex(x => x[0] == 'qa'); if (i >= 0) TABS.splice(i, 1); if (TAB == 'qa') TAB = 'tt' }
+  if (TAB != 'qa') return _rQaBase.apply(this, arguments);
+  const sy = window.scrollY;
+  TAB = 'tt'; try { _rQaBase.apply(this, arguments) } finally { TAB = 'qa' }
+  $$('#tabs .pill').forEach(b => b.classList.toggle('on', b.dataset.tab === 'qa'));
+  $('#v').innerHTML = rQa(); window.scrollTo(0, sy);
+};
+</script>
+<script>
+/* ---------- G26: teacher preferences (max in a row, free periods, days off) used by the quality report ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Teacher limits': 'قيود المدرسين',
+  'Leave a box empty to use the school default. Max lessons per day / week are taken from the teacher settings. Days off are days he prefers not to work: the report flags them, nothing is changed in the timetable.': 'اترك الخانة فارغة لاستخدام الحد العام للمدرسة. أقصى حصص يومياً/أسبوعياً تؤخذ من إعدادات المدرس. أيام الإجازة هي أيام يفضّل ألا يعمل فيها: يُنبّه عليها التقرير ولا يتغيّر الجدول.',
+  'Search teacher': 'بحث عن مدرس', 'Max / day': 'أقصى / يوم', 'Max / week': 'أقصى / أسبوع', 'Days off': 'أيام الإجازة', 'Clear': 'مسح',
+  'Save preferences': 'حفظ التفضيلات', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة', 'Preferences saved': 'تم حفظ التفضيلات',
+  'Teachers with their own limits': 'مدرسون لهم قيود خاصة', 'Default': 'الافتراضي', 'No teachers match.': 'لا يوجد مدرس مطابق.'
+}).filter(([k]) => !(k in AR))));
+
+const TPF = { d: null, q: '', dirty: false };
+const tpSaved = () => (S.set && S.set.tprefs) || {};
+const tpD = () => TPF.d || (TPF.d = JSON.parse(JSON.stringify(tpSaved())));
+const tpGet = id => Object.assign({ run: 0, gaps: -1, off: [] }, tpD()[id] || {});
+const _qaLimitsBase = qaLimits;
+qaLimits = function (id) {
+  const l = _qaLimitsBase(id), p = tpSaved()[id];
+  if (p) { if (+p.run > 0) l.run = +p.run; if (+p.gaps >= 0) l.gaps = +p.gaps; l.off = (p.off || []).map(Number) }
+  return l;
+};
+QA_SUBS.push(['limits', 'Teacher limits']);
+const tpDay = d => HL == 'ar' ? dayName(d) : dayName(d).slice(0, 3);
+function qaLimitsView() {
+  const D = tpD(), q = lc(TPF.q), own = Object.keys(D).length;
+  const L = (S.tch || []).filter(r => !q || lc(r[1]).includes(q) || lc(r[0]).includes(q)).sort((a, b) => natural(a[1] || a[0], b[1] || b[0]));
+  const rows = L.map(r => { const id = r[0], p = tpGet(id);
+    return `<tr><td><b>${esc(r[1] || id)}</b><div class="dim">${esc(r[5] || '')}</div></td><td class="n dim">${+r[2] || '—'}</td><td class="n dim">${+r[3] || '—'}</td><td class="n"><input type="number" min="0" max="12" placeholder="${QA.run}" data-tp="run|${esc(id)}" value="${p.run > 0 ? p.run : ''}"></td><td class="n"><input type="number" min="0" max="8" placeholder="${QA.gaps}" data-tp="gaps|${esc(id)}" value="${p.gaps >= 0 ? p.gaps : ''}"></td><td><div class="dys">${I.days.map(d => `<label><input type="checkbox" data-tp="off|${esc(id)}|${d}"${p.off.includes(d) ? ' checked' : ''}> ${esc(tpDay(d))}</label>`).join('')}</div></td><td><button class="b" data-tpa="clear" data-id="${esc(id)}">${t('Clear')}</button></td></tr>` }).join('');
+  return `<div class="tpv"><p class="msg2">${t('Leave a box empty to use the school default. Max lessons per day / week are taken from the teacher settings. Days off are days he prefers not to work: the report flags them, nothing is changed in the timetable.')}</p>
+<div class="tf"><label>${t('Search teacher')}<input type="text" data-tpq="1" value="${esc(TPF.q)}"></label><span class="dim">${t('Teachers with their own limits')}: <b>${own}</b></span></div>
+${rows ? `<div class="tw"><table class="ex"><tr><th>${t('Teacher')}</th><th class="n">${t('Max / day')}</th><th class="n">${t('Max / week')}</th><th class="n">${t('Max consecutive lessons')}</th><th class="n">${t('Free periods allowed per day')}</th><th>${t('Days off')}</th><th></th></tr>${rows}</table></div>` : `<p class="msg">${t('No teachers match.')}</p>`}
+${TPF.dirty ? `<div class="sv"><b>${t('unsaved changes')}</b><button class="b pri" data-tpa="save">${t('Save preferences')}</button><button class="b" data-tpa="discard">${t('Discard changes')}</button></div>` : ''}</div>`;
+}
+async function tpSave() {
+  const prev = JSON.parse(JSON.stringify(tpSaved())), put = async v => { S = await srv('api_saveSettingsX', 'tprefs', v); index(); render() };
+  try { await put(tpD()) } catch (e) { return }
+  TPF.d = null; TPF.dirty = false; render();
+  UX.done(t('Preferences saved'), async () => { await put(prev); TPF.d = null; TPF.dirty = false; render() });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-tpa]'); if (!b || TAB != 'qa') return;
+  const a = b.dataset.tpa;
+  if (a == 'save') return tpSave();
+  if (a == 'discard') { TPF.d = null; TPF.dirty = false; return render() }
+  if (a == 'clear') { delete tpD()[b.dataset.id]; TPF.dirty = true; return render() }
+});
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset; if (TAB != 'qa' || !d) return;
+  if (d.tpq !== undefined) { TPF.q = el.value; return render() }
+  if (!d.tp) return;
+  const [k, id, day] = d.tp.split('|'), D = tpD(), p = tpGet(id);
+  if (k == 'run') { const n = parseInt(el.value, 10); p.run = isNaN(n) ? 0 : Math.max(0, Math.min(12, n)) }
+  else if (k == 'gaps') { const n = parseInt(el.value, 10); p.gaps = isNaN(n) ? -1 : Math.max(0, Math.min(8, n)) }
+  else if (k == 'off') { const x = +day, i = p.off.indexOf(x); if (el.checked && i < 0) p.off.push(x); if (!el.checked && i >= 0) p.off.splice(i, 1); p.off.sort() }
+  if (p.run > 0 || p.gaps >= 0 || p.off.length) D[id] = p; else delete D[id];
+  TPF.dirty = true; render();
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
