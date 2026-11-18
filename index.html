@@ -298,6 +298,10 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .tpv .sv{position:sticky;bottom:64px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin-top:10px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);box-shadow:0 4px 14px rgba(0,0,0,.12)}
 @media(max-width:640px){.tpv .sv{bottom:78px}}
 </style>
+<style id="g28css">
+.thh select.thg{width:96px}
+.thh select.thg.no{border-color:var(--amber,#d97706)}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -5287,7 +5291,7 @@ function calExamWarn() {
 /* ---------- G24: stage limits for invigilators + roles (floor head ...) with the committees under them ---------- */
 Object.assign(AR, Object.fromEntries(Object.entries({
   'Invigilator stage limits': 'حدود المراقبين حسب المرحلة',
-  'A limited teacher invigilates only the stages you tick. Teachers without a limit can invigilate any stage.': 'المدرس المقيَّد يراقب في المراحل التي تحددها فقط. من ليس له حد يراقب في أي مرحلة.',
+  'A limited teacher invigilates only the stages and classes you choose. Teachers without a limit can invigilate any stage.': 'المدرس المقيَّد يراقب في المراحل والفصول التي تحددها فقط. من ليس له حد يراقب في أي مرحلة.',
   'Only one stage exists, so there is nothing to limit.': 'توجد مرحلة واحدة فقط، فلا حاجة لتحديد حدود.',
   'Apply to': 'تطبيق على', 'Teacher': 'المدرس', 'May invigilate only in': 'يراقب في المراحل التالية فقط',
   'Apply the limit': 'طبّق الحد', 'Limit each teacher to the stages he teaches': 'قيّد كل مدرس بالمراحل التي يدرّسها',
@@ -5305,6 +5309,11 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Room with no one responsible: ': 'لجنة بلا مسؤول: ', 'Two with the same role in room: ': 'اثنان بنفس الدور في اللجنة: ', 'Room not in this timetable: ': 'لجنة غير موجودة في هذا الجدول: ',
   'Roles & committees report': 'تقرير الأدوار واللجان', 'Head': 'المسؤول', 'Floor head signature': 'توقيع المسؤول',
   'Roles under my responsibility': 'أدوار تحت مسؤوليتي', 'Roles': 'الأدوار', 'Committees': 'اللجان',
+  'Or choose specific classes': 'أو اختر فصولاً بعينها', 'Mixed invigilators (a man and a woman)': 'مراقبون مختلطون (رجل وسيدة)',
+  'Every room gets at least one man and one woman. A teacher whose gender is not set never blocks a room. Set the gender of the teachers below and save.': 'كل لجنة يكون فيها رجل وسيدة على الأقل. المدرس الذي لم يُحدَّد نوعه لا يمنع التوزيع. حدّد نوع المدرسين بالأسفل ثم احفظ.',
+  'Require a man and a woman in each room': 'اشتراط رجل وسيدة في كل لجنة', 'Strict: leave the place empty rather than put two of the same gender': 'صارم: اترك المكان فارغاً بدل وضع اثنين من نفس النوع',
+  'Men': 'رجال', 'Women': 'سيدات', 'Not set': 'غير محدد', 'Gender': 'النوع', 'Man': 'رجل', 'Woman': 'سيدة', 'Save genders': 'حفظ الأنواع', 'Genders saved': 'تم حفظ أنواع المدرسين',
+  'gender': 'اثنان من نفس النوع في اللجنة (المطلوب رجل وسيدة)',
   'stage': 'خارج المراحل المسموح بها للمدرس', 'isHead': 'صاحب دور (رئيس دور…) وليس مراقباً', 'roleNoTeacher': 'دور بلا مدرس', 'roleNoRoom': 'لجنة غير موجودة', 'roleEmpty': 'دور بلا لجان', 'roomNoHead': 'لجنة بلا مسؤول', 'roomTwoHeads': 'مسؤولان بنفس الدور'
 }).filter(([k]) => !(k in AR))));
 
@@ -5327,14 +5336,16 @@ function g24Issues(R) {
 }
 function g24Limits(R) {
   const st = g24Stages(), L = R.stageOnly || (R.stageOnly = {}), ids = Object.keys(L).sort((a, b) => natural(exName(a), exName(b)));
-  if (st.length < 2) return `<h4>${t('Invigilator stage limits')}</h4><p class="msg">${t('Only one stage exists, so there is nothing to limit.')}</p>`;
+  if (st.length < 2 && (I.classes || []).length < 2) return `<h4>${t('Invigilator stage limits')}</h4><p class="msg">${t('Only one stage exists, so there is nothing to limit.')}</p>`;
   const A = G24.adj, gs = exPoolGroups();
   const chips = (sel, attr) => `<div class="stg">${st.map(x => `<label><input type="checkbox" ${attr}="${esc(x)}"${sel.includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div>`;
-  return `<h4>${t('Invigilator stage limits')}</h4><p class="msg">${t('A limited teacher invigilates only the stages you tick. Teachers without a limit can invigilate any stage.')}</p>
+  const cls = (I.classes || []).slice().sort(natural), nCls = sel => sel.filter(x => !st.includes(x)).length;
+  const clsChips = (sel, attr, pre) => `<div class="stg">${cls.map(x => `<label><input type="checkbox" ${attr}="${esc((pre || '') + x)}"${sel.includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div>`;
+  return `<h4>${t('Invigilator stage limits')}</h4><p class="msg">${t('A limited teacher invigilates only the stages and classes you choose. Teachers without a limit can invigilate any stage.')}</p>
 <div class="gh"><label>${t('Apply to')}<select data-g24="who"><option value="">—</option><optgroup label="${esc(t('Groups'))}">${gs.map(g => g24Opt('g:' + g[0], (g[2] ? t('Department: ') : t('Stage: ')) + g[0] + ' (' + g[1].length + ')', A.who == 'g:' + g[0])).join('')}</optgroup><optgroup label="${esc(t('Teachers'))}">${g24Tid().map(id => g24Opt('t:' + id, exName(id) + ' (' + id + ')', A.who == 't:' + id)).join('')}</optgroup></select></label></div>
-<div><small>${t('May invigilate only in')}</small>${chips(A.st, 'data-g24st')}</div>
+<div><small>${t('May invigilate only in')}</small>${chips(A.st, 'data-g24st')}<details class="g24c"${nCls(A.st) ? ' open' : ''}><summary>${t('Or choose specific classes')} <span class="cnt">(${nCls(A.st)})</span></summary>${clsChips(A.st, 'data-g24st')}</details></div>
 <div class="gh"><button class="b" data-g24a="apply">${t('Apply the limit')}</button><button class="b" data-g24a="auto">${t('Limit each teacher to the stages he teaches')}</button>${ids.length ? `<button class="b dng" data-g24a="clear">${t('Remove all limits')}</button>` : ''}</div>
-<h4>${t('Teachers with a limit')} <span class="cnt">(${ids.length})</span></h4>${ids.length ? ids.map(id => `<div class="lim"><b>${esc(exName(id))} <span class="cnt">${esc(id)}</span></b><div class="stg">${st.map(x => `<label><input type="checkbox" data-g24l="${esc(id)}|${esc(x)}"${L[id].includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div><button class="b dng" data-g24a="unlim" data-id="${esc(id)}" title="${esc(t('Remove'))}">✕</button></div>`).join('') : `<p class="msg">${t('No limits yet.')}</p>`}`;
+<h4>${t('Teachers with a limit')} <span class="cnt">(${ids.length})</span></h4>${ids.length ? ids.map(id => `<div class="lim"><b>${esc(exName(id))} <span class="cnt">${esc(id)}</span></b><div><div class="stg">${st.map(x => `<label><input type="checkbox" data-g24l="${esc(id)}|${esc(x)}"${L[id].includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div><details class="g24c"><summary>${t('Classes')} <span class="cnt">(${nCls(L[id])})</span></summary>${clsChips(L[id], 'data-g24l', id + '|')}</details></div><button class="b dng" data-g24a="unlim" data-id="${esc(id)}" title="${esc(t('Remove'))}">✕</button></div>`).join('') : `<p class="msg">${t('No limits yet.')}</p>`}`;
 }
 function g24Roles(R) {
   const rooms = g24Rooms(), roles = R.roles || (R.roles = []), T = g24Tid(), presets = ['Floor head', 'Control head', 'Floor supervisor', 'Stage coordinator'];
@@ -5348,9 +5359,17 @@ ${roles.length ? roles.map((r, i) => `<div class="role"><div class="rt"><label>$
 <div class="rm">${rooms.map(m => `<label class="${(r.rooms || []).includes(m) ? '' : taken[m] ? 'tk' : ''}"><input type="checkbox" data-g24m="${i}|${esc(m)}"${(r.rooms || []).includes(m) ? ' checked' : ''}> ${esc(m)}</label>`).join('') || `<span class="msg">—</span>`}</div></div>`).join('') : `<p class="msg">${t('No roles yet.')}</p>`}
 <div class="gh"><button class="b pri" data-g24a="addrole">${ic('check')} ${t('Add a role')}</button></div>${iss.length ? `<ul class="iss">${iss.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}`;
 }
+function g24Mixed(R) {
+  const G = (S.set && S.set.tgender) || {}, ids = g24Tid();
+  const none = ids.filter(id => !G[id]).length, men = ids.filter(id => G[id] == 'M').length, wom = ids.filter(id => G[id] == 'F').length;
+  return `<h4>${t('Mixed invigilators (a man and a woman)')}</h4><p class="msg">${t('Every room gets at least one man and one woman. A teacher whose gender is not set never blocks a room. Set each teacher\'s gender in Settings > Teachers.')}</p>
+<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-exr2="mixedGender"${R.mixedGender ? ' checked' : ''}> ${t('Require a man and a woman in each room')}</label>
+<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-exr2="genderStrict"${R.genderStrict !== false ? ' checked' : ''}> ${t('Strict: leave the place empty rather than put two of the same gender')}</label>
+<div class="gh"><span class="cnt">${t('Men')}: <b>${men}</b> · ${t('Women')}: <b>${wom}</b> · ${t('Not set')}: <b class="${none ? 'dng' : ''}">${none}</b></span></div>`;
+}
 function g24Card() {
   const R = EX.rules; if (!R || !EX.D) return '';
-  return `<div class="card g24"><p class="msg">${t('Remember to press "Save the rules" after changing the limits or roles.')}</p>${g24Limits(R)}<hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">${g24Roles(R)}</div>`;
+  return `<div class="card g24"><p class="msg">${t('Remember to press "Save the rules" after changing the limits or roles.')}</p>${g24Limits(R)}<hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">${g24Mixed(R)}<hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">${g24Roles(R)}</div>`;
 }
 const _g24Rules = exRules;
 exRules = function () {
@@ -5368,6 +5387,13 @@ document.addEventListener('click', async e => {
   if (a == 'auto') { R.stageOnly = R.stageOnly || {}; let n = 0; g24Tid().forEach(id => { const s = g24Teaches(id); if (s.length) { R.stageOnly[id] = s; n++ } }); return render() }
   if (a == 'clear') { R.stageOnly = {}; return render() }
   if (a == 'unlim') { delete (R.stageOnly || {})[b.dataset.id]; return render() }
+  if (a == 'gdiscard') { G24.g = null; G24.gd = false; return render() }
+  if (a == 'gsave') {
+    const prev = JSON.parse(JSON.stringify((S.set && S.set.tgender) || {})), put = async v => { S = await srv('api_saveSettingsX', 'tgender', v); index(); render() };
+    try { await put(G24.g) } catch (e) { return }
+    G24.g = null; G24.gd = false; render();
+    return UX.done(t('Genders saved'), async () => { await put(prev); G24.g = null; G24.gd = false; render() });
+  }
   if (a == 'addrole') { (R.roles = R.roles || []).push({ id: 'r' + Math.random().toString(36).slice(2, 8), name: t('Floor head'), t: '', rooms: [], note: '' }); return render() }
   if (a == 'delrole') { R.roles.splice(+b.dataset.i, 1); return render() }
   if (a == 'free') { const r = R.roles[+b.dataset.i], used = new Set(); R.roles.forEach(x => (x.rooms || []).forEach(m => used.add(m))); g24Rooms().forEach(m => { if (!used.has(m)) r.rooms.push(m) }); return render() }
@@ -5376,6 +5402,8 @@ document.addEventListener('click', async e => {
 document.addEventListener('change', e => {
   const el = e.target, d = el.dataset; if (TAB != 'ct' || !d || !EX.rules) return; const R = EX.rules;
   if (d.g24 == 'who') { G24.adj.who = el.value; return }
+  if (d.g24g !== undefined) { const G = G24.g || (G24.g = {}); if (el.value) G[d.g24g] = el.value; else delete G[d.g24g]; G24.gd = true; return render() }
+  if (d.g24q !== undefined) { G24.q = el.value; return render() }
   if (d.g24st !== undefined) { const s = G24.adj.st, i = s.indexOf(d.g24st); if (el.checked && i < 0) s.push(d.g24st); if (!el.checked && i >= 0) s.splice(i, 1); return }
   if (d.g24l) { const [id, x] = d.g24l.split('|'), L = (R.stageOnly || {})[id]; if (!L) return; const i = L.indexOf(x); if (el.checked && i < 0) L.push(x); if (!el.checked && i >= 0) L.splice(i, 1); if (!L.length) { delete R.stageOnly[id]; render() } return }
   if (d.g24r) { const [i, k] = d.g24r.split('|'), r = R.roles[+i]; if (r) { r[k] = el.value; if (k == 't') render() } return }
@@ -5623,6 +5651,47 @@ document.addEventListener('change', e => {
   if (p.run > 0 || p.gaps >= 0 || p.off.length) D[id] = p; else delete D[id];
   TPF.dirty = true; render();
 });
+</script>
+<script>
+/* ---------- G28: teacher gender (man / woman) lives in the Teachers tab ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Every room gets at least one man and one woman. A teacher whose gender is not set never blocks a room. Set each teacher\'s gender in Settings > Teachers.': 'كل قاعة يكون فيها رجل وامرأة على الأقل. المدرس الذي لم يُحدد نوعه لا يمنع أي قاعة. حدد نوع كل مدرس من الإعدادات > المدرسين.',
+  'Man': 'رجل', 'Woman': 'امرأة', 'Gender': 'النوع', 'Genders saved': 'تم حفظ الأنواع', 'Not set': 'غير محدد', 'Men': 'رجال', 'Women': 'نساء'
+}).filter(([k]) => !(k in AR))));
+let TG = null;                                  // draft: tid -> 'M' | 'F'
+const tgSaved = () => (S && S.set && S.set.tgender) || {};
+const tgCur = () => TG || tgSaved();
+const tgDirty = () => { if (!TG) return false; const a = tgSaved(), b = TG, ks = new Set(Object.keys(a).concat(Object.keys(b))); for (const k of ks) if ((a[k] || '') != (b[k] || '')) return true; return false };
+const _thRowG28 = thRow;
+thRow = function (r) {
+  const h = _thRowG28.apply(this, arguments), tid = r[0], g = tgCur()[tid] || '';
+  const sel = `<select class="thg${g ? '' : ' no'}" data-thg="${esc(tid)}" title="${esc(t('Gender'))}"><option value="">${t('Gender')}</option><option value="M"${g == 'M' ? ' selected' : ''}>${t('Man')}</option><option value="F"${g == 'F' ? ' selected' : ''}>${t('Woman')}</option></select>`;
+  return h.replace('<span class="tg">', sel + '<span class="tg">');
+};
+const _thStatusG28 = thStatus;
+thStatus = function () {
+  const h = _thStatusG28.apply(this, arguments);
+  if (!tgDirty() || h.includes('data-th="reset"')) return h;
+  return `<span class="tag w"><i class="thdot"></i>${t('Unsaved changes')}</span><button class="b" data-th="reset">${t('Discard changes')}</button> ` + h.replace(/ disabled style="opacity:\.5"/, '');
+};
+document.addEventListener('change', e => {
+  const el = e.target; if (!el || !el.dataset || el.dataset.thg === undefined) return;
+  TG = TG || JSON.parse(JSON.stringify(tgSaved()));
+  if (el.value) TG[el.dataset.thg] = el.value; else delete TG[el.dataset.thg];
+  el.classList.toggle('no', !el.value);
+  const st = $('#thst'); if (st) st.innerHTML = thStatus();
+});
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-th="reset"]'); if (b) TG = null }, true);
+const _thSaveG28 = thSave;
+thSave = async function () {
+  const other = thDiffs().some(x => x[1].any);
+  if (other) { await _thSaveG28.apply(this, arguments); if (thDiffs().some(x => x[1].any)) return }   // cancelled or failed: keep everything as it is
+  if (!tgDirty()) { if (!other) toast(t('No changes')); return }
+  const prev = JSON.parse(JSON.stringify(tgSaved())), put = async v => { S = await srv('api_saveSettingsX', 'tgender', v); index(); render() };
+  try { await put(TG) } catch (e) { return }
+  TG = null; render();
+  UX.done(t('Genders saved'), async () => { await put(prev); TG = null; render() });
+};
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
