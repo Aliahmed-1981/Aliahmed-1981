@@ -302,6 +302,48 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .thh select.thg{width:96px}
 .thh select.thg.no{border-color:var(--amber,#d97706)}
 </style>
+<style id="g29css">
+#pa .ivt,.pv .ivt{table-layout:auto!important}
+#pa .ivt th,#pa .ivt td,.pv .ivt th,.pv .ivt td{overflow-wrap:break-word;word-break:normal;line-height:1.35;vertical-align:middle}
+#pa .ivt col,.pv .ivt col{width:auto!important}
+#pa .ivt th,.pv .ivt th{white-space:normal;padding-inline:6px}
+#pa .ivt td:first-child,.pv .ivt td:first-child{white-space:nowrap}
+#pa .ivt td.sg,.pv .ivt td.sg{min-width:90px}
+#pa .ivi td,.pv .ivi td{overflow-wrap:break-word;line-height:1.35}
+.ctl{flex-wrap:wrap;row-gap:16px}
+.ctl span{white-space:nowrap}
+.ctl.hds{margin-top:10px}
+</style>
+<style id="g30css">
+.pp .pph{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.pp .pph h3{margin:0 0 2px}
+.pp .ppp{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:10px 0 2px}
+.pp .ppp label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.pp .ppp select{min-width:260px;max-width:100%}
+.pp .ppg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:12px}
+.pp .ppc{border:1px solid var(--ln);border-radius:12px;padding:10px 14px;background:var(--sf)}
+.pp .ppc h5{margin:0 0 6px;font-size:14px}
+.pp .ppi{display:flex;flex-direction:row;align-items:flex-start;gap:8px;padding:6px 4px;border-top:1px solid var(--ln);cursor:pointer;border-radius:8px}
+.pp .ppi:first-of-type{border-top:0}
+.pp .ppi input{margin-top:3px;flex:0 0 auto}
+.pp .ppi b{font-weight:600;font-size:13.5px;display:block}
+.pp .ppi small.k{display:block;font-size:11px;color:var(--mut);font-family:ui-monospace,Menlo,Consolas,monospace}
+.pp .ppi em{font-style:normal;font-size:11px;color:var(--teal);font-weight:700}
+.pp .ppi.chg{background:var(--soft)}
+.pp .ppi.off{opacity:.55;cursor:default}
+.pp .ppn{font-size:12px;margin:4px 0 0}
+.rm td small.hk{display:block;font-size:10.5px;color:var(--mut);line-height:1.2}
+</style>
+<style id="g33css">
+.g33{border:1px solid var(--ln);border-radius:12px;margin:10px 0;background:var(--sf)}
+.g33>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:10px 14px;font-weight:700;user-select:none}
+.g33>summary::-webkit-details-marker{display:none}
+.g33>summary::before{content:'\25B8';display:inline-block;transition:transform .15s;color:var(--mut)}
+.g33[open]>summary::before{transform:rotate(90deg)}
+.g33>summary .sm{font-weight:400;font-size:12px;color:var(--mut);margin-inline-start:auto}
+.g33>.gb{padding:0 14px 12px}
+.g33>.gb>h4:first-child{display:none}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -5599,7 +5641,7 @@ render = function () {
 /* ---------- G26: teacher preferences (max in a row, free periods, days off) used by the quality report ---------- */
 Object.assign(AR, Object.fromEntries(Object.entries({
   'Teacher limits': 'قيود المدرسين',
-  'Leave a box empty to use the school default. Max lessons per day / week are taken from the teacher settings. Days off are days he prefers not to work: the report flags them, nothing is changed in the timetable.': 'اترك الخانة فارغة لاستخدام الحد العام للمدرسة. أقصى حصص يومياً/أسبوعياً تؤخذ من إعدادات المدرس. أيام الإجازة هي أيام يفضّل ألا يعمل فيها: يُنبّه عليها التقرير ولا يتغيّر الجدول.',
+  'Leave a box empty to use the school default. Max lessons per day / week are taken from the teacher settings. Days off are days he prefers not to work: the report flags them and the automatic distribution tries to avoid them.': 'اترك الخانة فارغة لاستخدام الحد العام للمدرسة. أقصى حصص يومياً/أسبوعياً تؤخذ من إعدادات المدرس. أيام الإجازة هي أيام يفضّل ألا يعمل فيها: يُنبّه عليها التقرير وتحاول الجدولة التلقائية تجنّبها.',
   'Search teacher': 'بحث عن مدرس', 'Max / day': 'أقصى / يوم', 'Max / week': 'أقصى / أسبوع', 'Days off': 'أيام الإجازة', 'Clear': 'مسح',
   'Save preferences': 'حفظ التفضيلات', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة', 'Preferences saved': 'تم حفظ التفضيلات',
   'Teachers with their own limits': 'مدرسون لهم قيود خاصة', 'Default': 'الافتراضي', 'No teachers match.': 'لا يوجد مدرس مطابق.'
@@ -5622,7 +5664,7 @@ function qaLimitsView() {
   const L = (S.tch || []).filter(r => !q || lc(r[1]).includes(q) || lc(r[0]).includes(q)).sort((a, b) => natural(a[1] || a[0], b[1] || b[0]));
   const rows = L.map(r => { const id = r[0], p = tpGet(id);
     return `<tr><td><b>${esc(r[1] || id)}</b><div class="dim">${esc(r[5] || '')}</div></td><td class="n dim">${+r[2] || '—'}</td><td class="n dim">${+r[3] || '—'}</td><td class="n"><input type="number" min="0" max="12" placeholder="${QA.run}" data-tp="run|${esc(id)}" value="${p.run > 0 ? p.run : ''}"></td><td class="n"><input type="number" min="0" max="8" placeholder="${QA.gaps}" data-tp="gaps|${esc(id)}" value="${p.gaps >= 0 ? p.gaps : ''}"></td><td><div class="dys">${I.days.map(d => `<label><input type="checkbox" data-tp="off|${esc(id)}|${d}"${p.off.includes(d) ? ' checked' : ''}> ${esc(tpDay(d))}</label>`).join('')}</div></td><td><button class="b" data-tpa="clear" data-id="${esc(id)}">${t('Clear')}</button></td></tr>` }).join('');
-  return `<div class="tpv"><p class="msg2">${t('Leave a box empty to use the school default. Max lessons per day / week are taken from the teacher settings. Days off are days he prefers not to work: the report flags them, nothing is changed in the timetable.')}</p>
+  return `<div class="tpv"><p class="msg2">${t('Leave a box empty to use the school default. Max lessons per day / week are taken from the teacher settings. Days off are days he prefers not to work: the report flags them and the automatic distribution tries to avoid them.')}</p>
 <div class="tf"><label>${t('Search teacher')}<input type="text" data-tpq="1" value="${esc(TPF.q)}"></label><span class="dim">${t('Teachers with their own limits')}: <b>${own}</b></span></div>
 ${rows ? `<div class="tw"><table class="ex"><tr><th>${t('Teacher')}</th><th class="n">${t('Max / day')}</th><th class="n">${t('Max / week')}</th><th class="n">${t('Max consecutive lessons')}</th><th class="n">${t('Free periods allowed per day')}</th><th>${t('Days off')}</th><th></th></tr>${rows}</table></div>` : `<p class="msg">${t('No teachers match.')}</p>`}
 ${TPF.dirty ? `<div class="sv"><b>${t('unsaved changes')}</b><button class="b pri" data-tpa="save">${t('Save preferences')}</button><button class="b" data-tpa="discard">${t('Discard changes')}</button></div>` : ''}</div>`;
@@ -5692,6 +5734,263 @@ thSave = async function () {
   TG = null; render();
   UX.done(t('Genders saved'), async () => { await put(prev); TG = null; render() });
 };
+</script>
+<script>
+/* ---------- G29: floor heads + their signatures on every exam sheet, and cells that grow with their text ---------- */
+Object.assign(AR, { 'Floor heads': 'رؤساء الأدوار' });
+const g29Roles = () => { const tt = exTt(); return ((tt && tt.rules && tt.rules.roles) || []).filter(r => r.t && (r.rooms || []).length) };
+function g29Heads(rooms) {                       // roles whose committees include any of these rooms -> one entry per (role, teacher)
+  const set = new Set((rooms || []).map(x => String(x).trim())), out = [];
+  g29Roles().forEach(r => { if (r.rooms.some(m => set.has(String(m).trim()))) out.push({ role: r.name || t('Floor head'), name: exName(r.t) }) });
+  return out;
+}
+const g29Txt = H => H.map(h => h.role + ' – ' + h.name).join('; ');
+const g29Sig = H => H.length ? `<div class="ctl hds">${H.map(h => `<span>${esc(h.role)} – ${esc(h.name)} (${t('Signature')}): ................................</span>`).join('')}</div>` : '';
+const _g29Groups = exGroups;
+exGroups = function () {
+  const G = _g29Groups(), R = EX.rep; if (!g29Roles().length) return G;
+  const tt = exTt(), lab = t('Room'), per = [[t('Examination Period'), tt.period || tt.name], [t('Academic Year'), tt.year]];
+  G.forEach(g => {
+    let rooms = [];
+    if (R.k == 'sig') { const rm = g.info && (g.info.find(x => x[0] == lab) || [])[1]; if (rm) rooms = [rm] }
+    else if (R.k == 'dsig') { rooms = (g.rows || []).filter(r => Array.isArray(r)).map(r => r[5]).filter(Boolean) }
+    else if (R.k == 'rooms') { rooms = [String(g.title).split(' – ').pop()] }
+    else if (R.k == 'daily') {                  // one extra column: who is responsible for the room
+      const iR = g.head.indexOf(t('Room')); if (iR < 0) return;
+      g.head.splice(iR + 1, 0, t('Floor head')); g.rows.forEach(r => { if (Array.isArray(r)) r.splice(iR + 1, 0, g29Txt(g29Heads([r[iR]]))) });
+      const H = g29Heads(g.rows.filter(r => Array.isArray(r)).map(r => r[iR])); g.foot = (g.foot || '') + g29Sig(H); return;
+    } else return;
+    const H = g29Heads(rooms); if (!H.length) return;
+    if (R.k == 'dsig') g.info = (g.info || []).concat([[t('Floor heads'), g29Txt(H)]]);
+    if (R.k == 'rooms') g.info = per.concat([[lab, rooms[0]], [t('Floor head'), g29Txt(H)]]);
+    g.foot = (g.foot || '') + g29Sig(H);
+  });
+  return G;
+};
+/* readable sheets: when "fit on one page" would make the text tiny, spill onto a second page instead */
+const _g29Sheets = exSheets;
+exSheets = function (G, por) {
+  if (!pfFit()) return _g29Sheets(G, por);
+  const out = [], cap = por ? 44 : 28;
+  G.forEach(g => { const pages = Math.max(1, Math.ceil(g.rows.length / cap)), per = Math.ceil(g.rows.length / pages) || 1; for (let p = 0; p < pages; p++) out.push(exSheetHtml(g, g.rows.slice(p * per, (p + 1) * per), p + 1, pages, por)) });
+  return out;
+};
+</script>
+<script>
+/* ---------- G30: one place for permissions. Role defaults = one table where the Head of department column replaces the Head rows;
+   per person = a "Customize permissions" page (checkboxes grouped in cards, a preset, Save / Back) instead of the All options panel. ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Customize permissions': 'تخصيص الصلاحيات', 'Permission preset': 'قالب الصلاحيات', 'Role default': 'افتراضي الدور', 'Same as': 'مثل', 'Custom': 'مخصص',
+  'Choosing a preset ticks the suggested options below; you can still change any of them. Nothing is saved until you press Save.': 'اختيار القالب يحدد الخيارات المقترحة بالأسفل ويمكنك تعديل أي منها. لا يُحفظ شيء قبل الضغط على «حفظ».',
+  'differs from the role': 'يختلف عن الدور', 'Reset to the role defaults': 'إعادة لافتراضي الدور', 'Save permissions': 'حفظ الصلاحيات', 'Cancel': 'إلغاء', 'Allowed': 'مسموح', 'of': 'من', 'Changed from the role': 'معدّل عن الدور',
+  'Because he heads departments these options are on automatically.': 'لأنه يرأس أقسامًا فهذه الخيارات تعمل تلقائيًا.', 'Needs "View Exams & invigilation".': 'تحتاج صلاحية «عرض الامتحانات والمراقبة».',
+  'his teachers': 'مدرسوه', 'preliminary': 'مبدئية', 'proposal': 'اقتراح', 'Head of department': 'رئيس القسم', 'Back': 'رجوع',
+  'Report an absence for his teachers': 'تسجيل غياب مدرسيه', 'Preliminary approval of their absences': 'الموافقة المبدئية على غيابهم',
+  'Choose substitutes for his absent teachers (before the final approval)': 'اختيار بدلاء لمدرسيه الغائبين (قبل الموافقة النهائية)',
+  'You can see only the teachers and exams inside your access, and change nothing here.': 'ترى المدرسين والامتحانات داخل نطاقك فقط، ولا تستطيع التعديل هنا.',
+  'Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.': 'للأدمن فقط دائمًا: الإعدادات، المستخدمين واللينكات، الجدولة التلقائية، مساعد النقل، أرقام الماستر.'
+}).filter(([k]) => !(k in AR))));
+
+/* 1. exams area: no admin-only backup calls for other people, and everything is read-only when the scope is partial */
+const _g30bkl = exBkLoad; exBkLoad = async function () { if (S && S.role != 'admin') { EX.bk = EX.bk || []; return } return _g30bkl.apply(this, arguments) };
+const _g30bkg = exBkGone; exBkGone = function () { return S && S.role != 'admin' ? '' : _g30bkg.apply(this, arguments) };
+const _g30bk = exBackup; exBackup = function () { return S && S.role != 'admin' ? '' : _g30bk.apply(this, arguments) };
+const _g30can = exCan;
+exCan = function (k) {
+  if (!_g30can(k)) return false;
+  if (S && S.role != 'admin' && (k == 'ct_edit' || k == 'ct_inv') && !(EX.D && EX.D.scope && EX.D.scope.full)) return false;     // a partial scope = read only (the server refuses too)
+  return true;
+};
+const _g30ex = rExam;
+rExam = function () {
+  const h = _g30ex();
+  if (!S || S.role == 'admin') return h;
+  const tp = document.createElement('template'); tp.innerHTML = h; const R = tp.content;
+  if (!exCan('ct_inv')) R.querySelectorAll('.g24 input,.g24 select,.g24 textarea,.g24 button,[data-exr2],[data-g24],[data-g24a]').forEach(x => { x.disabled = true; if (x.tagName == 'BUTTON') x.remove() });
+  if (EX.D && EX.D.scope && !EX.D.scope.full) { const f = R.querySelector('.exu') || R.firstElementChild; if (f && !R.querySelector('.g30lim')) { const n = document.createElement('p'); n.className = 'msg g30lim'; n.textContent = t('You can see only the teachers and exams inside your access, and change nothing here.'); f.insertBefore(n, f.firstChild) } }
+  return tp.innerHTML;
+};
+
+/* 2. the role table: the Head of department rows go, his column maps onto the general rows */
+const US_HK = ['abs_dept', 'abs_prelim', 'abs_propose'], G30_MAP = { abs_behalf: ['abs_dept', 'his teachers'], abs_decide: ['abs_prelim', 'preliminary'], abs_assign: ['abs_propose', 'proposal'] };
+{ const i = PERM_GROUPS.findIndex(x => x[0] == 'Head of department'); if (i >= 0) PERM_GROUPS.splice(i, 1); if (typeof G16_HOD_OVL != 'undefined' && !G16_HOD_OVL.includes('abs_decide')) G16_HOD_OVL.push('abs_decide') }
+const _g30rb = usRoleBox;
+usRoleBox = function () {
+  const h = _g30rb(), tp = document.createElement('template'); tp.innerHTML = h;
+  tp.content.querySelectorAll('tr').forEach(tr => {
+    const c = tr.querySelector('input[data-rp^="coordinator|"]'); if (!c) return; const k = c.dataset.rp.split('|')[1], m = G30_MAP[k]; if (!m) return;
+    const td = tr.children[3]; if (!td) return; const on = !!(US.rp && US.rp.hod && US.rp.hod[m[0]]);
+    td.innerHTML = `<input type="checkbox" data-rp="hod|${m[0]}"${on ? ' checked' : ''}><small class="hk">${esc(t(m[1]))}</small>`;
+  });
+  return tp.innerHTML;
+};
+
+/* 3. the per-person page */
+const US_SUB = ['ct_edit', 'ct_inv', 'ct_export'];
+const usRoleOf = r => String(r[3] || '').toLowerCase();
+const usDef = k => ((US.permDefs || []).find(x => x.k == k) || { d: {} }).d;
+function usSim(r, ov) {                          // the same rules as permsOf_ on the server
+  const role = usRoleOf(r), o = {}; (US.permDefs || []).forEach(p => { o[p.k] = !!p.d[role] });
+  if (role != 'hod' && usHeadSet(r).size) US_HK.forEach(k => { o[k] = true });
+  const was = o.ct; for (const k in ov) if (ov[k] === true || ov[k] === false) o[k] = ov[k];
+  if (o.ct !== was) US_SUB.forEach(x => { if (!(ov[x] === true || ov[x] === false)) o[x] = o.ct });
+  US_SUB.forEach(x => { if (!o.ct) o[x] = false });
+  return o;
+}
+function usGroupsFor(r) {                        // what is shown for this person (the keys that make sense for his role)
+  const role = usRoleOf(r), hs = usHeadSet(r).size > 0, lab = {};
+  PERM_GROUPS.concat([['Head of department', [['abs_dept', 'Report an absence for his teachers'], ['abs_prelim', 'Preliminary approval of their absences'], ['abs_propose', 'Choose substitutes for his absent teachers (before the final approval)']]]]).forEach(g => g[1].forEach(([k, l]) => { lab[k] = l }));
+  return PERM_GROUPS.map(([gn, L]) => {
+    let rows = L.filter(([k]) => k != 'edit');
+    if (gn == 'Absence & substitutes') {
+      if (role == 'hod') rows = rows.filter(([k]) => !G30_MAP[k]).concat(US_HK.map(k => [k, lab[k]]));
+      else if (hs) rows = rows.concat(US_HK.map(k => [k, lab[k]]));
+    }
+    return [gn, rows];
+  });
+}
+function usOpenPerm(i) {
+  const r = US.rows[i]; US.pp = i; US.pp0 = [r[9], r[10]];
+  const keys = usGroupsFor(r).flatMap(g => g[1].map(x => x[0])), sim = usSim(r, (() => { try { return JSON.parse(r[9] || '{}') || {} } catch (e) { return {} } })());
+  US.pd = {}; keys.forEach(k => { US.pd[k] = !!sim[k] });
+}
+const usKeysOf = r => usGroupsFor(r).flatMap(g => g[1].map(x => x[0]));
+function usSaveOv(r) {
+  const base = usSim(r, {}), keys = usKeysOf(r), ov = {};
+  keys.forEach(k => { if (US.pd[k] !== !!base[k]) ov[k] = US.pd[k] });
+  const sim = usSim(r, ov); keys.forEach(k => { if (!!sim[k] !== US.pd[k]) ov[k] = US.pd[k] });
+  let old = {}; try { old = JSON.parse(r[9] || '{}') || {} } catch (e) { }
+  Object.keys(old).forEach(k => { if (!keys.includes(k) && (old[k] === true || old[k] === false)) ov[k] = old[k] });         // keep what this page does not show
+  return Object.keys(ov).length ? JSON.stringify(ov) : '';
+}
+function usPresetOf(r) {
+  const keys = usKeysOf(r), same = o => keys.every(k => !!o[k] === !!US.pd[k]), role = usRoleOf(r);
+  if (same(usSim(r, {}))) return 'role';
+  for (const x of ['coordinator', 'hod', 'teacher', 'viewer']) if (x != role) { const o = {}; (US.permDefs || []).forEach(p => { o[p.k] = !!p.d[x] }); US_SUB.forEach(s => { if (!o.ct) o[s] = false }); if (same(o)) return 'as:' + x }
+  return 'custom';
+}
+function usPermPage() {
+  const r = US.rows[US.pp], role = usRoleOf(r), nm = r[1] || r[2] || '';
+  const roleName = { admin: 'Admin', coordinator: 'Coordinator', hod: 'Head of department', teacher: 'Teacher ', viewer: 'Viewer' }[role] || role;
+  if (role == 'admin') return `<div class="card pp"><div class="pph"><div><h3>${t('Customize permissions')}</h3><p class="msg">${esc(nm)} · ${t(roleName)}</p></div><button class="b" data-pp="back">${t('Back')}</button></div><p class="msg">${t('Admin links always have every option.')}</p></div>`;
+  const base = usSim(r, {}), G = usGroupsFor(r), keys = usKeysOf(r), on = keys.filter(k => US.pd[k]).length, chg = keys.filter(k => US.pd[k] !== !!base[k]).length, ps = usPresetOf(r), hs = usHeadSet(r).size > 0;
+  const item = ([k, l]) => {
+    const dis = US_SUB.includes(k) && !US.pd.ct, d = US.pd[k] !== !!base[k];
+    return `<label class="ppi${d ? ' chg' : ''}${dis ? ' off' : ''}"><input type="checkbox" data-ppk="${k}"${US.pd[k] && !dis ? ' checked' : ''}${dis ? ' disabled' : ''}><span><b>${t(l)}</b><small class="k">${k}</small>${d ? `<em>${t('differs from the role')}</em>` : ''}${dis ? `<small class="k">${t('Needs "View Exams & invigilation".')}</small>` : ''}</span></label>`;
+  };
+  const presets = [['role', t('Role default') + ' (' + t(roleName) + ')']].concat(['coordinator', 'hod', 'teacher', 'viewer'].filter(x => x != role).map(x => ['as:' + x, t('Same as') + ' ' + t({ coordinator: 'Coordinator', hod: 'Head of department', teacher: 'Teacher ', viewer: 'Viewer' }[x])])).concat(ps == 'custom' ? [['custom', t('Custom')]] : []);
+  return `<div class="card pp"><div class="pph"><div><h3>${t('Customize permissions')}</h3><p class="msg" style="margin:0">${esc(nm)} · ${t(roleName)} · ${t('Scope')}: ${esc(r[4] || '—')}</p></div><button class="b" data-pp="back">${t('Back')}</button></div>
+<div class="ppp"><label>${t('Permission preset')}<select data-ppset>${presets.map(([v, l]) => `<option value="${v}"${v == ps ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label><button class="b" data-pp="reset"${chg ? '' : ' disabled'}>${t('Reset to the role defaults')}</button></div>
+<p class="msg ppn">${t('Choosing a preset ticks the suggested options below; you can still change any of them. Nothing is saved until you press Save.')}</p>
+<p class="msg ppn"><b>${t('Allowed')}: ${on} ${t('of')} ${keys.length}</b> · ${t('Changed from the role')}: ${chg} · ${t('Editing lessons: use the Can edit column of the person.')}</p>
+${hs && role != 'hod' ? `<p class="msg ppn">${t('Because he heads departments these options are on automatically.')}</p>` : ''}
+<div class="ppg">${G.filter(g => g[1].length).map(([gn, L]) => `<div class="ppc"><h5>${t(gn)}</h5>${L.map(item).join('')}</div>`).join('')}<div class="ppc" style="grid-column:1/-1">${usHeadBox(r, US.pp).replace(/^<div class="pg"[^>]*>/, '<div>')}</div></div>
+<p class="msg ppn">${t('Always admin only: Settings, Users & links, Auto schedule, Move assistant, Master sheet numbers.')}</p>
+<div class="bar" style="position:static;margin:12px 0 0"><button class="b pri" data-pp="save">${ic('check')} ${t('Save permissions')}</button><button class="b" data-pp="back">${t('Cancel')}</button></div></div>`;
+}
+usPanel = function () { return '' };
+const _g30ru = rUsers;
+rUsers = function () {
+  if (US && US.rows && US.pp != null && US.rows[US.pp]) return usPermPage();
+  return _g30ru();
+};
+const g30Keep = fn => { const y = window.scrollY; fn(); render(); window.scrollTo(0, y) };
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-usa="perm"],[data-pp]'); if (!b || !US) return;
+  if (b.dataset.usa == 'perm') { e.stopImmediatePropagation(); usOpenPerm(+b.dataset.i); render(); window.scrollTo(0, 0); return }
+  const a = b.dataset.pp, r = US.rows[US.pp]; if (!r) return;
+  if (a == 'back') { r[9] = US.pp0[0]; r[10] = US.pp0[1]; US.pp = null; US.pd = null; render(); return }
+  if (a == 'reset') return g30Keep(() => { const s = usSim(r, {}); usKeysOf(r).forEach(k => { US.pd[k] = !!s[k] }) });
+  if (a == 'save') {
+    r[9] = usSaveOv(r);
+    try { US = Object.assign(await srv('api_saveUsers', US.rows), { sub: US.sub }) } catch (x) { return }
+    toast(t('Saved')); render(); window.scrollTo(0, 0);
+  }
+}, true);
+document.addEventListener('change', e => {
+  const el = e.target; if (!el || !el.dataset || !US || US.pp == null) return; const r = US.rows[US.pp]; if (!r) return;
+  if (el.dataset.ppk) return g30Keep(() => { US.pd[el.dataset.ppk] = el.checked; if (el.dataset.ppk == 'ct' && !el.checked) US_SUB.forEach(s => { US.pd[s] = false }); if (el.dataset.ppk == 'ct' && el.checked) US_SUB.forEach(s => { US.pd[s] = !!usSim(r, {})[s] || US.pd[s] }) });
+  if (el.dataset.ppset !== undefined) return g30Keep(() => {
+    const v = el.value, keys = usKeysOf(r); if (v == 'custom') return;
+    if (v == 'role') { const s = usSim(r, {}); keys.forEach(k => { US.pd[k] = !!s[k] }); return }
+    const x = v.slice(3), o = {}; (US.permDefs || []).forEach(p => { o[p.k] = !!p.d[x] }); if (!o.ct) US_SUB.forEach(s => { o[s] = false });
+    keys.forEach(k => { if (!US_HK.includes(k)) US.pd[k] = !!o[k] });
+  });
+});
+</script>
+<script>
+/* ---------- G31: the automatic distribution respects the teacher preferences (soft) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Teacher preferences (days off, lessons in a row, free periods) saved in Quality > Teacher limits are taken into account. They are preferences: they never stop a lesson from being placed.': 'تفضيلات المدرسين (أيام الإجازة، الحصص المتتالية، الحصص الفاضية) المحفوظة في تاب الجودة ← حدود المدرسين تؤخذ في الاعتبار. هي تفضيلات: لا تمنع وضع أي حصة.',
+  'Preferences broken': 'تفضيلات لم تتحقق', 'Teacher preferences are respected.': 'تفضيلات المدرسين محترمة.', 'Teacher preferences that could not be met': 'تفضيلات مدرسين تعذّر تحقيقها',
+  'works on his day off': 'يعمل في يوم إجازته', 'lessons in a row': 'حصص متتالية', 'max': 'الحد', 'free periods': 'حصص فاضية'
+}).filter(([k]) => !(k in AR))));
+const g31Has = () => S && S.set && S.set.tprefs && Object.keys(S.set.tprefs).length > 0;
+const g31Kind = x => x.kind == 'off' ? t('works on his day off') : x.kind == 'run' ? x.n + ' ' + t('lessons in a row') + ' (' + t('max') + ' ' + x.max + ')' : x.n + ' ' + t('free periods') + ' (' + t('max') + ' ' + x.max + ')';
+const _sAutoG31 = sAuto;
+sAuto = function () {
+  const h = _sAutoG31(); if (!g31Has()) return h;
+  return h.replace('<div class="mode">', '<p class="msg">' + t('Teacher preferences (days off, lessons in a row, free periods) saved in Quality > Teacher limits are taken into account. They are preferences: they never stop a lesson from being placed.') + '</p><div class="mode">');
+};
+const _auResultG31 = auResult;
+auResult = function () {
+  let h = _auResultG31(); const p = AU.plan; if (!p || !p.stats) return h;
+  const n = p.stats.prefBroken || 0;
+  if (n) h = h.replace('<div><b>' + p.stats.classes + '</b>', '<div class="bad"><b>' + n + '</b>' + t('Preferences broken') + '</div><div><b>' + p.stats.classes + '</b>');
+  let note = '';
+  if (n && (p.prefList || []).length) {
+    const by = {}; p.prefList.forEach(x => { (by[x.t] = by[x.t] || []).push(dayName(x.d) + ': ' + g31Kind(x)) });
+    note = '<div class="note"><b>' + t('Teacher preferences that could not be met') + '</b><br>' + Object.keys(by).map(id => esc(tname(id)) + ' – ' + esc(by[id].join(' · '))).join('<br>') + '</div>';
+  } else if (g31Has() && p.stats.placed) note = '<div class="note">' + t('Teacher preferences are respected.') + '</div>';
+  return note ? h.replace('<table class="rs">', note + '<table class="rs">') : h;
+};
+</script>
+<script>
+/* ---------- G32: search boxes keep focus and filter while typing ---------- */
+const _g32r = render;
+render = function () {
+  const a = document.activeElement; let key = null, s = 0, e = 0;
+  if (a && a.tagName == 'INPUT' && /^(text|search|)$/.test(a.type || '')) {
+    const ds = Object.keys(a.dataset || {});
+    if (a.id) key = '#' + a.id;
+    else if (ds.length) key = 'input[data-' + ds[0].replace(/[A-Z]/g, m => '-' + m.toLowerCase()) + (a.dataset[ds[0]] ? '="' + String(a.dataset[ds[0]]).replace(/"/g, '\\"') + '"' : '') + ']';
+    try { s = a.selectionStart; e = a.selectionEnd } catch (x) { }
+  }
+  const r = _g32r.apply(this, arguments);
+  if (key) try { const n = document.querySelector(key); if (n && n !== document.activeElement) { n.focus(); try { n.setSelectionRange(s, e) } catch (x) { } } } catch (x) { }
+  return r;
+};
+let _g32t = 0;
+document.addEventListener('input', e => {
+  const el = e.target, d = el.dataset; if (!d || TAB != 'qa' || d.tpq === undefined) return;
+  TPF.q = el.value; clearTimeout(_g32t); _g32t = setTimeout(render, 250);
+});
+</script>
+<script>
+/* ---------- G33: the exam Rules page is split into collapsible sections ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({ 'excluded': 'مستبعد', 'priority': 'أولوية', 'limited': 'محدود', 'roles': 'أدوار' }).filter(([k]) => !(k in AR))));
+const G33 = { open: {} };
+function g33Fold(key, title, sum, body) {
+  return `<details class="g33" data-g33="${key}"${G33.open[key] ? ' open' : ''}><summary>${title}<span class="sm">${sum || ''}</span></summary><div class="gb">${body}</div></details>`;
+}
+function g33H4(html) { const m = /^<h4>([\s\S]*?)<\/h4>/.exec(html); return m ? m[1] : '' }
+const _g33Card = g24Card;
+g24Card = function () {
+  const R = EX.rules; if (!R || !EX.D) return '';
+  const nL = Object.keys(R.stageOnly || {}).length, nR = (R.roles || []).length, L = g24Limits(R), M = g24Mixed(R), O = g24Roles(R);
+  const mx = R.mixedGender ? '✓' : '—';
+  return `<div class="card g24"><p class="msg">${t('Remember to press "Save the rules" after changing the limits or roles.')}</p>${g33Fold('lim', g33H4(L), nL ? nL + ' ' + t('limited') : '', L)}${g33Fold('mix', g33H4(M), mx, M)}${g33Fold('rol', g33H4(O), nR ? nR + ' ' + t('roles') : '', O)}</div>`;
+};
+const _g33Rules = exRules;
+exRules = function () {
+  let h = _g33Rules(); const R = EX.rules, tag = '<h4>' + t('Teachers') + '</h4>', i = h.indexOf(tag);
+  if (i < 0 || !R) return h;
+  const end = h.indexOf('</table></div>', i); if (end < 0) return h;
+  const e2 = end + '</table></div>'.length, n = Object.keys(EX.D.names).length;
+  const sum = [(R.excluded || []).length ? (R.excluded.length + ' ' + t('excluded')) : '', (R.priority || []).length ? (R.priority.length + ' ' + t('priority')) : ''].filter(Boolean).join(' · ') || n;
+  return h.slice(0, i) + g33Fold('tch', t('Teachers'), sum, h.slice(i, e2)) + h.slice(e2);
+};
+document.addEventListener('toggle', e => { const d = e.target; if (d && d.dataset && d.dataset.g33) G33.open[d.dataset.g33] = d.open }, true);
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
