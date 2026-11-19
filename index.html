@@ -354,6 +354,27 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .exu table.ex.xg td:last-child{padding:2px 6px}
 .g34h{font-size:12px;color:var(--mut);margin:0 0 8px}
 </style>
+<style id="g35css">
+.g35box{margin-top:10px;padding:10px 12px;border:1px solid var(--ln);border-radius:12px;background:var(--sf)}
+.g35box .it{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;max-height:190px;overflow:auto}
+.g35box .it label{display:inline-flex;flex-direction:row;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--ln);border-radius:999px;font-size:12px;cursor:pointer;background:var(--bg,#fff)}
+.g35box .it label:has(input:checked){border-color:var(--coral);background:var(--wns);font-weight:700}
+.g35box .hd{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+</style>
+<style id="g36css">
+.g36 .bar2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.g36 .sc2{overflow:auto;max-height:64vh;border:1px solid var(--ln);border-radius:10px}
+.g36 table{border-collapse:collapse;width:100%;font-size:13px}
+.g36 th{position:sticky;top:0;background:var(--sf);z-index:1;border:1px solid var(--ln);padding:6px 8px;font-size:12px;color:var(--mut);white-space:nowrap}
+.g36 td{border:1px solid var(--ln);padding:0}
+.g36 td input[type=text]{width:100%;min-width:104px;border:0;border-radius:0;background:transparent;box-shadow:none;height:36px;margin:0;text-align:center}
+.g36 td.lb input{text-align:start;min-width:90px;font-weight:700}
+.g36 td input:focus{outline:2px solid var(--coral);outline-offset:-2px;background:var(--wns)}
+.g36 td.no{width:34px;text-align:center;color:var(--mut);background:var(--sf);font-size:12px}
+.g36 td.bk{text-align:center;padding:0 8px}
+.g36 tr.brk td{background:rgba(127,127,127,.12)}
+.g36 td.bad input{background:rgba(220,60,60,.15)}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -6055,6 +6076,181 @@ exWork = function () {
   if (!viewer) return h;
   return h.replace(/<button class="pill[^"]*" data-exs="(?!rep")[^"]*">[\s\S]*?<\/button>/g, '');
 };
+</script>
+<script>
+/* ---------- G35: Daily invigilators signature sheet - choose stages / floor heads / committees with checkboxes, every committee printed once ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Group the sheets by': 'تجميع الشيتات حسب', 'Stage': 'المرحلة', 'Floor head': 'رئيس الدور', 'Committee (room)': 'اللجنة', 'All': 'الكل',
+  'Choose what to print (each committee is printed once):': 'اختر ما تريد طباعته (كل لجنة تُطبع مرة واحدة):', 'No floor head': 'بدون رئيس دور',
+  'Include the reserve invigilators': 'إضافة المراقبين الاحتياط'
+}).filter(([k]) => !(k in AR))));
+const g35By = () => EX.rep.by || 'stage';
+function g35StOf(r) { const set = new Set(); String(r.grade || '').split(/[,،;\/\s]+/).filter(Boolean).forEach(g => { if (I.cs[g]) set.add(I.cs[g]); else I.classes.filter(c => c.toUpperCase().startsWith(g.toUpperCase())).forEach(c => set.add(I.cs[c])) }); return set.size ? [...set].sort(natural) : [t('Other')] }
+function g35Keys(r, by) {                       // the possible groups of one committee row
+  if (by == 'room') return [String(r.room || '—')];
+  if (by == 'head') { const H = g29Heads([r.room]); return H.length ? H.map(h => h.role + ' – ' + h.name) : [t('No floor head')] }
+  return g35StOf(r);
+}
+function g35Ents(by) {                           // every group that exists for the current date / sitting filter
+  const R = EX.rep, S2 = exSessions().filter(s => (!R.date || s.date == R.date) && (!R.key || s.key == R.key)), set = new Set();
+  S2.forEach(s => s.rows.forEach(r => g35Keys(r, by).forEach(k => set.add(k)))); return [...set].sort(natural);
+}
+const _g35Groups = exGroups;
+exGroups = function () {
+  const R = EX.rep; if (R.k != 'dsig') return _g35Groups();
+  const A = exAs(), S2 = exSessions().filter(s => (!R.date || s.date == R.date) && (!R.key || s.key == R.key)), G = [], tt = exTt(), by = g35By();
+  const sel = Array.isArray(R.sel) ? R.sel : null, wantRes = R.res !== false;
+  const inSes = (k, type, slot) => A.filter(a => a.key == k && a.type == type && (type == 'reserve' || a.slot == slot));
+  const lbl = { stage: t('Stage'), head: t('Floor head'), room: t('Committee (room)') }[by], tm = s => s.start + ' - ' + s.end;
+  [...new Set(S2.map(s => s.date))].sort().forEach(d => {
+    const bucket = {};                           // each committee row goes to ONE group: its first group that is ticked
+    S2.filter(s => s.date == d).forEach(s => s.rows.forEach(r => { const k = g35Keys(r, by).find(x => !sel || sel.includes(x)); if (k !== undefined) (bucket[k] = bucket[k] || []).push([s, r]) }));
+    const usedRes = new Set();
+    Object.keys(bucket).sort(natural).forEach(g => {
+      const mains = [], res = [], sk = new Set();
+      bucket[g].forEach(([s, r]) => { sk.add(s.key); inSes(s.key, 'main', r.id).forEach(a => { if (!R.teacher || a.t == R.teacher) mains.push([s.start, r.room, exName(a.t), a.t, tm(s), s.name, r.room, r.subject, r.grade || '']) }) });
+      if (wantRes) S2.filter(s => s.date == d && sk.has(s.key)).forEach(s => inSes(s.key, 'reserve').forEach(a => { const u = s.key + '|' + a.t; if (usedRes.has(u) || (R.teacher && a.t != R.teacher)) return; usedRes.add(u); res.push([s.start, '', exName(a.t), a.t, tm(s), s.name, t('Reserve '), '', '']) }));
+      const srt = (x, y) => x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : natural(x[1], y[1]) || natural(x[2], y[2]);
+      const out = []; let n = 0;
+      if (mains.length) { out.push({ sec: t('Main invigilators') }); mains.sort(srt).forEach(x => out.push([++n, x[2], x[3], x[4], x[5], x[6], x[7], x[8], '', ''])) }
+      if (res.length) { out.push({ sec: t('Reserve invigilators') }); n = 0; res.sort(srt).forEach(x => out.push([++n, x[2], x[3], x[4], x[5], x[6], x[7], x[8], '', ''])) }
+      if (!mains.length && !res.length) return;
+      G.push({ title: t('Daily invigilators signature sheet') + ' – ' + g + ' – ' + d + ' ' + exDay(d), info: [[t('Examination Period'), tt.period || tt.name], [t('Academic Year'), tt.year], [t('Date'), d], [t('Day'), exDay(d)], [lbl, g], [t('Invigilators'), mains.length + (res.length ? ' + ' + res.length + ' ' + t('Reserve ') : '')]],
+        sig: true, sigI: 8, cols: [4, 17, 7, 9, 8, 10, 10, 7, 20, 8], head: [t('No.'), t('Invigilator Name'), t('Teacher Code'), t('Time'), t('Sitting'), t('Committee (room)'), t('Subject'), t('Grade / class'), t('Signature (acknowledged)'), t('Notes')], rows: out,
+        foot: `<div class="ctl"><span>${t('Controller signature')}: ................................</span><span>${t('Date')}: ....................</span></div>` });
+    });
+  });
+  return G;
+};
+const _g35Rep = exRep;
+exRep = function () {
+  let h = _g35Rep(); const R = EX.rep; if (R.k != 'dsig') return h;
+  h = h.replace(/<label>[^<]*<select data-exrp="stage">[\s\S]*?<\/select><\/label>/, '');
+  const by = g35By(), ents = g35Ents(by), sel = Array.isArray(R.sel) ? R.sel : null, all = !sel || ents.every(e => sel.includes(e));
+  const panel = `<div class="g35box"><div class="hd"><label style="flex-direction:row;align-items:center;gap:6px">${t('Group the sheets by')}<select data-g35="by">${[['stage', 'Stage'], ['head', 'Floor head'], ['room', 'Committee (room)']].map(([k, l]) => `<option value="${k}"${by == k ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
+<label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-g35="res"${R.res !== false ? ' checked' : ''}> ${t('Include the reserve invigilators')}</label></div>
+<p class="msg" style="margin:8px 0 0">${t('Choose what to print (each committee is printed once):')}</p>
+<div class="it"><label><input type="checkbox" data-g35="all"${all ? ' checked' : ''}> <b>${t('All')}</b></label>${ents.map(e => `<label><input type="checkbox" data-g35i="${esc(e)}"${!sel || sel.includes(e) ? ' checked' : ''}> ${esc(e)}</label>`).join('')}</div></div>`;
+  const i = h.indexOf('</div></div>'); return i < 0 ? h : h.slice(0, i + 6) + panel + h.slice(i + 6);
+};
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset; if (!d || TAB != 'ct' || EX.sub != 'rep' || (d.g35 === undefined && d.g35i === undefined)) return;
+  const R = EX.rep, ents = g35Ents(g35By());
+  if (d.g35 == 'by') { R.by = el.value; R.sel = null; return render() }
+  if (d.g35 == 'res') { R.res = el.checked; return render() }
+  if (d.g35 == 'all') { R.sel = el.checked ? null : []; return render() }
+  const cur = Array.isArray(R.sel) ? R.sel.slice() : ents.slice(), k = d.g35i, i = cur.indexOf(k);
+  if (el.checked && i < 0) cur.push(k); if (!el.checked && i >= 0) cur.splice(i, 1);
+  R.sel = ents.every(x => cur.includes(x)) ? null : cur; render();
+}, true);
+</script>
+<script>
+/* ---------- G36: Time slots as a timetable grid (periods x days) you fill like an Excel sheet ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Timetable grid': 'شبكة الجدول', 'List': 'قائمة', 'New schedule': 'جدول زمني جديد', 'New schedule name': 'اسم الجدول الزمني الجديد', 'Add period': 'إضافة حصة', 'Break': 'استراحة',
+  'Fill all days from the first day': 'نسخ أول يوم لباقي الأيام', 'Label': 'الاسم', 'Period': 'الحصة', 'Save Time slots': 'حفظ الحصص',
+  'Type the time of each period under its day, like 08:00-08:55. Leave a cell empty when there is no period that day. Enter = next row, Ctrl+D = fill down, Ctrl+R = fill right, and you can paste cells from Excel.': 'اكتب وقت كل حصة تحت يومها بالشكل 08:00-08:55. اترك الخانة فارغة إذا لا توجد حصة في ذلك اليوم. Enter = الصف التالي، Ctrl+D = نسخ لأسفل، Ctrl+R = نسخ لليمين، ويمكنك لصق خلايا من Excel.',
+  'Time format: 08:00-08:55': 'صيغة الوقت غير صحيحة: 08:00-08:55', 'Remove this period': 'حذف هذه الحصة', 'Schedule': 'الجدول الزمني'
+}).filter(([k]) => !(k in AR))));
+const G36 = { view: 'grid', sched: '', extra: {}, names: [], bad: {} };
+const g36Days = () => ((S.set && S.set.days) || [0, 1, 2, 3, 4]).map(Number).sort((a, b) => a - b);
+const g36Names = () => [...new Set([...schedNames(), ...G36.names])];
+const g36Rows = () => ed('Schedules');
+const g36Slots = sc => { const set = new Set(g36Rows().filter(r => String(r[0]) == sc).map(r => +r[2])); (G36.extra[sc] || []).forEach(n => set.add(n)); return [...set].sort((a, b) => a - b) };
+const g36Find = (sc, d, k) => g36Rows().find(r => String(r[0]) == sc && +r[1] == d && +r[2] == k);
+function g36Range(v) {
+  v = exDigits(String(v || '')).trim(); if (!v) return '';
+  const p = v.split(/\s*[-–—~]\s*|\s+to\s+|\s*إلى\s*|\s*الى\s*/); if (p.length != 2) return null;
+  const a = exNormTime(p[0]), b = exNormTime(p[1]); return /^\d\d:\d\d$/.test(a) && /^\d\d:\d\d$/.test(b) && a < b ? a + '-' + b : null;
+}
+const g36Get = (sc, d, k) => { const r = g36Find(sc, d, k); return r && r[4] && r[5] ? r[4] + '-' + r[5] : '' };
+const g36Label = (sc, k) => { const r = g36Rows().find(r => String(r[0]) == sc && +r[2] == k && String(r[3]).trim()); return r ? r[3] : '' };
+const g36Brk = (sc, k) => g36Rows().some(r => String(r[0]) == sc && +r[2] == k && r[6] == 'Y');
+function g36Set(sc, d, k, v) {                  // v = '08:00-08:55' or ''
+  const R = g36Rows(), r = g36Find(sc, d, k);
+  if (!v) { if (r) R.splice(R.indexOf(r), 1); return }
+  const [s, e] = v.split('-');
+  if (r) { r[4] = s; r[5] = e; return }
+  R.push([sc, d, k, g36Label(sc, k) || ('P' + k), s, e, g36Brk(sc, k) ? 'Y' : 'N']);
+}
+function g36Edit(sc) {
+  const D = g36Days(), K = g36Slots(sc);
+  const head = `<tr><th class="no">#</th><th>${t('Label')}</th><th>${t('Break')}</th>${D.map(d => `<th>${esc(dayName(d))}</th>`).join('')}<th></th></tr>`;
+  const body = K.map((k, ri) => `<tr${g36Brk(sc, k) ? ' class="brk"' : ''}><td class="no">${k}</td><td class="lb"><input type="text" data-g36c="${ri}|0" value="${esc(g36Label(sc, k))}" placeholder="P${k}"></td><td class="bk"><input type="checkbox" data-g36b="${k}"${g36Brk(sc, k) ? ' checked' : ''}></td>${D.map((d, ci) => `<td${G36.bad[sc + '|' + d + '|' + k] ? ' class="bad"' : ''}><input type="text" data-g36c="${ri}|${ci + 1}" data-g36k="${k}|${d}" value="${esc(g36Get(sc, d, k))}" placeholder="08:00-08:55"></td>`).join('')}<td class="bk"><button class="b dng" data-g36a="delp" data-k="${k}" title="${esc(t('Remove this period'))}">×</button></td></tr>`).join('');
+  return `<div class="sc2"><table>${head}${body}</table></div>`;
+}
+const _g36Slots = sSlots;
+sSlots = function () {
+  const names = g36Names();
+  const tog = `<span class="tabs2"><button class="pill${G36.view == 'grid' ? ' on' : ''}" data-g36a="view" data-v="grid">${t('Timetable grid')}</button><button class="pill${G36.view == 'list' ? ' on' : ''}" data-g36a="view" data-v="list">${t('List')}</button></span>`;
+  if (G36.view == 'list') return `<div class="g36"><div class="bar2">${tog}</div></div>` + _g36Slots();
+  if (!G36.sched || !names.includes(G36.sched)) G36.sched = (SF && names.includes(SF)) ? SF : (names[0] || 'Default');
+  if (!names.length) G36.names.push(G36.sched);
+  const sc = G36.sched;
+  return `<div class="g36"><div class="bar2">${tog}<label>${t('Schedule')} <select data-g36="sched">${g36Names().map(x => `<option value="${esc(x)}"${x == sc ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></label><button class="b" data-g36a="newsch">${t('New schedule')}</button></div>
+<p class="msg">${t('Type the time of each period under its day, like 08:00-08:55. Leave a cell empty when there is no period that day. Enter = next row, Ctrl+D = fill down, Ctrl+R = fill right, and you can paste cells from Excel.')}</p>
+${g36Edit(sc)}
+<div class="bar2" style="margin-top:10px"><button class="b" data-g36a="addp">${ic('plus')} ${t('Add period')}</button><button class="b" data-g36a="fill">${t('Fill all days from the first day')}</button><button class="b pri" data-a="tsave" data-n="Schedules">${ic('check')} ${t('Save Time slots')}</button></div></div>`;
+};
+const g36Cell = (ri, ci) => document.querySelector('[data-g36c="' + ri + '|' + ci + '"]');
+function g36Focus(ri, ci) { setTimeout(() => { const c = g36Cell(ri, ci); if (c) { c.focus(); try { c.select() } catch (x) { } } }, 0) }
+function g36Commit(el) {                         // write one input into the draft rows
+  const sc = G36.sched, d = el.dataset;
+  if (d.g36b !== undefined) { const k = +d.g36b; g36Rows().forEach(r => { if (String(r[0]) == sc && +r[2] == k) r[6] = el.checked ? 'Y' : 'N' }); return }
+  const [ri, ci] = (d.g36c || '').split('|').map(Number); if (isNaN(ri)) return;
+  const K = g36Slots(sc), k = K[ri];
+  if (ci == 0) { g36Rows().forEach(r => { if (String(r[0]) == sc && +r[2] == k) r[3] = el.value }); return }
+  const day = g36Days()[ci - 1], key = sc + '|' + day + '|' + k, v = g36Range(el.value);
+  if (v === null) { G36.bad[key] = 1; el.parentElement.classList.add('bad'); return }
+  delete G36.bad[key]; el.parentElement.classList.remove('bad'); el.value = v; g36Set(sc, day, k, v);
+}
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset; if (!d || TAB != 'st' || SUB != 'slots') return;
+  if (d.g36 == 'sched') { G36.sched = el.value; return render() }
+  if (d.g36b !== undefined) { g36Commit(el); return render() }
+  if (d.g36c !== undefined) { g36Commit(el); if (/^\d+\|0$/.test(d.g36c)) return; }
+}, true);
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-g36a]'); if (!b || TAB != 'st' || SUB != 'slots') return;
+  const a = b.dataset.g36a, sc = G36.sched;
+  if (a == 'view') { G36.view = b.dataset.v; return render() }
+  if (a == 'newsch') { const n = (await exAsk(t('New schedule name')) || '').trim(); if (!n) return; if (!g36Names().includes(n)) G36.names.push(n); G36.sched = n; return render() }
+  if (a == 'addp') { const K = g36Slots(sc), k = (K.length ? K[K.length - 1] : 0) + 1; (G36.extra[sc] = G36.extra[sc] || []).push(k); render(); return g36Focus(K.length, 0) }
+  if (a == 'delp') { const k = +b.dataset.k; const R = g36Rows(); for (let i = R.length - 1; i >= 0; i--) if (String(R[i][0]) == sc && +R[i][2] == k) R.splice(i, 1); G36.extra[sc] = (G36.extra[sc] || []).filter(x => x != k); return render() }
+  if (a == 'fill') { const D = g36Days(); if (D.length < 2) return; g36Slots(sc).forEach(k => { const v = g36Get(sc, D[0], k); D.slice(1).forEach(d => g36Set(sc, d, k, v)) }); return render() }
+});
+function g36Pos(el) { const c = el.dataset && el.dataset.g36c; return c ? c.split('|').map(Number) : null }
+document.addEventListener('keydown', e => {
+  const el = e.target; if (TAB != 'st' || SUB != 'slots' || !el.closest || !el.closest('.g36')) return;
+  const p = g36Pos(el); if (!p) return; const [ri, ci] = p, k = e.key, nC = g36Days().length, nR = g36Slots(G36.sched).length;
+  const go = (r, c) => { g36Commit(el); if (r < 0 || c < 0 || c > nC) return; if (r >= nR) { const K = g36Slots(G36.sched); (G36.extra[G36.sched] = G36.extra[G36.sched] || []).push((K[K.length - 1] || 0) + 1); render() } g36Focus(r, c) };
+  if (k == 'Enter') { e.preventDefault(); return go(ri + (e.shiftKey ? -1 : 1), ci) }
+  if (k == 'ArrowDown' || k == 'ArrowUp') { e.preventDefault(); return go(ri + (k == 'ArrowDown' ? 1 : -1), ci) }
+  if (e.ctrlKey && (k == 'ArrowRight' || k == 'ArrowLeft')) { e.preventDefault(); return go(ri, ci + ((k == 'ArrowRight') == (HL != 'ar') ? 1 : -1)) }
+  if (e.ctrlKey && (k == 'd' || k == 'D') && ri > 0) { e.preventDefault(); const up = g36Cell(ri - 1, ci); if (up) { el.value = up.value; g36Commit(el); render(); g36Focus(ri, ci) } return }
+  if (e.ctrlKey && (k == 'r' || k == 'R') && ci > 1) { e.preventDefault(); const lf = g36Cell(ri, ci - 1); if (lf) { el.value = lf.value; g36Commit(el); render(); g36Focus(ri, ci) } return }
+});
+document.addEventListener('paste', e => {
+  const el = e.target; if (TAB != 'st' || SUB != 'slots' || !el.closest || !el.closest('.g36')) return;
+  const p = g36Pos(el); if (!p) return; const txt = (e.clipboardData && e.clipboardData.getData('text')) || '';
+  if (!/[\t\n]/.test(txt.replace(/\n$/, ''))) return;
+  e.preventDefault();
+  const sc = G36.sched, lines = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t')), D = g36Days();
+  lines.forEach((cells, li) => {
+    const ri = p[0] + li; let K = g36Slots(sc); while (K.length <= ri) { (G36.extra[sc] = G36.extra[sc] || []).push((K[K.length - 1] || 0) + 1); K = g36Slots(sc) }
+    const k = K[ri];
+    cells.forEach((v, cj) => {
+      const ci = p[1] + cj; if (ci > D.length) return; v = v.trim();
+      if (ci == 0) { g36Rows().forEach(r => { if (String(r[0]) == sc && +r[2] == k) r[3] = v }); return }
+      const x = g36Range(v); if (x === null) { G36.bad[sc + '|' + D[ci - 1] + '|' + k] = 1; return } delete G36.bad[sc + '|' + D[ci - 1] + '|' + k]; g36Set(sc, D[ci - 1], k, x);
+    });
+  });
+  render(); g36Focus(p[0], p[1]);
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-a="tsave"][data-n="Schedules"]'); if (!b || G36.view != 'grid' || !Object.keys(G36.bad).length) return;
+  e.stopImmediatePropagation(); e.preventDefault(); toast(t('Time format: 08:00-08:55'), 1);
+}, true);
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
