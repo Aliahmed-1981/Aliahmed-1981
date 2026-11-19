@@ -361,6 +361,7 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .g35box .it label:has(input:checked){border-color:var(--coral);background:var(--wns);font-weight:700}
 .g35box .hd{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 </style>
+
 <style id="g36css">
 .g36 .bar2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .g36 .sc2{overflow:auto;max-height:64vh;border:1px solid var(--ln);border-radius:10px}
@@ -391,7 +392,77 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .g38 table.ut td input:focus{outline:2px solid var(--coral);outline-offset:-2px;background:var(--wns)}
 .g38 table.ut td.n{text-align:center;white-space:nowrap}
 .g38 .sv{position:sticky;bottom:64px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin-top:10px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.g38 .g38fl{border:1px solid var(--ln);border-radius:12px;background:var(--sf);padding:8px 12px;margin:0 0 10px}
+.g38 .g38fl .rw{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:4px 0}
+.g38 .g38fl label{display:inline-flex;flex-direction:row;align-items:center;gap:4px;font-size:12px;padding:2px 9px;border:1px solid var(--ln);border-radius:999px;cursor:pointer}
+.g38 .g38fl label:has(input:checked){border-color:var(--coral);background:var(--wns)}
 </style>
+
+
+<style id="g39css">
+.g39o{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
+.g39m{background:var(--sf,#fff);color:var(--tx,inherit);border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow:auto;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.g39m h3{margin:0 0 10px}
+.g39m .fl{margin:10px 0}
+.g39m .fl>b{display:block;margin-bottom:4px}
+.g39m .ch{display:flex;flex-wrap:wrap;gap:6px}
+.g39m .ch label{display:inline-flex;flex-direction:row;align-items:center;gap:4px;font-size:12px;padding:3px 10px;border:1px solid var(--ln);border-radius:999px;cursor:pointer}
+.g39m .ch label:has(input:checked){border-color:var(--coral);background:var(--wns);font-weight:700}
+.g39m select,.g39m input[type=text],.g39m input[type=date]{width:100%;max-width:320px}
+.g39m .ft{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+</style>
+<style id="g40css">
+/* shared list header: search box, Filters button with a collapsible panel, counter and a More menu */
+.g40b{margin:0 0 12px}
+.g40sr{position:relative}
+.g40sr svg{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--mut)}
+.g40sr input{width:100%;height:42px;padding-inline-start:40px;border:1px solid var(--ln);border-radius:10px;background:var(--sf);box-sizing:border-box}
+.g40rw{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.g40rw .grow{flex:1}
+.g40fb{background:var(--da,#0B2A4A);color:#fff;border:0}
+.g40fb.act::after{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-inline-start:6px}
+.g40cnt{font-size:13px;color:var(--mut)}
+.g40mo{position:relative}
+.g40mo .menu{position:absolute;inset-inline-end:0;top:calc(100% + 6px);min-width:190px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;z-index:20}
+.g40mo .menu button{display:flex;gap:8px;align-items:center;width:100%;text-align:start;border:0;background:transparent;padding:8px 10px;border-radius:8px;cursor:pointer;color:inherit}
+.g40mo .menu button:hover{background:var(--hl)}
+.g40pn{margin-top:10px;padding:14px 16px;border:1px solid var(--ln);border-radius:12px;background:var(--hl)}
+.g40pn .g40fg{margin:0 0 10px}
+.g40pn .g40fg>b{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+.g40pn .ch{display:flex;flex-wrap:wrap;gap:6px}
+.g40pn .ch label{display:inline-flex;flex-direction:row;align-items:center;gap:4px;font-size:12px;padding:3px 10px;border:1px solid var(--ln);border-radius:999px;cursor:pointer;background:var(--sf)}
+.g40pn .ch label:has(input:checked){border-color:var(--coral);font-weight:700}
+.g40pn .gr3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 16px}
+.g40pn .gr3 label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.g40pn .gr3 select{width:100%}
+.g40pn .ap{display:flex;gap:8px;margin-top:6px}
+/* tables with a coloured head */
+.tw table.ex th,table.ed th,.g38 table.ut th,.sc table.ex th{background:var(--da,#0B2A4A)!important;color:#fff!important;border-color:rgba(255,255,255,.18)!important;text-transform:none}
+.g40srt th{cursor:pointer;user-select:none}
+.g40srt th[data-g40s="asc"]::after{content:' \25B2';font-size:9px}
+.g40srt th[data-g40s="desc"]::after{content:' \25BC';font-size:9px}
+/* school dashboard */
+.g40d{margin:0 0 14px}
+.g40d .ban{background:linear-gradient(135deg,var(--da,#0B2A4A),var(--db,#08494A));color:#fff;border-radius:16px;padding:16px 20px;display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;justify-content:center;text-align:center}
+.g40d .ban b{font-size:22px}
+.g40d .ban span{font-size:13px;opacity:.9}
+.g40d h4{margin:14px 0 8px;font-size:15px}
+.g40d .gd{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.g40d .cd{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.g40d .cd .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.g40d .cd .hd b{font-size:14px}
+.g40d .cd .hd a,.g40d .cd .hd button{font-size:12px;color:var(--coral);background:none;border:0;cursor:pointer;padding:0}
+.g40d svg{display:block;margin:0 auto}
+.g40d .big{font-size:26px;font-weight:800;text-align:center;line-height:1}
+.g40d .sm{font-size:12px;color:var(--mut);text-align:center}
+.g40d .bar3{display:flex;align-items:center;gap:8px;font-size:12px}
+.g40d .bar3 i{display:block;height:8px;border-radius:99px;background:var(--coral)}
+.g40d .bar3 .tr{flex:1;background:var(--hl);border-radius:99px;height:8px}
+.g40d .lg{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:12px}
+.g40d .lg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:4px}
+</style>
+
+
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -6137,6 +6208,10 @@ exGroups = function () {
         foot: `<div class="ctl"><span>${t('Controller signature')}: ................................</span><span>${t('Date')}: ....................</span></div>` });
     });
   });
+  if (g29Roles().length) G.forEach(g => {                       // floor heads of the committees on the sheet: info line and signatures (as G29 does for the other sheets)
+    const H = g29Heads(g.rows.filter(r => Array.isArray(r)).map(r => r[5]).filter(Boolean)); if (!H.length) return;
+    g.info = (g.info || []).concat([[t('Floor heads'), g29Txt(H)]]); g.foot = (g.foot || '') + g29Sig(H);
+  });
   return G;
 };
 const _g35Rep = exRep;
@@ -6317,20 +6392,36 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   "Teacher's name": 'اسم المدرس', 'Sessions/ week': 'الحصص / أسبوع', 'TOTAL TEACHERS': 'إجمالي المدرسين', 'Group': 'المجموعة', 'Grade / role': 'الصف / الدور',
   'Grade / role: leave empty to use his classes from the assignments. Group: teachers with the same group name are printed together with their total.': 'الصف / الدور: اتركه فارغاً ليُكتب فصوله من التكليفات. المجموعة: المدرسون بنفس اسم المجموعة يُطبعون معاً مع إجماليهم.',
   'Include teachers without sessions': 'إظهار المدرسين بدون حصص', 'Utilization saved': 'تم حفظ بيانات الاستغلال', 'Save': 'حفظ', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة',
-  'Print / PDF': 'طباعة / PDF', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
+  'Print / PDF': 'طباعة / PDF', 'of': 'من', 'Enter a teacher name or code to search': 'اكتب اسم المدرس أو كوده للبحث', 'Stage': 'المرحلة', 'All': 'الكل', 'Subject': 'المادة', 'Search teacher': 'بحث عن مدرس', 'With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.': 'مع فلتر المرحلة أو المادة، تُحسب فصول وحصص كل مدرس داخل الفلتر فقط.', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
 }).filter(([k]) => !(k in AR))));
-const G38 = { sub: 'asg', d: null, dirty: false, zero: false };
+const G38 = { sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, gr: null, subj: '', q: '' } };
 const g38Saved = () => (S.set && S.set.tutil) || {};
 const g38D = () => G38.d || (G38.d = JSON.parse(JSON.stringify(g38Saved())));
 const g38Get = id => Object.assign({ date: '', role: '', group: '' }, g38D()[id] || {});
 const g38Fmt = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? (+m[3]) + '/' + (+m[2]) + '/' + m[1] : (v || '') };
-function g38Classes(id) { const out = [...new Set((S.asg || []).filter(r => String(r[2]) == id).map(r => String(r[0])).filter(Boolean))].sort(natural); return out }
+const g38StOf = c => I.cs[c] || stageOf(c) || t('Other');
+const g38InF = (c, subj) => { const f = G38.f; return (!f.st || f.st.includes(g38StOf(c))) && (!f.subj || lc(subj || '') == lc(f.subj)) };
+function g38Classes(id, all) { const out = [...new Set((S.asg || []).filter(r => String(r[2]) == id && (all || g38InF(r[0], r[1]))).map(r => String(r[0])).filter(Boolean))].sort(natural); return out }
 function g38Auto(id) { const c = g38Classes(id); return c.length > 8 ? c.slice(0, 8).join(', ') + ' +' + (c.length - 8) : c.join(', ') }
+function g38Base() {                              // every teacher with his numbers inside the stage / subject filter (before the group and search filters)
+  const cnt = {}; (S.lessons || []).forEach(l => { if (g38InF(l.c, l.s)) (l.t || []).forEach(x => cnt[x] = (cnt[x] || 0) + 1) });
+  return (S.tch || []).map(r => { const id = String(r[0]), p = g38Get(id), cl = g38Classes(id), st = cl.length ? g38StOf(cl[0]) : t('Other');
+    return { id, name: r[1] || id, n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, auto: g38Auto(id), has: cl.length > 0 } })
+    .filter(x => G38.zero ? (!G38.f.st && !G38.f.subj) || x.has || x.n : (x.n > 0 || x.has)).sort((a, b) => natural(a.name, b.name));
+}
 function g38Rows() {
-  const cnt = {}; (S.lessons || []).forEach(l => (l.t || []).forEach(x => cnt[x] = (cnt[x] || 0) + 1));
-  return (S.tch || []).map(r => { const id = String(r[0]), p = g38Get(id), cl = g38Classes(id), st = cl.length ? (I.cs[cl[0]] || stageOf(cl[0]) || t('Other')) : t('Other');
-    return { id, name: r[1] || id, n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, auto: g38Auto(id) } })
-    .filter(x => G38.zero || x.n > 0 || g38Classes(x.id).length).sort((a, b) => natural(a.name, b.name));
+  const f = G38.f, q = lc(f.q || '');
+  return g38Base().filter(x => (!f.gr || f.gr.includes(x.group)) && (!q || lc(x.name).includes(q) || lc(x.id).includes(q)));
+}
+function g38Opts() { const B = g38Base(); return { st: [...new Set((S.tch || []).flatMap(r => g38Classes(String(r[0]), true).map(g38StOf)))].sort(natural), gr: [...new Set(B.map(x => x.group))].sort(natural), subj: [...new Set((S.asg || []).map(r => r[1]).filter(Boolean))].sort(natural) } }
+function g38Filters() {
+  const O = g38Opts(), f = G38.f, chk = (k, v, on) => `<label><input type="checkbox" data-g38f="${k}|${esc(v)}"${on ? ' checked' : ''}> ${esc(v)}</label>`;
+  const panel = `<div class="g40fg"><b>${t('Stage')}</b><div class="ch"><label><input type="checkbox" data-g38f="st|*"${!f.st ? ' checked' : ''}> <b>${t('All')}</b></label>${O.st.map(v => chk('st', v, !f.st || f.st.includes(v))).join('')}</div></div>
+<div class="g40fg"><b>${t('Group')}</b><div class="ch"><label><input type="checkbox" data-g38f="gr|*"${!f.gr ? ' checked' : ''}> <b>${t('All')}</b></label>${O.gr.map(v => chk('gr', v, !f.gr || f.gr.includes(v))).join('')}</div></div>
+<div class="g40fg"><b>${t('Subject')}</b><select data-g38f="subj"><option value="">${t('All')}</option>${O.subj.map(v => `<option value="${esc(v)}"${lc(v) == lc(f.subj) ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
+<p class="msg">${t('With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.')}</p>`;
+  const n = g38Rows().length;
+  return g40Bar('ut', { qAttr: 'data-g38f="q"', qVal: f.q, ph: t('Enter a teacher name or code to search'), count: n ? '1–' + n + ' ' + t('of') + ' ' + n : '0', panel, active: !!(f.st || f.gr || f.subj), more: [[t('Print / PDF'), 'data-g38a="print"', 'print']] });
 }
 function g38Groups() {
   const rows = g38Rows(), by = {}; rows.forEach(r => (by[r.group] = by[r.group] || []).push(r));
@@ -6355,7 +6446,8 @@ function g38View() {
   const rows = g38Rows(), pg = g38Pages();
   const body = rows.map(r => `<tr><td class="n">${esc(r.id)}</td><td><input data-g38="${esc(r.id)}|date" value="${esc(g38Fmt(r.date))}" placeholder="d/m/yyyy"></td><td><b>${esc(r.name)}</b></td><td><input data-g38="${esc(r.id)}|group" value="${esc(g38Get(r.id).group)}" placeholder="${esc(r.group)}"></td><td><input data-g38="${esc(r.id)}|role" value="${esc(r.role)}" placeholder="${esc(r.auto)}"></td><td class="n">${r.n}</td></tr>`).join('');
   return `<div class="g38">${g38Tab().replace('<div class="g38">', '').replace(/<\/div>$/, '')}<p class="msg">${t('Grade / role: leave empty to use his classes from the assignments. Group: teachers with the same group name are printed together with their total.')}</p>
-<div class="bar2"><label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-g38z="1"${G38.zero ? ' checked' : ''}> ${t('Include teachers without sessions')}</label><button class="b pri" data-g38a="print">${ic('print')} ${t('Print / PDF')}</button></div>
+${g38Filters()}
+<div class="bar2"><label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-g38z="1"${G38.zero ? ' checked' : ''}> ${t('Include teachers without sessions')}</label></div>
 <div class="sc2"><table class="ut"><tr><th>${t('Print code')}</th><th>${t('Date of')}</th><th>${t("Teacher's name")}</th><th>${t('Group')}</th><th>${t('Grade / role')}</th><th>${t('Sessions')}</th></tr>${body}</table></div>
 ${G38.dirty ? `<div class="sv"><b>${t('unsaved changes')}</b><button class="b pri" data-g38a="save">${t('Save')}</button><button class="b" data-g38a="discard">${t('Discard changes')}</button></div>` : ''}
 <div class="card"><h3>${t('Print preview')} (${pg.length})</h3>${pg.length ? `<div class="pv">${pg.slice(0, 3).map(x => `<div class="pvs" style="width:560px">${x}</div>`).join('')}</div>` : ''}</div></div>`;
@@ -6378,6 +6470,14 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target, d = el.dataset; if (!d || TAB != 'st') return;
+  if (d.g38f !== undefined) {
+    const f = G38.f, [k, v] = d.g38f.split('|');
+    if (k == 'subj') f.subj = el.value; else if (k == 'q') f.q = el.value;
+    else { const O = g38Opts()[k], cur = f[k] ? f[k].slice() : O.slice();
+      if (v == '*') f[k] = el.checked ? null : [];
+      else { const i = cur.indexOf(v); if (el.checked && i < 0) cur.push(v); if (!el.checked && i >= 0) cur.splice(i, 1); f[k] = O.every(x => cur.includes(x)) ? null : cur } }
+    return render();
+  }
   if (d.g38z !== undefined) { G38.zero = el.checked; return render() }
   if (d.g38 === undefined) return;
   const [id, f] = d.g38.split('|'), D = g38D(), p = g38Get(id); let v = el.value.trim();
@@ -6385,6 +6485,233 @@ document.addEventListener('change', e => {
   p[f] = v; if (p.date || p.role || p.group) D[id] = p; else delete D[id];
   G38.dirty = true; render();
 });
+</script>
+<script>
+/* ---------- G39: every printed report asks for its filters first (stage, type, teacher, dates...) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Print filters': 'فلاتر الطباعة', 'Print': 'طباعة', 'Cancel': 'إلغاء', 'All': 'الكل', 'Stage': 'المرحلة', 'Severity': 'الخطورة', 'Error': 'خطأ', 'Warning': 'تحذير', 'Type': 'النوع', 'Teacher': 'المدرس', 'Date from': 'من تاريخ', 'Date to': 'إلى تاريخ',
+  'Absent teacher': 'المدرس الغائب', 'Substitute': 'البديل', 'Applies to': 'ينطبق على', 'Timetable': 'الجدول', 'Only items with issues': 'العناصر التي بها ملاحظات فقط', 'Nothing matches these filters.': 'لا يوجد ما يطابق هذه الفلاتر.', 'Contains the text': 'يحتوي على النص', 'Main': 'أساسي', 'Reserve': 'احتياط', 'Teachers and classes': 'المدرسون والفصول'
+}).filter(([k]) => !(k in AR))));
+/* fields: {k, label, type:'checks'|'select'|'date'|'text'|'flag', opts:[[value,label]]}; resolves to {k: [values] (checks, null = all) | string} or null (cancel) */
+function g39Ask(title, fields) {
+  return new Promise(res => {
+    const o = document.createElement('div'); o.className = 'g39o';
+    const body = fields.map(f => {
+      if (f.type == 'checks') return `<div class="fl"><b>${esc(f.label)}</b><div class="ch" data-k="${f.k}"><label><input type="checkbox" data-all="1" checked> <b>${t('All')}</b></label>${f.opts.map(([v, l]) => `<label><input type="checkbox" data-v="${esc(v)}" checked> ${esc(l)}</label>`).join('')}</div></div>`;
+      if (f.type == 'select') return `<div class="fl"><b>${esc(f.label)}</b><select data-k="${f.k}"><option value="">${t('All')}</option>${f.opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select></div>`;
+      if (f.type == 'flag') return `<div class="fl"><label><input type="checkbox" data-k="${f.k}" data-flag="1"> ${esc(f.label)}</label></div>`;
+      return `<div class="fl"><b>${esc(f.label)}</b><input type="${f.type == 'date' ? 'date' : 'text'}" data-k="${f.k}"></div>`;
+    }).join('');
+    o.innerHTML = `<div class="g39m" role="dialog"><h3>${esc(title)}</h3>${body}<div class="ft"><button class="b" data-g39="x">${t('Cancel')}</button><button class="b pri" data-g39="ok">${ic('print')} ${t('Print')}</button></div></div>`;
+    const done = v => { o.remove(); res(v) };
+    o.addEventListener('change', e => {
+      const el = e.target, grp = el.closest && el.closest('.ch'); if (!grp) return;
+      const boxes = [...grp.querySelectorAll('input[data-v]')], all = grp.querySelector('input[data-all]');
+      if (el === all) boxes.forEach(b => b.checked = all.checked); else all.checked = boxes.every(b => b.checked);
+    });
+    o.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('[data-g39]');
+      if (e.target === o || (b && b.dataset.g39 == 'x')) return done(null);
+      if (!b) return;
+      const out = {};
+      fields.forEach(f => {
+        if (f.type == 'checks') { const bx = [...o.querySelectorAll('.ch[data-k="' + f.k + '"] input[data-v]')]; out[f.k] = bx.every(x => x.checked) ? null : bx.filter(x => x.checked).map(x => x.dataset.v) }
+        else { const el = o.querySelector('[data-k="' + f.k + '"]'); out[f.k] = f.type == 'flag' ? el.checked : el.value }
+      });
+      done(out);
+    });
+    document.addEventListener('keydown', function kd(e) { if (e.key == 'Escape' && document.body.contains(o)) { document.removeEventListener('keydown', kd); done(null) } });
+    document.body.appendChild(o);
+  });
+}
+const g39In = (sel, v) => !sel || sel.includes(String(v));
+const g39Stages = classes => [...new Set(classes.map(c => I.cs[c] || stageOf(c) || t('Other')))].sort(natural);
+const g39St = c => I.cs[c] || stageOf(c) || t('Other');
+const g39Opt = a => a.map(x => [x, x]);
+
+/* 1. conflicts report */
+const _g39Conf = conflictsReport; let G39C = null;
+conflictsReport = function () {
+  if (!G39C) return _g39Conf();
+  const f = G39C, q = lc(f.q || ''), keep = S.conflicts.list.filter(c => !c.ign && (!f.sev || f.sev.includes(c.sev)) && g39In(f.type, c.type) && (!f.t || (c.p && c.p.t == f.t)) && (!f.st || [c.p.c, c.p.c1, c.p.c2].filter(Boolean).some(x => f.st.includes(g39St(x)))) && (!q || lc(cmsg(c)).includes(q)));
+  const was = S.conflicts.list; S.conflicts.list = keep;
+  try { return _g39Conf() } finally { S.conflicts.list = was }
+};
+const _g39DoPrint = doPrint;
+doPrint = async function () {
+  if (PP.k != 'conf') return _g39DoPrint();
+  const L = S.conflicts.list.filter(c => !c.ign), types = [...new Set(L.map(c => c.type))].sort((a, b) => a - b), ts = [...new Set(L.map(c => c.p && c.p.t).filter(Boolean))].sort((a, b) => natural(tname(a), tname(b)));
+  const sts = g39Stages(L.flatMap(c => [c.p.c, c.p.c1, c.p.c2].filter(Boolean)));
+  const f = await g39Ask(t('Conflicts report') + ' – ' + t('Print filters'), [
+    { k: 'sev', label: t('Severity'), type: 'checks', opts: [['error', t('Error')], ['warning', t('Warning')]] }, { k: 'type', label: t('Type'), type: 'checks', opts: types.map(x => [String(x), t(TYPES[x])]) },
+    { k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(sts) }, { k: 't', label: t('Teacher'), type: 'select', opts: ts.map(x => [x, tname(x)]) }, { k: 'q', label: t('Contains the text'), type: 'text' }]);
+  if (!f) return; G39C = f;
+  try { const h = conflictsReport(); if (!h.includes('<td')) toast(t('Nothing matches these filters.'), 1); else printHtml(h) } finally { G39C = null }
+};
+
+/* 2. substitute sheet */
+const _g39Abx = abxPrint;
+abxPrint = async function (date) {
+  const D = ABX.data, rows = D.covers.filter(c => c.date == date && !c.prov); if (!rows.length) return;
+  const ab = [...new Set(rows.map(c => c.absent).filter(Boolean))], sb = [...new Set(rows.map(c => c.sub).filter(Boolean))];
+  const f = await g39Ask(t('Substitute sheet') + ' – ' + t('Print filters'), [
+    { k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(g39Stages(rows.map(c => c.c))) }, { k: 'ab', label: t('Absent teacher'), type: 'select', opts: ab.map(x => [x, abxName(x)]) }, { k: 'sb', label: t('Substitute'), type: 'select', opts: sb.map(x => [x, abxName(x)]) }]);
+  if (!f) return;
+  const keep = D.covers.filter(c => c.date != date || c.prov || ((!f.st || f.st.includes(g39St(c.c))) && (!f.ab || c.absent == f.ab) && (!f.sb || c.sub == f.sb)));
+  if (!keep.some(c => c.date == date && !c.prov)) return toast(t('Nothing matches these filters.'), 1);
+  const old = ABX.data; ABX.data = Object.assign({}, old, { covers: keep });
+  try { _g39Abx(date) } finally { ABX.data = old }
+};
+
+/* 3. school calendar */
+const _g39Cal = calPrint;
+calPrint = async function () {
+  const L = calVisible(); if (!L.length) return toast(t('No events this month.'), 1);
+  const types = [...new Set(L.map(e => e.type))], scopes = [...new Set(L.map(e => e.scope || ''))];
+  const f = await g39Ask(t('School calendar') + ' – ' + t('Print filters'), [
+    { k: 'ty', label: t('Type'), type: 'checks', opts: types.map(x => [x, t(CAL_LB[x])]) }, { k: 'sc', label: t('Applies to'), type: 'checks', opts: scopes.map(x => [x, calScopeLabel(x)]) },
+    { k: 'a', label: t('Date from'), type: 'date' }, { k: 'b', label: t('Date to'), type: 'date' }]);
+  if (!f) return;
+  const keep = L.filter(e => g39In(f.ty, e.type) && g39In(f.sc, e.scope || '') && (!f.a || e.e >= f.a) && (!f.b || e.s <= f.b));
+  if (!keep.length) return toast(t('Nothing matches these filters.'), 1);
+  const o = calVisible; calVisible = () => keep.slice();
+  try { _g39Cal() } finally { calVisible = o }
+};
+
+/* 4. quality report (print and Excel): several stages at once, teachers by stage */
+const _g39Qr = qaRows; let G39Q = null;
+qaRows = function (D) {
+  const R = _g39Qr(D); if (!G39Q) return R;
+  const f = G39Q, inT = x => !f.st || (x.st instanceof Set ? [...x.st].some(s => f.st.includes(s)) : f.st.includes(x.st));
+  return { T: R.T.filter(inT), C: R.C.filter(inT) };
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-qaa="print"],[data-qaa="xlsx"]'); if (!b || TAB != 'qa') return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (!S.lessons.length) return;
+  const sts = [...new Set((S.cls || []).map(r => g39St(r[0])).concat(I.classes.map(g39St)))].sort(natural);
+  const f = await g39Ask(t('Timetable quality report') + ' – ' + t('Print filters'), [{ k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(sts) }, { k: 'only', label: t('Only items with issues'), type: 'flag' }]);
+  if (!f) return; G39Q = f; const was = QA.only; if (f.only) QA.only = true;
+  try { b.dataset.qaa == 'print' ? printHtml(qaSheets(), false) : qaXlsx() } finally { G39Q = null; QA.only = was }
+}, true);
+
+/* 5. my exam duties */
+const _g39Du = duRows; let G39D = null;
+duRows = function () { const R = _g39Du(); if (!G39D) return R; const f = G39D; return R.filter(d => g39In(f.tt, d.ttName) && g39In(f.ty, d.type) && (!f.t || d.teacher == f.t) && (!f.a || d.date >= f.a) && (!f.b || d.date <= f.b)) };
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('[data-dua="print"]'); if (!b || TAB != 'du') return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  const D = DU.D, R = duRows(), many = D.hod || D.admin;
+  const tts = [...new Set(R.map(d => d.ttName))], ts = [...new Map(R.map(d => [d.teacher, d.name])).entries()];
+  const f = await g39Ask(t('My exam duties') + ' – ' + t('Print filters'), [{ k: 'tt', label: t('Timetable'), type: 'checks', opts: g39Opt(tts) }, { k: 'ty', label: t('Type'), type: 'checks', opts: [['main', t('Main')], ['reserve', t('Reserve')]] }]
+    .concat(many ? [{ k: 't', label: t('Teacher'), type: 'select', opts: ts }] : []).concat([{ k: 'a', label: t('Date from'), type: 'date' }, { k: 'b', label: t('Date to'), type: 'date' }]));
+  if (!f) return; G39D = f;
+  try { const rows = duRows(); if (!rows.length) return toast(t('Nothing matches these filters.'), 1); printHtml(`<div class="sheet"><h2>${t('My exam duties')}</h2><div class="tw">${duTable(rows, many)}</div></div>`) } finally { G39D = null }
+}, true);
+</script>
+<script>
+/* ---------- G40: IXL-style look: list header with Filters + Apply, coloured sortable tables, a school dashboard on Today ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Filters': 'الفلاتر', 'Class': 'الفصل', 'Teacher': 'المدرس', 'Type': 'النوع', 'Severity': 'الخطورة', 'Stage': 'المرحلة', 'Apply': 'تطبيق', 'Clear filters': 'مسح الفلاتر', 'More': 'المزيد', 'Search': 'بحث', 'of': 'من',
+  'Search the conflicts': 'ابحث في التعارضات', 'School dashboard': 'لوحة المدرسة', 'Timetable at a glance': 'الجدول بنظرة سريعة', 'lessons per week': 'حصة أسبوعياً', 'teachers': 'مدرس', 'classes': 'فصل',
+  'Timetable quality': 'جودة الجدول', 'View report': 'عرض التقرير', 'Conflicts': 'التعارضات', 'Errors': 'أخطاء', 'Warnings': 'تحذيرات', 'No conflicts': 'لا توجد تعارضات', 'Teacher workload': 'عبء المدرسين',
+  'Average periods per teacher': 'متوسط الحصص لكل مدرس', 'Busiest teachers': 'الأكثر حصصاً', 'Engagement': 'نظرة عامة', 'Health': 'الحالة', 'out of 100': 'من 100'
+}).filter(([k]) => !(k in AR))));
+const G40 = { open: {}, menu: '', cq: '' };
+(function () { const sp = document.querySelector('symbol#i-grid'); if (sp && !document.querySelector('symbol#i-search')) sp.parentNode.insertAdjacentHTML('beforeend', '<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol><symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 4h18l-7 9v6l-4 2v-8z"/></symbol>') })();
+const g40Ico = ic('search');
+function g40Bar(id, o) {
+  const op = !!G40.open[id], mo = G40.menu == id;
+  return `<div class="g40b" data-g40id="${id}"><div class="g40sr">${g40Ico}<input type="text" ${o.qAttr} value="${esc(o.qVal || '')}" placeholder="${esc(o.ph || t('Search'))}"></div>
+<div class="g40rw"><button class="b g40fb${o.active ? ' act' : ''}" data-g40t="${id}">${ic('filter')} ${t('Filters')} ${op ? '▴' : '▾'}</button><span class="grow"></span><span class="g40cnt">${o.count || ''}</span>
+${o.more && o.more.length ? `<div class="g40mo"><button class="b" data-g40m="${id}">${t('More')} ▾</button>${mo ? `<div class="menu">${o.more.map(([l, at, ico]) => `<button ${at}>${ico ? ic(ico) + ' ' : ''}${esc(l)}</button>`).join('')}</div>` : ''}</div>` : ''}</div>
+${op ? `<div class="g40pn" data-g40p="${id}">${o.panel || ''}<div class="ap"><button class="b pri" data-g40a="apply|${id}">${t('Apply')}</button><button class="b" data-g40a="clear|${id}">${t('Clear filters')}</button></div></div>` : ''}</div>`;
+}
+document.addEventListener('click', e => {
+  const t0 = e.target.closest && e.target.closest('[data-g40t]'), m = e.target.closest && e.target.closest('[data-g40m]'), a = e.target.closest && e.target.closest('[data-g40a]');
+  if (t0) { const id = t0.dataset.g40t; G40.open[id] = !G40.open[id]; return render() }
+  if (m) { const id = m.dataset.g40m; G40.menu = G40.menu == id ? '' : id; return render() }
+  if (G40.menu && !(e.target.closest && e.target.closest('.g40mo .menu'))) { G40.menu = ''; render(); return }
+  if (G40.menu && e.target.closest('.g40mo .menu')) G40.menu = '';
+  if (!a) return;
+  const [k, id] = a.dataset.g40a.split('|'), pn = a.closest('.g40pn');
+  if (id == 'cf') { const CFx = CF; if (k == 'clear') { ['stage', 'cls', 'tch', 'type', 'sev'].forEach(x => CFx[x] = ''); CFx.ign = false; CFx.focus = ''; }
+    else { pn.querySelectorAll('[data-cfs]').forEach(s => CFx[s.dataset.cfs] = s.value); const ig = pn.querySelector('[data-cfi]'); if (ig) CFx.ign = ig.checked }
+    G40.open.cf = false; return render() }
+  if (id == 'ut') {
+    if (k == 'clear') G38.f = { st: null, gr: null, subj: '', q: G38.f.q };
+    else { const O = g38Opts(), rd = key => { const bx = [...pn.querySelectorAll('input[data-g38f^="' + key + '|"]')].filter(x => !x.dataset.g38f.endsWith('|*')), on = bx.filter(x => x.checked).map(x => x.dataset.g38f.slice(key.length + 1)); return on.length == bx.length ? null : on };
+      G38.f.st = rd('st'); G38.f.gr = rd('gr'); const s = pn.querySelector('select[data-g38f="subj"]'); G38.f.subj = s ? s.value : '' }
+    G40.open.ut = false; return render() }
+}, true);
+/* panel checkboxes only change the draft: "All" toggles its group, nothing is applied until Apply */
+document.addEventListener('change', e => {
+  const el = e.target; if (!el.closest || !el.closest('.g40pn')) return;
+  const d = el.dataset.g38f; if (d !== undefined && d.indexOf('|') > 0) {
+    e.stopImmediatePropagation(); const [k, v] = d.split('|'), grp = el.closest('.ch'); if (!grp) return;
+    const boxes = [...grp.querySelectorAll('input[data-g38f]')].filter(x => !x.dataset.g38f.endsWith('|*')), all = grp.querySelector('input[data-g38f$="|*"]');
+    if (v == '*') boxes.forEach(b => b.checked = el.checked); else if (all) all.checked = boxes.every(b => b.checked);
+  } else if (el.dataset.g38f == 'subj' || el.dataset.cfs !== undefined || el.dataset.cfi !== undefined) e.stopImmediatePropagation();
+}, true);
+/* live search */
+let _g40t = 0;
+document.addEventListener('input', e => {
+  const el = e.target, d = el.dataset; if (!d) return;
+  if (d.g38f == 'q') { G38.f.q = el.value; clearTimeout(_g40t); _g40t = setTimeout(render, 250) }
+  else if (d.g40cq !== undefined) { CF.q = el.value; clearTimeout(_g40t); _g40t = setTimeout(render, 250) }
+});
+
+/* conflicts page: the toolbar becomes the shared list header */
+const _g40Conf = rConflicts;
+rConflicts = function () {
+  const was = S.conflicts.list, q = lc(CF.q || ''); let h;
+  if (q) S.conflicts.list = was.filter(c => lc(t(TYPES[c.type]) + ' ' + cmsg(c)).includes(q));
+  try { h = _g40Conf() } finally { S.conflicts.list = was }
+  const re = /<div class="bar">([\s\S]*?)<\/div>(?=\s*<div class="card">)/, m = re.exec(h); if (!m) return h;
+  const inner = m[1].replace(/<button class="b" data-a="cfclr">[\s\S]*?<\/button>/, ''), n = was.filter(c => confMatch(c) && (!q || lc(t(TYPES[c.type]) + ' ' + cmsg(c)).includes(q))).length;
+  const sels = inner.match(/<select[\s\S]*?<\/select>/g) || [], ig = inner.match(/<label><input type="checkbox" data-cfi[\s\S]*?<\/label>/);
+  const panel = `<div class="gr3">${sels.map(s => `<label>${t({ stage: 'Stage', cls: 'Class', tch: 'Teacher', type: 'Type', sev: 'Severity' }[(/data-cfs="(\w+)"/.exec(s) || [])[1]] || 'Filters')}${s}</label>`).join('')}</div>${ig ? '<div style="margin-top:8px">' + ig[0] + '</div>' : ''}`;
+  const bar = g40Bar('cf', { qAttr: 'data-g40cq="1"', qVal: CF.q || '', ph: t('Search the conflicts'), count: n ? '1–' + Math.min(400, n) + ' ' + t('of') + ' ' + n : '0', panel, active: !!(CF.stage || CF.cls || CF.tch || CF.type || CF.sev || CF.ign || CF.focus), more: [[t('Print / PDF'), 'data-g40pc="1"', 'print']] });
+  return h.replace(m[0], bar + (CF.focus ? `<p><button class="b" data-a="cfclr">${ic('x')} ${t('Clear filter')}</button></p>` : ''));
+};
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-g40pc]'); if (!b) return; G40.menu = ''; PP.k = 'conf'; doPrint() }, true);
+
+/* sortable tables: click a header to sort the rows (numbers and text) */
+document.addEventListener('click', e => {
+  const th = e.target.closest && e.target.closest('table.ex th, table.ed th, table.ut th'); if (!th || th.querySelector('input,select,button')) return;
+  const tb = th.closest('table'); if (!tb || tb.classList.contains('xg') || tb.querySelector('tr.wrp,td[colspan]')) return;
+  const rows = [...tb.querySelectorAll('tr')].filter(r => r.querySelector('td')); if (rows.length < 2) return;
+  const ci = [...th.parentElement.children].indexOf(th), dir = th.dataset.g40s == 'asc' ? 'desc' : 'asc';
+  const val = r => { const c = r.children[ci]; if (!c) return ''; const i = c.querySelector('input,select'); return (i ? i.value : c.textContent).trim() };
+  const num = x => /^-?\d+(\.\d+)?$/.test(x) ? parseFloat(x) : null;
+  rows.sort((a, b) => { const x = val(a), y = val(b), nx = num(x), ny = num(y); const r = nx !== null && ny !== null ? nx - ny : natural(x, y); return dir == 'asc' ? r : -r });
+  const par = rows[0].parentElement; rows.forEach(r => par.appendChild(r));
+  th.parentElement.querySelectorAll('th').forEach(x => delete x.dataset.g40s); th.dataset.g40s = dir; tb.classList.add('g40srt');
+});
+
+/* school dashboard on Today (admin and coordinators) */
+const g40Gauge = (v, max, col) => { const f = Math.max(0, Math.min(1, v / max)), L = 157.08; return `<svg viewBox="0 0 120 70" width="170" height="96"><path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="var(--hl)" stroke-width="12" stroke-linecap="round"/><path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(f * L).toFixed(1)} ${L}"/></svg>` };
+const g40Donut = parts => { const tot = parts.reduce((s, p) => s + p[0], 0) || 1, C = 251.33; let off = 0; return `<svg viewBox="0 0 100 100" width="120" height="120"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--hl)" stroke-width="14"/>${parts.map(([n, c]) => { const l = n / tot * C, s = `<circle cx="50" cy="50" r="40" fill="none" stroke="${c}" stroke-width="14" stroke-dasharray="${l.toFixed(1)} ${(C - l).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 50 50)"/>`; off += l; return n ? s : '' }).join('')}</svg>` };
+function g40Dash() {
+  let sc = null; try { sc = qaCompute() } catch (x) { }
+  const k = S.conflicts && S.conflicts.counts || { error: 0, warning: 0, byType: {} }, wl = (S.workload || []).filter(x => x[1] > 0), tot = wl.reduce((s, x) => s + x[1], 0), avg = wl.length ? tot / wl.length : 0, top = wl.slice().sort((a, b) => b[1] - a[1]).slice(0, 5), mx = top.length ? top[0][1] : 1;
+  const link = (tab, sub) => `<button data-g40go="${tab}${sub ? '|' + sub : ''}">${t('View report')} ›</button>`;
+  const q = sc ? sc.score : 0, qc = q >= 80 ? 'var(--green)' : q >= 60 ? 'var(--amber)' : 'var(--bad)';
+  return `<div class="g40d"><div class="ban"><span>${t('Timetable at a glance')}</span><div><b>${(S.lessons || []).length}</b> <span>${t('lessons per week')}</span></div><div><b>${wl.length}</b> <span>${t('teachers')}</span></div><div><b>${I.classes.length}</b> <span>${t('classes')}</span></div></div>
+<h4>${t('Health')}</h4><div class="gd">
+<div class="cd"><div class="hd"><b>${t('Timetable quality')}</b>${link('qa')}</div>${g40Gauge(q, 100, qc)}<div class="big" style="color:${qc}">${sc ? q : '—'}</div><div class="sm">${t('out of 100')}</div></div>
+<div class="cd"><div class="hd"><b>${t('Conflicts')}</b>${link('cf')}</div>${k.error + k.warning ? g40Donut([[k.error, 'var(--bad)'], [k.warning, 'var(--amber)']]) : `<div class="sm" style="padding:34px 0">${t('No conflicts')}</div>`}<div class="lg"><span><i style="background:var(--bad)"></i>${t('Errors')} ${k.error}</span><span><i style="background:var(--amber)"></i>${t('Warnings')} ${k.warning}</span></div></div>
+<div class="cd"><div class="hd"><b>${t('Teacher workload')}</b>${link('qa', 'load')}</div>${g40Gauge(avg, Math.max(30, Math.ceil(avg / 5) * 5 + 10), 'var(--coral)')}<div class="big">${avg ? avg.toFixed(1) : '—'}</div><div class="sm">${t('Average periods per teacher')}</div></div>
+<div class="cd"><div class="hd"><b>${t('Busiest teachers')}</b>${link('qa', 'load')}</div>${top.map(([id, n]) => `<div class="bar3"><span style="width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tname(id))}</span><span class="tr"><i style="width:${Math.round(n / mx * 100)}%"></i></span><b>${n}</b></div>`).join('') || `<div class="sm">—</div>`}</div></div></div>`;
+}
+const _g40Today = rToday;
+rToday = function () {
+  const h = _g40Today(); if (!S || !(S.role == 'admin' || S.role == 'coordinator')) return h;
+  let d = ''; try { d = g40Dash() } catch (x) { return h }
+  const i = h.indexOf('</div>', h.indexOf('class="kpis"')); if (i < 0) return h;
+  return h.slice(0, i + 6) + d + h.slice(i + 6);
+};
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-g40go]'); if (!b) return; const [tab, sub] = b.dataset.g40go.split('|'); if (sub && typeof QA != 'undefined') QA.sub = sub; if (tab == 'cf') return goConflicts(''); if (TABS.some(x => x[0] == tab)) { TAB = tab; render() } });
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
