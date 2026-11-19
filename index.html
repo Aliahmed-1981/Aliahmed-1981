@@ -344,6 +344,16 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .g33>.gb{padding:0 14px 12px}
 .g33>.gb>h4:first-child{display:none}
 </style>
+<style id="g34css">
+.exu table.ex.xg{border-collapse:collapse;font-size:13px}
+.exu table.ex.xg th{position:sticky;top:0;background:var(--sf);z-index:1;border:1px solid var(--ln)}
+.exu table.ex.xg td{border:1px solid var(--ln);padding:0}
+.exu table.ex.xg td input,.exu table.ex.xg td select{border:0;border-radius:0;background:transparent;box-shadow:none;height:34px;margin:0}
+.exu table.ex.xg td input:focus,.exu table.ex.xg td select:focus{outline:2px solid var(--coral);outline-offset:-2px;background:var(--wns)}
+.exu table.ex.xg td.gr{padding:2px 4px}
+.exu table.ex.xg td:last-child{padding:2px 6px}
+.g34h{font-size:12px;color:var(--mut);margin:0 0 8px}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -5991,6 +6001,60 @@ exRules = function () {
   return h.slice(0, i) + g33Fold('tch', t('Teachers'), sum, h.slice(i, e2)) + h.slice(e2);
 };
 document.addEventListener('toggle', e => { const d = e.target; if (d && d.dataset && d.dataset.g33) G33.open[d.dataset.g33] = d.open }, true);
+</script>
+<script>
+/* ---------- G34: the exam / activity schedule behaves like an Excel sheet; viewers see only the Reports tab ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Excel-style table: Enter = next row, Ctrl+arrows = move, Ctrl+D = fill down, and you can paste cells copied from Excel (they fill the rows and columns from the selected cell).': 'جدول بنمط Excel: Enter = الصف التالي، Ctrl+الأسهم = تنقّل، Ctrl+D = نسخ الخلية التي فوق، ويمكنك لصق خلايا منسوخة من Excel (تملأ الصفوف والأعمدة من الخلية المحددة).'
+}).filter(([k]) => !(k in AR))));
+const G34_F = ['date', 'session', 'start', 'end', 'subject', 'room', 'grade', 'students', 'seats'];
+const _g34Ex = exExams;
+exExams = function () {
+  let h = _g34Ex(); const i = h.indexOf('<div class="tw"><table class="ex">'); if (i < 0) return h;
+  h = h.slice(0, i) + '<p class="g34h">' + t('Excel-style table: Enter = next row, Ctrl+arrows = move, Ctrl+D = fill down, and you can paste cells copied from Excel (they fill the rows and columns from the selected cell).') + '</p>' + h.slice(i).replace('<table class="ex">', '<table class="ex xg">');
+  return h;
+};
+const g34Cell = (i, f) => document.querySelector(f == 'grade' ? '[data-exg="' + i + '"]' : '[data-exs2="' + i + '|' + f + '"]');
+const g34Blank = (r) => ({ id: '', date: r ? r.date : '', session: r ? r.session : '', start: r ? r.start : '', end: r ? r.end : '', subject: '', room: '', students: '', grade: '', seats: '' });
+function g34Focus(i, f) { setTimeout(() => { const c = g34Cell(i, f); if (c) { c.focus(); if (c.select) try { c.select() } catch (x) { } } }, 0) }
+function g34Pos(el) { const d = el.dataset; if (d.exs2) { const [i, f] = d.exs2.split('|'); return [+i, f] } if (d.exg !== undefined) return [+d.exg, 'grade']; return null }
+function g34Commit(el) { const p = g34Pos(el); if (!p || p[1] == 'grade' || el.value == '__new') return; const r = EX.ses && EX.ses[p[0]]; if (r) r[p[1]] = el.value }
+document.addEventListener('keydown', e => {
+  const el = e.target; if (TAB != 'ct' || EX.sub != 'exams' || !EX.ses || !el.closest || !el.closest('table.xg')) return;
+  const p = g34Pos(el); if (!p) return; const [i, f] = p, k = e.key, fi = G34_F.indexOf(f);
+  const go = (ni, nf) => { g34Commit(el); const rows = EX.ses; if (ni < 0 || nf < 0 || nf >= G34_F.length) return; if (ni >= rows.length) { rows.push(g34Blank(rows[rows.length - 1])); render() } g34Focus(ni, G34_F[nf]) };
+  if (k == 'Enter' && el.tagName != 'BUTTON') { e.preventDefault(); return go(i + (e.shiftKey ? -1 : 1), fi) }
+  if (e.ctrlKey && (k == 'ArrowDown' || k == 'ArrowUp')) { e.preventDefault(); return go(i + (k == 'ArrowDown' ? 1 : -1), fi) }
+  if (e.ctrlKey && (k == 'ArrowRight' || k == 'ArrowLeft')) { e.preventDefault(); const d = (k == 'ArrowRight') == (HL != 'ar') ? 1 : -1; return go(i, fi + d) }
+  if ((k == 'ArrowDown' || k == 'ArrowUp') && el.tagName == 'INPUT' && (el.type == 'text' || !el.type)) { e.preventDefault(); return go(i + (k == 'ArrowDown' ? 1 : -1), fi) }
+  if (e.ctrlKey && (k == 'd' || k == 'D') && i > 0 && f != 'grade') { e.preventDefault(); EX.ses[i][f] = EX.ses[i - 1][f]; render(); return g34Focus(i, f) }
+});
+document.addEventListener('paste', e => {
+  const el = e.target; if (TAB != 'ct' || EX.sub != 'exams' || !EX.ses || !el.closest || !el.closest('table.xg')) return;
+  const p = g34Pos(el); if (!p) return; const txt = (e.clipboardData && e.clipboardData.getData('text')) || '';
+  if (!/[\t\n]/.test(txt.replace(/\n$/, ''))) return;            // a single value pastes normally
+  e.preventDefault();
+  const lines = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t')), rows = EX.ses, f0 = G34_F.indexOf(p[1]);
+  lines.forEach((cells, li) => {
+    const ri = p[0] + li; while (rows.length <= ri) rows.push(g34Blank(rows[rows.length - 1]));
+    cells.forEach((v, ci) => {
+      const f = G34_F[f0 + ci]; if (!f) return; v = String(v).trim();
+      if (f == 'date') v = exNormDate(v); else if (f == 'start' || f == 'end') v = exNormTime(v); else if (f == 'students') v = exDigits(v).replace(/[^\d]/g, '');
+      else if (f == 'grade') v = v.replace(/\s*[,;،]\s*/g, ', ');
+      rows[ri][f] = v;
+    });
+  });
+  render(); g34Focus(p[0], p[1]);
+});
+/* viewers (no edit / invigilation right) only get the Reports tab */
+const _g34Work = exWork;
+exWork = function () {
+  const viewer = !!S && S.role != 'admin' && !exCan('ct_edit') && !exCan('ct_inv');
+  if (viewer && EX.sub != 'rep') EX.sub = 'rep';
+  let h = _g34Work();
+  if (!viewer) return h;
+  return h.replace(/<button class="pill[^"]*" data-exs="(?!rep")[^"]*">[\s\S]*?<\/button>/g, '');
+};
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
