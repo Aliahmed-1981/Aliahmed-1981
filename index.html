@@ -375,6 +375,23 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 .g36 tr.brk td{background:rgba(127,127,127,.12)}
 .g36 td.bad input{background:rgba(220,60,60,.15)}
 </style>
+<style id="g37css">
+.td .li2list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));column-gap:22px}
+.td .li2list .li2:last-child{border-bottom:1px solid var(--ln)}
+.td .g37more{margin-top:8px}
+.td .g37ev .tg{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--ln);background:var(--sf);margin-inline-start:6px}
+</style>
+<style id="g38css">
+.g38 .bar2{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.g38 .sc2{overflow:auto;max-height:60vh;border:1px solid var(--ln);border-radius:10px}
+.g38 table.ut{border-collapse:collapse;width:100%;font-size:13px}
+.g38 table.ut th{position:sticky;top:0;background:var(--sf);border:1px solid var(--ln);padding:6px 8px;font-size:12px;color:var(--mut);white-space:nowrap;z-index:1}
+.g38 table.ut td{border:1px solid var(--ln);padding:0 6px}
+.g38 table.ut td input{width:100%;border:0;background:transparent;box-shadow:none;height:34px;margin:0;border-radius:0}
+.g38 table.ut td input:focus{outline:2px solid var(--coral);outline-offset:-2px;background:var(--wns)}
+.g38 table.ut td.n{text-align:center;white-space:nowrap}
+.g38 .sv{position:sticky;bottom:64px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin-top:10px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -6251,6 +6268,128 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('[data-a="tsave"][data-n="Schedules"]'); if (!b || G36.view != 'grid' || !Object.keys(G36.bad).length) return;
   e.stopImmediatePropagation(); e.preventDefault(); toast(t('Time format: 08:00-08:55'), 1);
 }, true);
+</script>
+<script>
+/* ---------- G37: Today page - a Calendar & events tile and card on top, and a shorter lessons list ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Calendar & events': 'التقويم والأحداث', 'Events · next 7 days': 'أحداث · 7 أيام', 'Open the calendar': 'فتح التقويم', 'No events in the next 14 days.': 'لا توجد أحداث في الـ14 يوماً القادمة.',
+  'Show all': 'عرض الكل', 'Show less': 'عرض أقل', 'Today (event)': 'اليوم'
+}).filter(([k]) => !(k in AR))));
+const G37 = { all: false };
+const g37Add = (ds, n) => tdDate(new Date(new Date(ds + 'T00:00').getTime() + n * 864e5));
+function g37Events(ds, n) {
+  if (typeof calAll != 'function') return [];
+  const mine = calMine(), end = g37Add(ds, n);
+  return calAll().filter(e => calRel(e, mine) && e.e >= ds && e.s <= end).sort((a, b) => a.s < b.s ? -1 : a.s > b.s ? 1 : natural(a.name, b.name));
+}
+const _g37Today = rToday;
+rToday = function () {
+  const h = _g37Today(); let ds; try { ds = tdDate(new Date()) } catch (x) { return h }
+  const tp = document.createElement('template'); tp.innerHTML = h; const R = tp.content;
+  const ev14 = g37Events(ds, 14), ev7 = g37Events(ds, 7);
+  const kp = R.querySelector('.kpis');
+  if (kp && typeof calAll == 'function' && TABS.some(x => x[0] == 'cal')) kp.insertAdjacentHTML('beforeend', `<button class="kpi" data-tdgo="cal"><i style="background:var(--coral)">${ic('cal')}</i><span><b>${ev7.length}</b><small>${t('Events · next 7 days')}</small></span></button>`);
+  let grid = R.querySelector('.td > .grid');
+  if (!grid && kp && TABS.some(x => x[0] == 'cal')) { grid = document.createElement('div'); grid.className = 'grid'; kp.insertAdjacentElement('afterend', grid) }
+  if (grid && TABS.some(x => x[0] == 'cal')) {
+    const row = e => `<div class="li2"><span class="tm">${esc(calFmt(e.s))}${e.e != e.s ? ' → ' + esc(calFmt(e.e)) : ''}</span><span class="grow"><b>${esc(e.name)}</b>${e.type ? `<span class="tg">${esc(t({ holiday: 'Holiday', exam: 'Exam', trip: 'Trip / activity', other: 'Other' }[e.type] || 'Other'))}</span>` : ''}${e.scope ? ` <small class="msg">${esc(e.scope)}</small>` : ''}</span>${e.s <= ds && ds <= e.e ? `<span class="tag">${t('Today (event)')}</span>` : ''}</div>`;
+    const card = `<div class="card g37ev"><h3>${t('Calendar & events')}</h3>${ev14.length ? ev14.slice(0, 8).map(row).join('') : `<div class="empty2">${t('No events in the next 14 days.')}</div>`}<p><button class="b" data-tdgo="cal">${t('Open the calendar')}</button></p></div>`;
+    grid.insertAdjacentHTML('afterbegin', card);
+  }
+  R.querySelectorAll('.card').forEach(c => {                    // the lessons list: two columns, first 6 only until "Show all"
+    const h3 = c.querySelector('h3'); if (!h3 || h3.textContent.trim() != t('My lessons today')) return;
+    const li = [...c.querySelectorAll(':scope > .li2')]; if (!li.length) return;
+    const box = document.createElement('div'); box.className = 'li2list'; li[0].before(box); li.forEach(x => box.appendChild(x));
+    if (li.length > 6) {
+      if (!G37.all) li.slice(6).forEach(x => x.style.display = 'none');
+      box.insertAdjacentHTML('afterend', `<button class="b g37more" data-g37="lessons">${G37.all ? t('Show less') : t('Show all') + ' (' + li.length + ')'}</button>`);
+    }
+  });
+  return tp.innerHTML;
+};
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-g37]'); if (!b) return; G37.all = !G37.all; render() });
+</script>
+<script>
+/* ---------- G38: Teachers' Utilization report (Settings > Teachers & assignments) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  "Teachers' Utilization": 'استغلال المدرسين', 'Utilization report': 'تقرير الاستغلال', 'Assignments': 'التكليفات', 'NO.': 'م', 'Print code': 'كود الطباعة', 'Date of': 'تاريخ التعيين',
+  "Teacher's name": 'اسم المدرس', 'Sessions/ week': 'الحصص / أسبوع', 'TOTAL TEACHERS': 'إجمالي المدرسين', 'Group': 'المجموعة', 'Grade / role': 'الصف / الدور',
+  'Grade / role: leave empty to use his classes from the assignments. Group: teachers with the same group name are printed together with their total.': 'الصف / الدور: اتركه فارغاً ليُكتب فصوله من التكليفات. المجموعة: المدرسون بنفس اسم المجموعة يُطبعون معاً مع إجماليهم.',
+  'Include teachers without sessions': 'إظهار المدرسين بدون حصص', 'Utilization saved': 'تم حفظ بيانات الاستغلال', 'Save': 'حفظ', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة',
+  'Print / PDF': 'طباعة / PDF', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
+}).filter(([k]) => !(k in AR))));
+const G38 = { sub: 'asg', d: null, dirty: false, zero: false };
+const g38Saved = () => (S.set && S.set.tutil) || {};
+const g38D = () => G38.d || (G38.d = JSON.parse(JSON.stringify(g38Saved())));
+const g38Get = id => Object.assign({ date: '', role: '', group: '' }, g38D()[id] || {});
+const g38Fmt = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? (+m[3]) + '/' + (+m[2]) + '/' + m[1] : (v || '') };
+function g38Classes(id) { const out = [...new Set((S.asg || []).filter(r => String(r[2]) == id).map(r => String(r[0])).filter(Boolean))].sort(natural); return out }
+function g38Auto(id) { const c = g38Classes(id); return c.length > 8 ? c.slice(0, 8).join(', ') + ' +' + (c.length - 8) : c.join(', ') }
+function g38Rows() {
+  const cnt = {}; (S.lessons || []).forEach(l => (l.t || []).forEach(x => cnt[x] = (cnt[x] || 0) + 1));
+  return (S.tch || []).map(r => { const id = String(r[0]), p = g38Get(id), cl = g38Classes(id), st = cl.length ? (I.cs[cl[0]] || stageOf(cl[0]) || t('Other')) : t('Other');
+    return { id, name: r[1] || id, n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, auto: g38Auto(id) } })
+    .filter(x => G38.zero || x.n > 0 || g38Classes(x.id).length).sort((a, b) => natural(a.name, b.name));
+}
+function g38Groups() {
+  const rows = g38Rows(), by = {}; rows.forEach(r => (by[r.group] = by[r.group] || []).push(r));
+  return Object.keys(by).sort(natural).map(g => [g, by[g]]);
+}
+function g38Sheet() {
+  const gr = g38Groups(); if (!gr.length) return null;
+  const out = []; gr.forEach(([g, L]) => { out.push({ sec: g }); out.push({ sec: t('TOTAL TEACHERS') + ' : ' + L.length }); L.forEach((r, i) => out.push([i + 1, r.id, g38Fmt(r.date), r.name, r.role || r.auto, r.n])) });
+  const yr = (S.set && S.set.year) || ((S.set && S.set.academic && S.set.academic.year) || '');
+  return { title: t("Teachers' Utilization"), info: [[t('Academic Year'), yr]], cols: [6, 9, 13, 30, 31, 11], head: [t('NO.'), t('Print code'), t('Date of'), t("Teacher's name"), t('Grade / role'), t('Sessions/ week')], rows: out };
+}
+function g38Pages() {                              // the sheet footer reads the open custom timetable, so give it a harmless one while we draw
+  const g = g38Sheet(); if (!g) return [];
+  const D = EX.D, id = EX.id; EX.D = { timetables: [{ id: '__g38', name: t("Teachers' Utilization") }] }; EX.id = '__g38';
+  try { return exSheets([g], true) } finally { EX.D = D; EX.id = id }
+}
+function g38Tab() {
+  const tab = (k, l) => `<button class="pill${G38.sub == k ? ' on' : ''}" data-g38s="${k}">${t(l)}</button>`;
+  return `<div class="g38"><div class="bar2">${tab('asg', 'Assignments')}${tab('util', 'Utilization report')}</div></div>`;
+}
+function g38View() {
+  const rows = g38Rows(), pg = g38Pages();
+  const body = rows.map(r => `<tr><td class="n">${esc(r.id)}</td><td><input data-g38="${esc(r.id)}|date" value="${esc(g38Fmt(r.date))}" placeholder="d/m/yyyy"></td><td><b>${esc(r.name)}</b></td><td><input data-g38="${esc(r.id)}|group" value="${esc(g38Get(r.id).group)}" placeholder="${esc(r.group)}"></td><td><input data-g38="${esc(r.id)}|role" value="${esc(r.role)}" placeholder="${esc(r.auto)}"></td><td class="n">${r.n}</td></tr>`).join('');
+  return `<div class="g38">${g38Tab().replace('<div class="g38">', '').replace(/<\/div>$/, '')}<p class="msg">${t('Grade / role: leave empty to use his classes from the assignments. Group: teachers with the same group name are printed together with their total.')}</p>
+<div class="bar2"><label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-g38z="1"${G38.zero ? ' checked' : ''}> ${t('Include teachers without sessions')}</label><button class="b pri" data-g38a="print">${ic('print')} ${t('Print / PDF')}</button></div>
+<div class="sc2"><table class="ut"><tr><th>${t('Print code')}</th><th>${t('Date of')}</th><th>${t("Teacher's name")}</th><th>${t('Group')}</th><th>${t('Grade / role')}</th><th>${t('Sessions')}</th></tr>${body}</table></div>
+${G38.dirty ? `<div class="sv"><b>${t('unsaved changes')}</b><button class="b pri" data-g38a="save">${t('Save')}</button><button class="b" data-g38a="discard">${t('Discard changes')}</button></div>` : ''}
+<div class="card"><h3>${t('Print preview')} (${pg.length})</h3>${pg.length ? `<div class="pv">${pg.slice(0, 3).map(x => `<div class="pvs" style="width:560px">${x}</div>`).join('')}</div>` : ''}</div></div>`;
+}
+const _g38Settings = rSettings;
+rSettings = function () {
+  const h = _g38Settings(); if (SUB != 'assign') return h;
+  const k = '<div class="scont">', i = h.indexOf(k); if (i < 0) return h;
+  const start = i + k.length;
+  if (G38.sub == 'util') return h.slice(0, start) + g38View() + '</div></div>';
+  return h.slice(0, start) + g38Tab() + h.slice(start);
+};
+async function g38Save() {
+  const prev = JSON.parse(JSON.stringify(g38Saved())), put = async v => { S = await srv('api_saveSettingsX', 'tutil', v); index(); render() };
+  try { await put(g38D()) } catch (e) { return }
+  G38.d = null; G38.dirty = false; render();
+  UX.done(t('Utilization saved'), async () => { await put(prev); G38.d = null; G38.dirty = false; render() });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-g38s],[data-g38a]'); if (!b || TAB != 'st') return;
+  if (b.dataset.g38s) { G38.sub = b.dataset.g38s; return render() }
+  const a = b.dataset.g38a;
+  if (a == 'save') return g38Save();
+  if (a == 'discard') { G38.d = null; G38.dirty = false; return render() }
+  if (a == 'print') { const pg = g38Pages(); if (!pg.length) return toast(t('Nothing to print.'), 1); return printHtml(pg.join(''), true) }
+});
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset; if (!d || TAB != 'st') return;
+  if (d.g38z !== undefined) { G38.zero = el.checked; return render() }
+  if (d.g38 === undefined) return;
+  const [id, f] = d.g38.split('|'), D = g38D(), p = g38Get(id); let v = el.value.trim();
+  if (f == 'date') { const n = exNormDate(v); v = /^\d{4}-\d{2}-\d{2}$/.test(n) ? n : v }
+  p[f] = v; if (p.date || p.role || p.group) D[id] = p; else delete D[id];
+  G38.dirty = true; render();
+});
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
