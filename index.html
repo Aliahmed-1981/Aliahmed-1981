@@ -6296,6 +6296,7 @@ rToday = function () {
     const card = `<div class="card g37ev"><h3>${t('Calendar & events')}</h3>${ev14.length ? ev14.slice(0, 8).map(row).join('') : `<div class="empty2">${t('No events in the next 14 days.')}</div>`}<p><button class="b" data-tdgo="cal">${t('Open the calendar')}</button></p></div>`;
     grid.insertAdjacentHTML('afterbegin', card);
   }
+  R.querySelectorAll('.card').forEach(c => { const h3 = c.querySelector('h3'); if (h3 && grid && h3.textContent.trim() == t('Coming up in the calendar')) c.remove() });   // replaced by the card on top
   R.querySelectorAll('.card').forEach(c => {                    // the lessons list: two columns, first 6 only until "Show all"
     const h3 = c.querySelector('h3'); if (!h3 || h3.textContent.trim() != t('My lessons today')) return;
     const li = [...c.querySelectorAll(':scope > .li2')]; if (!li.length) return;
@@ -6359,14 +6360,8 @@ function g38View() {
 ${G38.dirty ? `<div class="sv"><b>${t('unsaved changes')}</b><button class="b pri" data-g38a="save">${t('Save')}</button><button class="b" data-g38a="discard">${t('Discard changes')}</button></div>` : ''}
 <div class="card"><h3>${t('Print preview')} (${pg.length})</h3>${pg.length ? `<div class="pv">${pg.slice(0, 3).map(x => `<div class="pvs" style="width:560px">${x}</div>`).join('')}</div>` : ''}</div></div>`;
 }
-const _g38Settings = rSettings;
-rSettings = function () {
-  const h = _g38Settings(); if (SUB != 'assign') return h;
-  const k = '<div class="scont">', i = h.indexOf(k); if (i < 0) return h;
-  const start = i + k.length;
-  if (G38.sub == 'util') return h.slice(0, start) + g38View() + '</div></div>';
-  return h.slice(0, start) + g38Tab() + h.slice(start);
-};
+const _g38TH = rTH;                                // Settings > Teachers & assignments is drawn by rTH
+rTH = function () { return G38.sub == 'util' ? g38View() : g38Tab() + _g38TH() };
 async function g38Save() {
   const prev = JSON.parse(JSON.stringify(g38Saved())), put = async v => { S = await srv('api_saveSettingsX', 'tutil', v); index(); render() };
   try { await put(g38D()) } catch (e) { return }
