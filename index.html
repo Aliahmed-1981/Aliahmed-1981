@@ -6455,7 +6455,7 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Include teachers without sessions': 'إظهار المدرسين بدون حصص', 'Utilization saved': 'تم حفظ بيانات الاستغلال', 'Save': 'حفظ', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة',
   'Print / PDF': 'طباعة / PDF', 'of': 'من', 'Enter a teacher name or code to search': 'اكتب اسم المدرس أو كوده للبحث', 'Stage': 'المرحلة', 'All': 'الكل', 'Subject': 'المادة', 'Search teacher': 'بحث عن مدرس', 'With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.': 'مع فلتر المرحلة أو المادة، تُحسب فصول وحصص كل مدرس داخل الفلتر فقط.', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
 }).filter(([k]) => !(k in AR))));
-const G38 = { sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, gr: null, cl: null, subj: '', q: '' } };
+const G38 = { sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, dp: null, cl: null, subj: '', q: '' } };
 const g38Saved = () => (S.set && S.set.tutil) || {};
 const g38D = () => G38.d || (G38.d = JSON.parse(JSON.stringify(g38Saved())));
 const g38Get = id => Object.assign({ date: '', role: '', group: '' }, g38D()[id] || {});
@@ -6467,23 +6467,23 @@ function g38Auto(id) { const c = g38Classes(id); return c.length > 8 ? c.slice(0
 function g38Base() {                              // every teacher with his numbers inside the stage / subject filter (before the group and search filters)
   const cnt = {}; (S.lessons || []).forEach(l => { if (g38InF(l.c, l.s)) (l.t || []).forEach(x => cnt[x] = (cnt[x] || 0) + 1) });
   return (S.tch || []).map(r => { const id = String(r[0]), p = g38Get(id), cl = g38Classes(id), st = cl.length ? g38StOf(cl[0]) : t('Other');
-    return { id, name: r[1] || id, n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, auto: g38Auto(id), has: cl.length > 0 } })
+    return { id, name: r[1] || id, dept: String(r[5] || '').trim() || t('No department'), n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, auto: g38Auto(id), has: cl.length > 0 } })
     .filter(x => G38.zero ? (!G38.f.st && !G38.f.subj) || x.has || x.n : (x.n > 0 || x.has)).sort((a, b) => natural(a.name, b.name));
 }
 function g38Rows() {
   const f = G38.f, q = lc(f.q || '');
-  return g38Base().filter(x => (!f.gr || f.gr.includes(x.group)) && (!q || lc(x.name).includes(q) || lc(x.id).includes(q)));
+  return g38Base().filter(x => (!f.dp || f.dp.includes(x.dept)) && (!q || lc(x.name).includes(q) || lc(x.id).includes(q)));
 }
-function g38Opts() { const B = g38Base(); return { st: [...new Set((S.tch || []).flatMap(r => g38Classes(String(r[0]), true).map(g38StOf)))].sort(natural), gr: [...new Set(B.map(x => x.group))].sort(natural), subj: [...new Set((S.asg || []).map(r => r[1]).filter(Boolean))].sort(natural), cl: [...new Set((S.asg || []).map(r => String(r[0])).filter(Boolean))].sort(natural) } }
+function g38Opts() { const B = g38Base(); return { st: [...new Set((S.tch || []).flatMap(r => g38Classes(String(r[0]), true).map(g38StOf)))].sort(natural), dp: [...new Set((S.tch || []).map(r => String(r[5] || '').trim() || t('No department')))].sort(natural), subj: [...new Set((S.asg || []).map(r => r[1]).filter(Boolean))].sort(natural), cl: [...new Set((S.asg || []).map(r => String(r[0])).filter(Boolean))].sort(natural) } }
 function g38Filters() {
   const O = g38Opts(), f = G38.f, chk = (k, v, on) => `<label><input type="checkbox" data-g38f="${k}|${esc(v)}"${on ? ' checked' : ''}> ${esc(v)}</label>`;
   const panel = `<div class="g40fg"><b>${t('Stage')}</b><div class="ch"><label><input type="checkbox" data-g38f="st|*"${!f.st ? ' checked' : ''}> <b>${t('All')}</b></label>${O.st.map(v => chk('st', v, !f.st || f.st.includes(v))).join('')}</div></div>
 <div class="g40fg"><b>${t('Classes')}</b><div class="ch"><label><input type="checkbox" data-g38f="cl|*"${!f.cl ? ' checked' : ''}> <b>${t('All')}</b></label>${O.cl.map(v => chk('cl', v, !f.cl || f.cl.includes(v))).join('')}</div></div>
-<div class="g40fg"><b>${t('Group')}</b><div class="ch"><label><input type="checkbox" data-g38f="gr|*"${!f.gr ? ' checked' : ''}> <b>${t('All')}</b></label>${O.gr.map(v => chk('gr', v, !f.gr || f.gr.includes(v))).join('')}</div></div>
+<div class="g40fg"><b>${t('Department')}</b><div class="ch"><label><input type="checkbox" data-g38f="dp|*"${!f.dp ? ' checked' : ''}> <b>${t('All')}</b></label>${O.dp.map(v => chk('dp', v, !f.dp || f.dp.includes(v))).join('')}</div></div>
 <div class="g40fg"><b>${t('Subject')}</b><select data-g38f="subj"><option value="">${t('All')}</option>${O.subj.map(v => `<option value="${esc(v)}"${lc(v) == lc(f.subj) ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
 <p class="msg">${t('With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.')}</p>`;
   const n = g38Rows().length;
-  return g40Bar('ut', { qAttr: 'data-g38f="q"', qVal: f.q, ph: t('Enter a teacher name or code to search'), count: n ? '1–' + n + ' ' + t('of') + ' ' + n : '0', panel, active: !!(f.st || f.gr || f.cl || f.subj), more: [[t('Print / PDF'), 'data-g38a="print"', 'print']] });
+  return g40Bar('ut', { qAttr: 'data-g38f="q"', qVal: f.q, ph: t('Enter a teacher name or code to search'), count: n ? '1–' + n + ' ' + t('of') + ' ' + n : '0', panel, active: !!(f.st || f.dp || f.cl || f.subj), more: [[t('Print / PDF'), 'data-g38a="print"', 'print']] });
 }
 function g38Groups() {
   const rows = g38Rows(), by = {}; rows.forEach(r => (by[r.group] = by[r.group] || []).push(r));
@@ -6702,9 +6702,9 @@ document.addEventListener('click', e => {
     else { pn.querySelectorAll('[data-cfs]').forEach(s => CFx[s.dataset.cfs] = s.value); const ig = pn.querySelector('[data-cfi]'); if (ig) CFx.ign = ig.checked }
     G40.open.cf = false; return render() }
   if (id == 'ut') {
-    if (k == 'clear') G38.f = { st: null, gr: null, cl: null, subj: '', q: G38.f.q };
+    if (k == 'clear') G38.f = { st: null, dp: null, cl: null, subj: '', q: G38.f.q };
     else { const O = g38Opts(), rd = key => { const bx = [...pn.querySelectorAll('input[data-g38f^="' + key + '|"]')].filter(x => !x.dataset.g38f.endsWith('|*')), on = bx.filter(x => x.checked).map(x => x.dataset.g38f.slice(key.length + 1)); return on.length == bx.length ? null : on };
-      G38.f.st = rd('st'); G38.f.gr = rd('gr'); G38.f.cl = rd('cl'); const s = pn.querySelector('select[data-g38f="subj"]'); G38.f.subj = s ? s.value : '' }
+      G38.f.st = rd('st'); G38.f.dp = rd('dp'); G38.f.cl = rd('cl'); const s = pn.querySelector('select[data-g38f="subj"]'); G38.f.subj = s ? s.value : '' }
     G40.open.ut = false; return render() }
 }, true);
 /* panel checkboxes only change the draft: "All" toggles its group, nothing is applied until Apply */
@@ -6923,7 +6923,7 @@ render = function () { const r = _g43r.apply(this, arguments); try { g43Tidy() }
 <script>
 /* ---------- G44: ONE filter panel for every report/print page (stage, class, teacher, subject, room, days) ---------- */
 Object.assign(AR, Object.fromEntries(Object.entries({
-  'Classes': 'الفصول', 'Teachers': 'المدرسون', 'Rooms': 'الغرف', 'Days': 'الأيام', 'Subject': 'المادة', 'Stage': 'المرحلة', 'Search': 'بحث', 'All': 'الكل', 'sheets': 'ورقة',
+  'Department': 'القسم', 'No department': 'بدون قسم', 'Classes': 'الفصول', 'Teachers': 'المدرسون', 'Rooms': 'الغرف', 'Days': 'الأيام', 'Subject': 'المادة', 'Stage': 'المرحلة', 'Search': 'بحث', 'All': 'الكل', 'sheets': 'ورقة',
   'Search classes, teachers or rooms': 'ابحث بالفصل أو المدرس أو الغرفة', 'Will print': 'سيُطبع', 'Nothing matches these filters.': 'لا يوجد ما يطابق هذه الفلاتر.', 'type to search': 'اكتب للبحث',
   'Pick what to print with the filters above; every sheet is printed once.': 'اختر ما تريد طباعته من الفلاتر بالأعلى؛ كل ورقة تُطبع مرة واحدة.', 'Conflicts report': 'تقرير التعارضات',
   'The conflicts report asks for its filters when you press Print.': 'تقرير التعارضات يسأل عن فلاتره عند الضغط على طباعة.', 'Teacher': 'المدرس', 'Room': 'الغرفة'
