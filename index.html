@@ -6563,7 +6563,7 @@ function g39Ask(title, fields) {
   return new Promise(res => {
     const o = document.createElement('div'); o.className = 'g39o';
     const body = fields.map(f => {
-      if (f.type == 'checks') return `<div class="fl"><b>${esc(f.label)}</b><div class="ch" data-k="${f.k}"><label><input type="checkbox" data-all="1" checked> <b>${t('All')}</b></label>${f.opts.map(([v, l]) => `<label><input type="checkbox" data-v="${esc(v)}" checked> ${esc(l)}</label>`).join('')}</div></div>`;
+      if (f.type == 'checks') return `<div class="fl"><b>${esc(f.label)}</b>${f.opts.length > 8 ? `<input class="g44q" type="search" data-g44s="${f.k}" placeholder="${esc(t('type to search'))}" autocomplete="off">` : ''}<div class="ch" data-k="${f.k}"><label><input type="checkbox" data-all="1" checked> <b>${t('All')}</b></label>${f.opts.map(([v, l]) => `<label data-g44l="${esc(String(l).toLowerCase())}"><input type="checkbox" data-v="${esc(v)}" checked> ${esc(l)}</label>`).join('')}</div></div>`;
       if (f.type == 'select') return `<div class="fl"><b>${esc(f.label)}</b><input type="search" data-k="${f.k}" data-sel="1" list="g39dl-${f.k}" placeholder="${t('All')} – ${t('type to search')}" autocomplete="off"><datalist id="g39dl-${f.k}">${f.opts.map(([v, l]) => `<option value="${esc(l)}"></option>`).join('')}</datalist></div>`;
       if (f.type == 'flag') return `<div class="fl"><label><input type="checkbox" data-k="${f.k}" data-flag="1"> ${esc(f.label)}</label></div>`;
       return `<div class="fl"><b>${esc(f.label)}</b><input type="${f.type == 'date' ? 'date' : 'text'}" data-k="${f.k}"></div>`;
@@ -6953,7 +6953,7 @@ document.addEventListener('change', e => {
   if (v == '*') bx.forEach(b => b.checked = el.checked); else all.checked = bx.every(b => b.checked);
 }, true);
 document.addEventListener('input', e => {
-  const el = e.target; if (el.dataset && el.dataset.g44s !== undefined) { const q = el.value.trim().toLowerCase(); el.closest('[data-g44k]').querySelectorAll('[data-g44l]').forEach(l => l.style.display = !q || l.dataset.g44l.includes(q) ? '' : 'none') }
+  const el = e.target; if (el.dataset && el.dataset.g44s !== undefined) { const q = el.value.trim().toLowerCase(); el.closest('[data-g44k],.fl').querySelectorAll('[data-g44l]').forEach(l => l.style.display = !q || l.dataset.g44l.includes(q) ? '' : 'none') }
   if (el.dataset && el.dataset.g44q0 !== undefined) { PH.q = el.value; render() }
 });
 
@@ -7017,6 +7017,57 @@ document.addEventListener('click', e => {
   else Object.assign(PH.f, g44Read(pn));
   G40.open.rp = false; render();
 }, true);
+</script>
+<script>
+/* ---------- G45: the same search + Filters + count bar on Users, Change log and Substitute lessons ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({ 'Search users': 'ابحث في المستخدمين', 'Search the change log': 'ابحث في سجل التغييرات', 'Search substitute lessons': 'ابحث في حصص البدلاء', 'rows': 'صف', 'Role': 'الدور', 'Can edit': 'يمكنه التعديل', 'Active': 'نشط', 'Class': 'الفصل', 'Day': 'اليوم', 'User': 'المستخدم', 'Name': 'الاسم' }).filter(([k]) => !(k in AR))));
+const G45 = { us: { q: '', f: {} }, log: { q: '', f: {} }, ab: { q: '', f: {} } };
+const g45Val = c => { if (!c) return ''; const i = c.querySelector('input:not([type=checkbox]),select'); return (i ? (i.tagName == 'SELECT' ? (i.selectedOptions[0] || {}).textContent || '' : i.value) : c.textContent).trim() };
+const g45Rows = tb => [...tb.querySelectorAll('tr')].filter(r => r.querySelector('td'));
+function g45Ok(sc, r, cols) { const st = G45[sc], q = st.q.trim().toLowerCase(); const cells = [...r.children];
+  if (q && !cells.map(g45Val).join(' ').toLowerCase().includes(q)) return false;
+  return cols.every(([ix]) => { const sel = st.f['c' + ix]; return !sel || sel.includes(g45Val(cells[ix])) }) }
+function g45Bar(sc, tb, cols, ph) {
+  const st = G45[sc], rows = g45Rows(tb), act = Object.values(st.f).some(Boolean);
+  const dims = cols.map(([ix, lb]) => { const vals = [...new Set(rows.map(r => g45Val(r.children[ix])).filter(Boolean))].sort(natural); return vals.length > 1 && vals.length <= 40 ? g44Dim('c' + ix, t(lb), vals.map(v => [v, v]), st.f['c' + ix]) : '' }).join('');
+  const w = tb.closest('.sc') || tb, d = document.createElement('div');
+  d.innerHTML = g40Bar(sc, { qAttr: 'data-g45q="' + sc + '"', qVal: st.q, ph: t(ph), count: '', panel: dims, active: act, more: [] });
+  w.parentNode.insertBefore(d.firstElementChild, w); tb.dataset.g45 = sc; tb._cols = cols;
+  g45Apply(sc, tb);
+}
+function g45Apply(sc, tb) {
+  const cols = tb._cols || [], rows = g45Rows(tb); let n = 0;
+  rows.forEach(r => { const ok = g45Ok(sc, r, cols); r.style.display = ok ? '' : 'none'; if (ok) n++ });
+  const c = document.querySelector('.g40b[data-g40id="' + sc + '"] .g40cnt'); if (c) c.textContent = n == rows.length ? rows.length + ' ' + t('rows') : n + ' / ' + rows.length + ' ' + t('rows');
+}
+function g45Post() {
+  const v = document.getElementById('v'); if (!v) return;
+  if (TAB == 'us') { const tb = v.querySelector('.usr table.ed:not(.rm)'); if (tb && !tb.dataset.g45 && g45Rows(tb).length) g45Bar('us', tb, [[2, 'Role'], [3, 'Scope'], [4, 'Can edit'], [5, 'Active']].filter(x => x[0] != 3), 'Search users') }
+  if (TAB == 'st') [...v.querySelectorAll('.card')].forEach(cd => { const h = cd.querySelector(':scope > h3'); const tb = cd.querySelector('table.ed'); if (h && tb && !tb.dataset.g45 && h.textContent.trim() == t('Change log')) g45Bar('log', tb, [[1, 'Class'], [2, 'Day'], [6, 'User']], 'Search the change log') });
+  if (TAB == 'ab') { const items = [...v.querySelectorAll('.cv')]; if (items.length && !v.querySelector('.g40b[data-g40id=ab]')) g45Cv(v, items) }
+}
+/* substitute lessons: cards of small tables - search and class filter hide rows and empty cards */
+function g45Cv(v, tbs) {
+  const st = G45.ab, first = tbs[0].closest('.card'); if (!first) return;
+  const classes = [...new Set(tbs.flatMap(tb => g45Rows(tb).map(r => g45Val(r.children[1]))).filter(Boolean))].sort(natural);
+  const d = document.createElement('div'); d.innerHTML = g40Bar('ab', { qAttr: 'data-g45q="ab"', qVal: st.q, ph: t('Search substitute lessons'), count: '', panel: g44Dim('c1', t('Class'), classes.map(x => [x, x]), st.f.c1), active: !!st.f.c1, more: [] });
+  const h3 = first.querySelector('h3'); h3.parentNode.insertBefore(d.firstElementChild, h3.nextSibling);
+  g45CvApply(v);
+}
+function g45CvApply(v) {
+  const st = G45.ab, q = st.q.trim().toLowerCase(); let n = 0, all = 0;
+  v.querySelectorAll('.it').forEach(it => { const tb = it.querySelector('table.cv'); if (!tb) return; const rows = g45Rows(tb); let vis = 0;
+    rows.forEach(r => { all++; const tx = [...r.children].map(g45Val).join(' ').toLowerCase() + ' ' + (it.querySelector('.hd b') || { textContent: '' }).textContent.toLowerCase(), ok = (!q || tx.includes(q)) && (!st.f.c1 || st.f.c1.includes(g45Val(r.children[1]))); r.style.display = ok ? '' : 'none'; if (ok) { vis++; n++ } });
+    it.style.display = vis ? '' : 'none' });
+  const c = v.querySelector('.g40b[data-g40id="ab"] .g40cnt'); if (c) c.textContent = n + ' / ' + all + ' ' + t('rows');
+}
+document.addEventListener('input', e => { const el = e.target, sc = el.dataset && el.dataset.g45q; if (!sc) return; G45[sc].q = el.value; if (sc == 'ab') g45CvApply(document.getElementById('v')); else { const tb = document.querySelector('table[data-g45="' + sc + '"]'); if (tb) g45Apply(sc, tb) } });
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-g40a]'); if (!a) return; const [k, sc] = a.dataset.g40a.split('|'); if (!G45[sc]) return;
+  const pn = a.closest('.g40pn'); if (!pn) return; G45[sc].f = k == 'clear' ? {} : g44Read(pn); G40.open[sc] = false; render();
+}, true);
+const _g45r = render;
+render = function () { const r = _g45r.apply(this, arguments); try { g45Post() } catch (x) { console.error(x) } return r };
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
