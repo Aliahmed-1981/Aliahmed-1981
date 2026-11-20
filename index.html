@@ -510,6 +510,20 @@ table.ed.g42x td:last-child{width:1%;text-align:center}
 .g42h{color:var(--mut);font-size:12px;margin:0 0 6px}
 @media print{.g42s,.g42h{display:none!important}}
 </style>
+<style id="g44css">
+.g44ch{display:flex;flex-wrap:wrap;gap:6px}
+.g44ch label{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:3px 10px;border:1px solid var(--ln);border-radius:999px;cursor:pointer;background:var(--sf)}
+.g44ch label:has(input:checked){border-color:var(--coral);background:var(--wns);font-weight:700}
+.g44q{width:100%;max-width:260px;height:32px;margin:0 0 6px;padding:0 10px;border:1px solid var(--ln);border-radius:8px;background:var(--sf)}
+.g44sum{margin:10px 0 0;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.g44sum .tag{font-size:12px}
+.g44fl{margin:0 0 10px}
+@media (max-width:640px){
+  .g40pn{position:fixed!important;inset-inline:0;bottom:0;top:auto;z-index:9500;max-height:78vh;overflow:auto;border-radius:18px 18px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.35);margin:0}
+  .g40pn .ap{position:sticky;bottom:0;background:var(--sf);padding:10px 0 4px;display:flex;gap:8px}
+  .g40pn .ap .b{flex:1;min-height:44px}
+}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -6441,13 +6455,13 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Include teachers without sessions': 'إظهار المدرسين بدون حصص', 'Utilization saved': 'تم حفظ بيانات الاستغلال', 'Save': 'حفظ', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة',
   'Print / PDF': 'طباعة / PDF', 'of': 'من', 'Enter a teacher name or code to search': 'اكتب اسم المدرس أو كوده للبحث', 'Stage': 'المرحلة', 'All': 'الكل', 'Subject': 'المادة', 'Search teacher': 'بحث عن مدرس', 'With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.': 'مع فلتر المرحلة أو المادة، تُحسب فصول وحصص كل مدرس داخل الفلتر فقط.', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
 }).filter(([k]) => !(k in AR))));
-const G38 = { sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, gr: null, subj: '', q: '' } };
+const G38 = { sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, gr: null, cl: null, subj: '', q: '' } };
 const g38Saved = () => (S.set && S.set.tutil) || {};
 const g38D = () => G38.d || (G38.d = JSON.parse(JSON.stringify(g38Saved())));
 const g38Get = id => Object.assign({ date: '', role: '', group: '' }, g38D()[id] || {});
 const g38Fmt = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? (+m[3]) + '/' + (+m[2]) + '/' + m[1] : (v || '') };
 const g38StOf = c => I.cs[c] || stageOf(c) || t('Other');
-const g38InF = (c, subj) => { const f = G38.f; return (!f.st || f.st.includes(g38StOf(c))) && (!f.subj || lc(subj || '') == lc(f.subj)) };
+const g38InF = (c, subj) => { const f = G38.f; return (!f.st || f.st.includes(g38StOf(c))) && (!f.subj || lc(subj || '') == lc(f.subj)) && (!f.cl || f.cl.includes(String(c))) };
 function g38Classes(id, all) { const out = [...new Set((S.asg || []).filter(r => String(r[2]) == id && (all || g38InF(r[0], r[1]))).map(r => String(r[0])).filter(Boolean))].sort(natural); return out }
 function g38Auto(id) { const c = g38Classes(id); return c.length > 8 ? c.slice(0, 8).join(', ') + ' +' + (c.length - 8) : c.join(', ') }
 function g38Base() {                              // every teacher with his numbers inside the stage / subject filter (before the group and search filters)
@@ -6460,15 +6474,16 @@ function g38Rows() {
   const f = G38.f, q = lc(f.q || '');
   return g38Base().filter(x => (!f.gr || f.gr.includes(x.group)) && (!q || lc(x.name).includes(q) || lc(x.id).includes(q)));
 }
-function g38Opts() { const B = g38Base(); return { st: [...new Set((S.tch || []).flatMap(r => g38Classes(String(r[0]), true).map(g38StOf)))].sort(natural), gr: [...new Set(B.map(x => x.group))].sort(natural), subj: [...new Set((S.asg || []).map(r => r[1]).filter(Boolean))].sort(natural) } }
+function g38Opts() { const B = g38Base(); return { st: [...new Set((S.tch || []).flatMap(r => g38Classes(String(r[0]), true).map(g38StOf)))].sort(natural), gr: [...new Set(B.map(x => x.group))].sort(natural), subj: [...new Set((S.asg || []).map(r => r[1]).filter(Boolean))].sort(natural), cl: [...new Set((S.asg || []).map(r => String(r[0])).filter(Boolean))].sort(natural) } }
 function g38Filters() {
   const O = g38Opts(), f = G38.f, chk = (k, v, on) => `<label><input type="checkbox" data-g38f="${k}|${esc(v)}"${on ? ' checked' : ''}> ${esc(v)}</label>`;
   const panel = `<div class="g40fg"><b>${t('Stage')}</b><div class="ch"><label><input type="checkbox" data-g38f="st|*"${!f.st ? ' checked' : ''}> <b>${t('All')}</b></label>${O.st.map(v => chk('st', v, !f.st || f.st.includes(v))).join('')}</div></div>
+<div class="g40fg"><b>${t('Classes')}</b><div class="ch"><label><input type="checkbox" data-g38f="cl|*"${!f.cl ? ' checked' : ''}> <b>${t('All')}</b></label>${O.cl.map(v => chk('cl', v, !f.cl || f.cl.includes(v))).join('')}</div></div>
 <div class="g40fg"><b>${t('Group')}</b><div class="ch"><label><input type="checkbox" data-g38f="gr|*"${!f.gr ? ' checked' : ''}> <b>${t('All')}</b></label>${O.gr.map(v => chk('gr', v, !f.gr || f.gr.includes(v))).join('')}</div></div>
 <div class="g40fg"><b>${t('Subject')}</b><select data-g38f="subj"><option value="">${t('All')}</option>${O.subj.map(v => `<option value="${esc(v)}"${lc(v) == lc(f.subj) ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
 <p class="msg">${t('With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.')}</p>`;
   const n = g38Rows().length;
-  return g40Bar('ut', { qAttr: 'data-g38f="q"', qVal: f.q, ph: t('Enter a teacher name or code to search'), count: n ? '1–' + n + ' ' + t('of') + ' ' + n : '0', panel, active: !!(f.st || f.gr || f.subj), more: [[t('Print / PDF'), 'data-g38a="print"', 'print']] });
+  return g40Bar('ut', { qAttr: 'data-g38f="q"', qVal: f.q, ph: t('Enter a teacher name or code to search'), count: n ? '1–' + n + ' ' + t('of') + ' ' + n : '0', panel, active: !!(f.st || f.gr || f.cl || f.subj), more: [[t('Print / PDF'), 'data-g38a="print"', 'print']] });
 }
 function g38Groups() {
   const rows = g38Rows(), by = {}; rows.forEach(r => (by[r.group] = by[r.group] || []).push(r));
@@ -6687,9 +6702,9 @@ document.addEventListener('click', e => {
     else { pn.querySelectorAll('[data-cfs]').forEach(s => CFx[s.dataset.cfs] = s.value); const ig = pn.querySelector('[data-cfi]'); if (ig) CFx.ign = ig.checked }
     G40.open.cf = false; return render() }
   if (id == 'ut') {
-    if (k == 'clear') G38.f = { st: null, gr: null, subj: '', q: G38.f.q };
+    if (k == 'clear') G38.f = { st: null, gr: null, cl: null, subj: '', q: G38.f.q };
     else { const O = g38Opts(), rd = key => { const bx = [...pn.querySelectorAll('input[data-g38f^="' + key + '|"]')].filter(x => !x.dataset.g38f.endsWith('|*')), on = bx.filter(x => x.checked).map(x => x.dataset.g38f.slice(key.length + 1)); return on.length == bx.length ? null : on };
-      G38.f.st = rd('st'); G38.f.gr = rd('gr'); const s = pn.querySelector('select[data-g38f="subj"]'); G38.f.subj = s ? s.value : '' }
+      G38.f.st = rd('st'); G38.f.gr = rd('gr'); G38.f.cl = rd('cl'); const s = pn.querySelector('select[data-g38f="subj"]'); G38.f.subj = s ? s.value : '' }
     G40.open.ut = false; return render() }
 }, true);
 /* panel checkboxes only change the draft: "All" toggles its group, nothing is applied until Apply */
@@ -6904,6 +6919,100 @@ function g43Tidy() {
 }
 const _g43r = render;
 render = function () { const r = _g43r.apply(this, arguments); try { g43Tidy() } catch (e) { console.error(e) } return r };
+</script>
+<script>
+/* ---------- G44: ONE filter panel for every report/print page (stage, class, teacher, subject, room, days) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Classes': 'الفصول', 'Teachers': 'المدرسون', 'Rooms': 'الغرف', 'Days': 'الأيام', 'Subject': 'المادة', 'Stage': 'المرحلة', 'Search': 'بحث', 'All': 'الكل', 'sheets': 'ورقة',
+  'Search classes, teachers or rooms': 'ابحث بالفصل أو المدرس أو الغرفة', 'Will print': 'سيُطبع', 'Nothing matches these filters.': 'لا يوجد ما يطابق هذه الفلاتر.', 'type to search': 'اكتب للبحث',
+  'Pick what to print with the filters above; every sheet is printed once.': 'اختر ما تريد طباعته من الفلاتر بالأعلى؛ كل ورقة تُطبع مرة واحدة.', 'Conflicts report': 'تقرير التعارضات',
+  'The conflicts report asks for its filters when you press Print.': 'تقرير التعارضات يسأل عن فلاتره عند الضغط على طباعة.', 'Teacher': 'المدرس', 'Room': 'الغرفة'
+}).filter(([k]) => !(k in AR))));
+const PH = { f: { st: null, cl: null, tc: null, sj: null, rm: null, dy: null }, q: '' };
+/* a chip group: opts [[value,label]], sel = array or null (all); the draft lives in the checkboxes until Apply */
+function g44Dim(key, label, opts, sel) {
+  if (!opts.length) return '';
+  return `<div class="g40fg g44fl" data-g44k="${key}"><b>${esc(label)}</b>${opts.length > 8 ? `<input class="g44q" type="search" data-g44s="${key}" placeholder="${esc(t('type to search'))}" autocomplete="off">` : ''}<div class="g44ch"><label><input type="checkbox" data-g44="${key}|*"${!sel ? ' checked' : ''}> <b>${t('All')}</b></label>${opts.map(([v, l]) => `<label data-g44l="${esc(String(l).toLowerCase())}"><input type="checkbox" data-g44="${key}|${esc(v)}"${!sel || sel.includes(String(v)) ? ' checked' : ''}> ${esc(l)}</label>`).join('')}</div></div>`;
+}
+function g44Read(pn) {
+  const out = {};
+  pn.querySelectorAll('[data-g44k]').forEach(g => {
+    const key = g.dataset.g44k, bx = [...g.querySelectorAll('input[data-g44]')].filter(x => !x.dataset.g44.endsWith('|*')), on = bx.filter(x => x.checked).map(x => x.dataset.g44.slice(key.length + 1));
+    out[key] = on.length == bx.length ? null : on;
+  });
+  return out;
+}
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset && el.dataset.g44; if (d === undefined || !el.closest('.g40pn')) return;
+  e.stopImmediatePropagation(); const [k, v] = d.split('|'), g = el.closest('[data-g44k]'); if (!g) return;
+  const bx = [...g.querySelectorAll('input[data-g44]')].filter(x => !x.dataset.g44.endsWith('|*')), all = g.querySelector('input[data-g44$="|*"]');
+  if (v == '*') bx.forEach(b => b.checked = el.checked); else all.checked = bx.every(b => b.checked);
+}, true);
+document.addEventListener('input', e => {
+  const el = e.target; if (el.dataset && el.dataset.g44s !== undefined) { const q = el.value.trim().toLowerCase(); el.closest('[data-g44k]').querySelectorAll('[data-g44l]').forEach(l => l.style.display = !q || l.dataset.g44l.includes(q) ? '' : 'none') }
+  if (el.dataset && el.dataset.g44q0 !== undefined) { PH.q = el.value; render() }
+});
+
+const g44Subjects = () => [...new Set(S.lessons.map(l => l.s).filter(Boolean))].sort(natural);
+const g44In = (sel, v) => !sel || sel.includes(String(v));
+/* the items a print kind would produce with the current filters */
+function g44Ids(k) {
+  const f = PH.f, q = PH.q.trim().toLowerCase(), L = S.lessons;
+  const hit = (arr, name) => !q || String(name).toLowerCase().includes(q) || String(arr).toLowerCase().includes(q);
+  if (k == 'class') return I.classes.filter(c => g44In(f.st, stageOf(c)) && g44In(f.cl, c) && hit(c, c) && (!f.tc || L.some(l => l.c == c && l.t.some(x => f.tc.includes(x)))) && (!f.sj || L.some(l => l.c == c && f.sj.includes(l.s))));
+  if (k == 'teacher') return teachersWithLessons().filter(x => g44In(f.tc, x) && hit(x, tname(x)) && L.some(l => l.t.includes(x) && g44In(f.st, stageOf(l.c)) && g44In(f.cl, l.c) && g44In(f.sj, l.s)));
+  if (k == 'room') return roomsWithLessons().filter(x => g44In(f.rm, x) && hit(x, x) && L.some(l => l.r == x && g44In(f.cl, l.c) && g44In(f.st, stageOf(l.c))));
+  return [];
+}
+const g44Stages = () => stages();
+const g44MasterPlan = () => {   // [[stage,[classes]]] with the selected stages, classes and days
+  const f = PH.f; return g44Stages().filter(s => g44In(f.st, s)).map(s => [s, I.classes.filter(c => stageOf(c) == s && g44In(f.cl, c))]).filter(x => x[1].length);
+};
+const g44Days = () => I.days.filter(d => g44In(PH.f.dy, d));
+function g44Panel(k) {
+  const f = PH.f, st = g44Stages().map(x => [x, x]), cl = I.classes.slice().sort(natural).map(x => [x, x]), tc = teachersWithLessons().map(x => [x, tname(x)]), sj = g44Subjects().map(x => [x, x]), rm = roomsWithLessons().map(x => [x, x]), dy = I.days.map(d => [String(d), dayName(d)]);
+  if (k == 'class') return g44Dim('st', t('Stage'), st, f.st) + g44Dim('cl', t('Classes'), cl, f.cl) + g44Dim('tc', t('Teachers'), tc, f.tc) + g44Dim('sj', t('Subject'), sj, f.sj);
+  if (k == 'teacher') return g44Dim('st', t('Stage'), st, f.st) + g44Dim('cl', t('Classes'), cl, f.cl) + g44Dim('tc', t('Teachers'), tc, f.tc) + g44Dim('sj', t('Subject'), sj, f.sj);
+  if (k == 'room') return g44Dim('rm', t('Rooms'), rm, f.rm) + g44Dim('st', t('Stage'), st, f.st) + g44Dim('cl', t('Classes'), cl, f.cl);
+  return g44Dim('st', t('Stage'), st, f.st) + g44Dim('cl', t('Classes'), cl, f.cl) + g44Dim('dy', t('Days'), dy, f.dy);
+}
+function g44Count(k) { return k == 'master' ? g44MasterPlan().length * g44Days().length : g44Ids(k).length }
+function g44Summary(k) {
+  if (k == 'master') { const P = g44MasterPlan(), D = g44Days(); return P.map(([s, c]) => `<span class="tag">${esc(s)}: ${c.length} ${t('Classes')} × ${D.length} ${t('Days')}</span>`).join('') }
+  const ids = g44Ids(k); return ids.slice(0, 14).map(x => `<span class="tag">${esc(k == 'teacher' ? tname(x) : x)}</span>`).join('') + (ids.length > 14 ? `<span class="tag">+${ids.length - 14}</span>` : '');
+}
+rReports = function () {
+  const kinds = [['class', 'book', 'Class timetables'], ['teacher', 'user', 'Teacher timetables'], ['room', 'room', 'Room timetables'], ['master', 'grid', 'Master grid'], ['conf', 'alert', 'Conflicts report']];
+  if (!kinds.some(x => x[0] == PP.k)) PP.k = 'class';
+  const k = PP.k, n = k == 'conf' ? 0 : g44Count(k), act = Object.values(PH.f).some(Boolean);
+  const head = `<div class="bar"><div class="seg">${kinds.map(([kk, i, l]) => `<button data-pk="${kk}" class="${k == kk ? 'on' : ''}">${ic(i)} ${t(l)}</button>`).join('')}</div>${pfFitBox()} <button class="b pri" data-a="doprint">${ic('print')} ${t('Print / PDF')}</button></div>`;
+  if (k == 'conf') return head + `<div class="card"><p class="msg">${t('The conflicts report asks for its filters when you press Print.')}</p></div>`;
+  const noT = k == 'class' || k == 'master' ? `<p><label class="tag"><input type="checkbox" data-pnt${PP.noT ? ' checked' : ''}> ${t('Print without teacher names')}</label></p>` : '';
+  const bar = g40Bar('rp', { qAttr: 'data-g44q0="1"', qVal: PH.q, ph: t('Search classes, teachers or rooms'), count: n + ' ' + t('sheets'), panel: g44Panel(k), active: act, more: [] });
+  return `${head}<div class="card">${noT}${bar}<div class="g44sum"><b>${t('Will print')}:</b> ${n ? g44Summary(k) : `<span class="msg">${t('Nothing matches these filters.')}</span>`}</div></div>`;
+};
+function g44Master() {
+  PRINT = true; const was = I.classes; let out = '';
+  try {
+    const sub = t('Weekly timetable');
+    g44MasterPlan().forEach(([s, cs]) => { I.classes = cs; g44Days().forEach(d => { out += sheet(t('Master grid') + ' – ' + s + ' – ' + dayName(d), dayDate(d), masterTab(s, d)) }) });
+  } finally { I.classes = was; PRINT = false }
+  return out;
+}
+const _g44dp = doPrint;
+doPrint = function () {
+  const k = PP.k; if (!['class', 'teacher', 'room', 'master'].includes(k)) return _g44dp.apply(this, arguments);
+  if (k == 'master') { if (!g44Count(k)) return toast(t('Select at least one item to print.'), 1); return printHtml(g44Master()) }
+  const ids = g44Ids(k); if (!ids.length) return toast(t('Select at least one item to print.'), 1);
+  printHtml(buildPrint(k, ids));
+};
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-g40a$="|rp"]'); if (!a || TAB != 'rp') return;
+  const [k] = a.dataset.g40a.split('|'), pn = a.closest('.g40pn'); if (!pn) return;
+  if (k == 'clear') PH.f = { st: null, cl: null, tc: null, sj: null, rm: null, dy: null };
+  else Object.assign(PH.f, g44Read(pn));
+  G40.open.rp = false; render();
+}, true);
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
