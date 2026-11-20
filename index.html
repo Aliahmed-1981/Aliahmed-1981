@@ -6453,9 +6453,9 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   "Teacher's name": 'اسم المدرس', 'Sessions/ week': 'الحصص / أسبوع', 'TOTAL TEACHERS': 'إجمالي المدرسين', 'Group': 'المجموعة', 'Grade / role': 'الصف / الدور',
   'Grade / role: leave empty to use his classes from the assignments. Group: teachers with the same group name are printed together with their total.': 'الصف / الدور: اتركه فارغاً ليُكتب فصوله من التكليفات. المجموعة: المدرسون بنفس اسم المجموعة يُطبعون معاً مع إجماليهم.',
   'Include teachers without sessions': 'إظهار المدرسين بدون حصص', 'Utilization saved': 'تم حفظ بيانات الاستغلال', 'Save': 'حفظ', 'Discard changes': 'تجاهل التعديلات', 'unsaved changes': 'تعديلات غير محفوظة',
-  'Print / PDF': 'طباعة / PDF', 'of': 'من', 'Enter a teacher name or code to search': 'اكتب اسم المدرس أو كوده للبحث', 'Stage': 'المرحلة', 'All': 'الكل', 'Subject': 'المادة', 'Search teacher': 'بحث عن مدرس', 'With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.': 'مع فلتر المرحلة أو المادة، تُحسب فصول وحصص كل مدرس داخل الفلتر فقط.', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
+  'Group the printed sheet by': 'تجميع الورقة المطبوعة حسب', 'Group column (or stage)': 'عمود المجموعة (أو المرحلة)', 'Department': 'القسم', 'Stage': 'المرحلة', 'Teacher': 'المدرس', 'TOTAL': 'الإجمالي', 'Print / PDF': 'طباعة / PDF', 'of': 'من', 'Enter a teacher name or code to search': 'اكتب اسم المدرس أو كوده للبحث', 'Stage': 'المرحلة', 'All': 'الكل', 'Subject': 'المادة', 'Search teacher': 'بحث عن مدرس', 'With a stage or subject filter, the classes and the sessions/week of each teacher count only inside the filter.': 'مع فلتر المرحلة أو المادة، تُحسب فصول وحصص كل مدرس داخل الفلتر فقط.', 'Nothing to print.': 'لا يوجد ما يُطبع.', 'Other': 'أخرى', 'Sessions': 'الحصص', 'Print preview': 'معاينة الطباعة', 'Portrait': 'عمودي', 'Landscape': 'أفقي'
 }).filter(([k]) => !(k in AR))));
-const G38 = { sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, dp: null, cl: null, subj: '', q: '' } };
+const G38 = { by: 'auto', sub: 'asg', d: null, dirty: false, zero: false, f: { st: null, dp: null, cl: null, subj: '', q: '' } };
 const g38Saved = () => (S.set && S.set.tutil) || {};
 const g38D = () => G38.d || (G38.d = JSON.parse(JSON.stringify(g38Saved())));
 const g38Get = id => Object.assign({ date: '', role: '', group: '' }, g38D()[id] || {});
@@ -6467,7 +6467,7 @@ function g38Auto(id) { const c = g38Classes(id); return c.length > 8 ? c.slice(0
 function g38Base() {                              // every teacher with his numbers inside the stage / subject filter (before the group and search filters)
   const cnt = {}; (S.lessons || []).forEach(l => { if (g38InF(l.c, l.s)) (l.t || []).forEach(x => cnt[x] = (cnt[x] || 0) + 1) });
   return (S.tch || []).map(r => { const id = String(r[0]), p = g38Get(id), cl = g38Classes(id), st = cl.length ? g38StOf(cl[0]) : t('Other');
-    return { id, name: r[1] || id, dept: String(r[5] || '').trim() || t('No department'), n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, auto: g38Auto(id), has: cl.length > 0 } })
+    return { id, name: r[1] || id, dept: String(r[5] || '').trim() || t('No department'), n: cnt[id] || 0, date: p.date, role: p.role, group: p.group || st, stage: st, auto: g38Auto(id), has: cl.length > 0 } })
     .filter(x => G38.zero ? (!G38.f.st && !G38.f.subj) || x.has || x.n : (x.n > 0 || x.has)).sort((a, b) => natural(a.name, b.name));
 }
 function g38Rows() {
@@ -6485,13 +6485,16 @@ function g38Filters() {
   const n = g38Rows().length;
   return g40Bar('ut', { qAttr: 'data-g38f="q"', qVal: f.q, ph: t('Enter a teacher name or code to search'), count: n ? '1–' + n + ' ' + t('of') + ' ' + n : '0', panel, active: !!(f.st || f.dp || f.cl || f.subj), more: [[t('Print / PDF'), 'data-g38a="print"', 'print']] });
 }
+function g38Key(r) { const b = G38.by; return b == 'dept' ? r.dept : b == 'stage' ? r.stage : r.group }
 function g38Groups() {
-  const rows = g38Rows(), by = {}; rows.forEach(r => (by[r.group] = by[r.group] || []).push(r));
+  const rows = g38Rows(), by = {}; rows.forEach(r => (by[g38Key(r)] = by[g38Key(r)] || []).push(r));
   return Object.keys(by).sort(natural).map(g => [g, by[g]]);
 }
 function g38Sheet() {
   const gr = g38Groups(); if (!gr.length) return null;
-  const out = []; gr.forEach(([g, L]) => { out.push({ sec: g }); out.push({ sec: t('TOTAL TEACHERS') + ' : ' + L.length }); L.forEach((r, i) => out.push([i + 1, r.id, g38Fmt(r.date), r.name, r.role || r.auto, r.n])) });
+  const out = [];
+  if (G38.by == 'teacher') (S.lessons.length, g38Rows()).forEach(r => { const per = {}; (S.lessons || []).forEach(l => { if ((l.t || []).includes(r.id) && g38InF(l.c, l.s)) per[l.c] = (per[l.c] || 0) + 1 }); const cs = Object.keys(per).sort(natural); out.push({ sec: r.name + (r.dept ? ' – ' + r.dept : '') }); out.push({ sec: t('TOTAL') + ' : ' + r.n }); (cs.length ? cs : ['']).forEach((c, i) => out.push([i + 1, r.id, g38Fmt(r.date), r.name, c, c ? per[c] : r.n])) });
+  else gr.forEach(([g, L]) => { out.push({ sec: g }); out.push({ sec: t('TOTAL TEACHERS') + ' : ' + L.length }); L.forEach((r, i) => out.push([i + 1, r.id, g38Fmt(r.date), r.name, r.role || r.auto, r.n])) });
   const yr = (S.set && S.set.year) || ((S.set && S.set.academic && S.set.academic.year) || '');
   return { title: t("Teachers' Utilization"), info: [[t('Academic Year'), yr]], cols: [6, 9, 13, 30, 31, 11], head: [t('NO.'), t('Print code'), t('Date of'), t("Teacher's name"), t('Grade / role'), t('Sessions/ week')], rows: out };
 }
@@ -6509,7 +6512,7 @@ function g38View() {
   const body = rows.map(r => `<tr><td class="n">${esc(r.id)}</td><td><input data-g38="${esc(r.id)}|date" value="${esc(g38Fmt(r.date))}" placeholder="d/m/yyyy"></td><td><b>${esc(r.name)}</b></td><td><input data-g38="${esc(r.id)}|group" value="${esc(g38Get(r.id).group)}" placeholder="${esc(r.group)}"></td><td><input data-g38="${esc(r.id)}|role" value="${esc(r.role)}" placeholder="${esc(r.auto)}"></td><td class="n">${r.n}</td></tr>`).join('');
   return `<div class="g38">${g38Tab().replace('<div class="g38">', '').replace(/<\/div>$/, '')}<p class="msg">${t('Grade / role: leave empty to use his classes from the assignments. Group: teachers with the same group name are printed together with their total.')}</p>
 ${g38Filters()}
-<div class="bar2"><label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-g38z="1"${G38.zero ? ' checked' : ''}> ${t('Include teachers without sessions')}</label></div>
+<div class="bar2"><label style="flex-direction:row;align-items:center;gap:6px">${t('Group the printed sheet by')} <select data-g38by="1">${[['auto', 'Group column (or stage)'], ['dept', 'Department'], ['stage', 'Stage'], ['teacher', 'Teacher']].map(([v, l]) => `<option value="${v}"${G38.by == v ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label><label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-g38z="1"${G38.zero ? ' checked' : ''}> ${t('Include teachers without sessions')}</label></div>
 <div class="sc2"><table class="ut"><tr><th>${t('Print code')}</th><th>${t('Date of')}</th><th>${t("Teacher's name")}</th><th>${t('Group')}</th><th>${t('Grade / role')}</th><th>${t('Sessions')}</th></tr>${body}</table></div>
 ${G38.dirty ? `<div class="sv"><b>${t('unsaved changes')}</b><button class="b pri" data-g38a="save">${t('Save')}</button><button class="b" data-g38a="discard">${t('Discard changes')}</button></div>` : ''}
 <div class="card"><h3>${t('Print preview')} (${pg.length})</h3>${pg.length ? `<div class="pv">${pg.slice(0, 3).map(x => `<div class="pvs" style="width:560px">${x}</div>`).join('')}</div>` : ''}</div></div>`;
@@ -6540,6 +6543,7 @@ document.addEventListener('change', e => {
       else { const i = cur.indexOf(v); if (el.checked && i < 0) cur.push(v); if (!el.checked && i >= 0) cur.splice(i, 1); f[k] = O.every(x => cur.includes(x)) ? null : cur } }
     return render();
   }
+  if (d.g38by !== undefined) { G38.by = el.value; return render() }
   if (d.g38z !== undefined) { G38.zero = el.checked; return render() }
   if (d.g38 === undefined) return;
   const [id, f] = d.g38.split('|'), D = g38D(), p = g38Get(id); let v = el.value.trim();
