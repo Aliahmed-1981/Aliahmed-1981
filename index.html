@@ -494,6 +494,22 @@ nav#g41nav{display:block;padding:12px 20px 0}
 @media print{nav#g41nav{display:none!important}}
 :root[data-theme=dark] #g41nav .g41b.on,:root[data-theme=dark] #g41nav .g41c.on{color:#fff}
 </style>
+<style id="g42css">
+/* Excel-like grids for every editable table */
+table.ed.g42x{border-collapse:separate;border-spacing:0;border:1px solid var(--ln);border-radius:10px}
+table.ed.g42x th{position:sticky;top:0;z-index:2}
+table.ed.g42x td{border-bottom:1px solid var(--ln);border-inline-end:1px solid var(--ln);padding:0}
+table.ed.g42x td input:not([type=checkbox]):not([type=color]),table.ed.g42x td select{width:100%;box-sizing:border-box;border:0;border-radius:0;background:transparent;margin:0;min-height:36px}
+table.ed.g42x tr:nth-child(even) td{background:rgba(120,130,150,.06)}
+table.ed.g42x tr:hover td{background:var(--hl)}
+table.ed.g42x td:focus-within{outline:2px solid var(--teal);outline-offset:-2px;background:var(--soft)}
+table.ed.g42x td:last-child{width:1%;text-align:center}
+.g42s{margin:0 0 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.g42s input{flex:1;min-width:180px;max-width:420px;height:38px;padding:0 12px;border:1px solid var(--ln);border-radius:10px;background:var(--sf)}
+.g42s small{color:var(--mut)}
+.g42h{color:var(--mut);font-size:12px;margin:0 0 6px}
+@media print{.g42s,.g42h{display:none!important}}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -6529,7 +6545,7 @@ function g39Ask(title, fields) {
     const o = document.createElement('div'); o.className = 'g39o';
     const body = fields.map(f => {
       if (f.type == 'checks') return `<div class="fl"><b>${esc(f.label)}</b><div class="ch" data-k="${f.k}"><label><input type="checkbox" data-all="1" checked> <b>${t('All')}</b></label>${f.opts.map(([v, l]) => `<label><input type="checkbox" data-v="${esc(v)}" checked> ${esc(l)}</label>`).join('')}</div></div>`;
-      if (f.type == 'select') return `<div class="fl"><b>${esc(f.label)}</b><select data-k="${f.k}"><option value="">${t('All')}</option>${f.opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select></div>`;
+      if (f.type == 'select') return `<div class="fl"><b>${esc(f.label)}</b><input type="search" data-k="${f.k}" data-sel="1" list="g39dl-${f.k}" placeholder="${t('All')} – ${t('type to search')}" autocomplete="off"><datalist id="g39dl-${f.k}">${f.opts.map(([v, l]) => `<option value="${esc(l)}"></option>`).join('')}</datalist></div>`;
       if (f.type == 'flag') return `<div class="fl"><label><input type="checkbox" data-k="${f.k}" data-flag="1"> ${esc(f.label)}</label></div>`;
       return `<div class="fl"><b>${esc(f.label)}</b><input type="${f.type == 'date' ? 'date' : 'text'}" data-k="${f.k}"></div>`;
     }).join('');
@@ -6547,6 +6563,7 @@ function g39Ask(title, fields) {
       const out = {};
       fields.forEach(f => {
         if (f.type == 'checks') { const bx = [...o.querySelectorAll('.ch[data-k="' + f.k + '"] input[data-v]')]; out[f.k] = bx.every(x => x.checked) ? null : bx.filter(x => x.checked).map(x => x.dataset.v) }
+        else if (f.type == 'select') { const v = o.querySelector('[data-k="' + f.k + '"]').value.trim().toLowerCase(); const m = !v ? null : (f.opts.find(([x, l]) => String(l).toLowerCase() == v || String(x).toLowerCase() == v) || f.opts.find(([x, l]) => String(l).toLowerCase().includes(v))); out[f.k] = m ? m[0] : (v ? '\u0000none' : '') }
         else { const el = o.querySelector('[data-k="' + f.k + '"]'); out[f.k] = f.type == 'flag' ? el.checked : el.value }
       });
       done(out);
@@ -6564,7 +6581,7 @@ const g39Opt = a => a.map(x => [x, x]);
 const _g39Conf = conflictsReport; let G39C = null;
 conflictsReport = function () {
   if (!G39C) return _g39Conf();
-  const f = G39C, q = lc(f.q || ''), keep = S.conflicts.list.filter(c => !c.ign && (!f.sev || f.sev.includes(c.sev)) && g39In(f.type, c.type) && (!f.t || (c.p && c.p.t == f.t)) && (!f.st || [c.p.c, c.p.c1, c.p.c2].filter(Boolean).some(x => f.st.includes(g39St(x)))) && (!q || lc(cmsg(c)).includes(q)));
+  const f = G39C, q = lc(f.q || ''), keep = S.conflicts.list.filter(c => !c.ign && (!f.sev || f.sev.includes(c.sev)) && g39In(f.type, c.type) && (!f.t || (c.p && c.p.t == f.t)) && (!f.cl || [c.p.c, c.p.c1, c.p.c2].includes(f.cl)) && (!f.st || [c.p.c, c.p.c1, c.p.c2].filter(Boolean).some(x => f.st.includes(g39St(x)))) && (!q || lc(cmsg(c)).includes(q)));
   const was = S.conflicts.list; S.conflicts.list = keep;
   try { return _g39Conf() } finally { S.conflicts.list = was }
 };
@@ -6575,7 +6592,7 @@ doPrint = async function () {
   const sts = g39Stages(L.flatMap(c => [c.p.c, c.p.c1, c.p.c2].filter(Boolean)));
   const f = await g39Ask(t('Conflicts report') + ' – ' + t('Print filters'), [
     { k: 'sev', label: t('Severity'), type: 'checks', opts: [['error', t('Error')], ['warning', t('Warning')]] }, { k: 'type', label: t('Type'), type: 'checks', opts: types.map(x => [String(x), t(TYPES[x])]) },
-    { k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(sts) }, { k: 't', label: t('Teacher'), type: 'select', opts: ts.map(x => [x, tname(x)]) }, { k: 'q', label: t('Contains the text'), type: 'text' }]);
+    { k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(sts) }, { k: 'cl', label: t('Class'), type: 'select', opts: g39Opt(I.classes.slice().sort(natural)) }, { k: 't', label: t('Teacher'), type: 'select', opts: ts.map(x => [x, tname(x)]) }, { k: 'q', label: t('Contains the text'), type: 'text' }]);
   if (!f) return; G39C = f;
   try { const h = conflictsReport(); if (!h.includes('<td')) toast(t('Nothing matches these filters.'), 1); else printHtml(h) } finally { G39C = null }
 };
@@ -6586,9 +6603,9 @@ abxPrint = async function (date) {
   const D = ABX.data, rows = D.covers.filter(c => c.date == date && !c.prov); if (!rows.length) return;
   const ab = [...new Set(rows.map(c => c.absent).filter(Boolean))], sb = [...new Set(rows.map(c => c.sub).filter(Boolean))];
   const f = await g39Ask(t('Substitute sheet') + ' – ' + t('Print filters'), [
-    { k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(g39Stages(rows.map(c => c.c))) }, { k: 'ab', label: t('Absent teacher'), type: 'select', opts: ab.map(x => [x, abxName(x)]) }, { k: 'sb', label: t('Substitute'), type: 'select', opts: sb.map(x => [x, abxName(x)]) }]);
+    { k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(g39Stages(rows.map(c => c.c))) }, { k: 'cl', label: t('Class'), type: 'select', opts: g39Opt([...new Set(rows.map(c => c.c))].sort(natural)) }, { k: 'ab', label: t('Absent teacher'), type: 'select', opts: ab.map(x => [x, abxName(x)]) }, { k: 'sb', label: t('Substitute'), type: 'select', opts: sb.map(x => [x, abxName(x)]) }]);
   if (!f) return;
-  const keep = D.covers.filter(c => c.date != date || c.prov || ((!f.st || f.st.includes(g39St(c.c))) && (!f.ab || c.absent == f.ab) && (!f.sb || c.sub == f.sb)));
+  const keep = D.covers.filter(c => c.date != date || c.prov || ((!f.st || f.st.includes(g39St(c.c))) && (!f.cl || c.c == f.cl) && (!f.ab || c.absent == f.ab) && (!f.sb || c.sub == f.sb)));
   if (!keep.some(c => c.date == date && !c.prov)) return toast(t('Nothing matches these filters.'), 1);
   const old = ABX.data; ABX.data = Object.assign({}, old, { covers: keep });
   try { _g39Abx(date) } finally { ABX.data = old }
@@ -6614,14 +6631,14 @@ const _g39Qr = qaRows; let G39Q = null;
 qaRows = function (D) {
   const R = _g39Qr(D); if (!G39Q) return R;
   const f = G39Q, inT = x => !f.st || (x.st instanceof Set ? [...x.st].some(s => f.st.includes(s)) : f.st.includes(x.st));
-  return { T: R.T.filter(inT), C: R.C.filter(inT) };
+  return { T: R.T.filter(x => inT(x) && (!f.t || x.id == f.t) && (!f.cl || S.lessons.some(l => l.c == f.cl && (l.t || []).includes(x.id)))), C: R.C.filter(x => inT(x) && (!f.cl || x.c == f.cl)) };
 };
 document.addEventListener('click', async e => {
   const b = e.target.closest && e.target.closest('[data-qaa="print"],[data-qaa="xlsx"]'); if (!b || TAB != 'qa') return;
   e.stopImmediatePropagation(); e.preventDefault();
   if (!S.lessons.length) return;
   const sts = [...new Set((S.cls || []).map(r => g39St(r[0])).concat(I.classes.map(g39St)))].sort(natural);
-  const f = await g39Ask(t('Timetable quality report') + ' – ' + t('Print filters'), [{ k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(sts) }, { k: 'only', label: t('Only items with issues'), type: 'flag' }]);
+  const f = await g39Ask(t('Timetable quality report') + ' – ' + t('Print filters'), [{ k: 'st', label: t('Stage'), type: 'checks', opts: g39Opt(sts) }, { k: 'cl', label: t('Class'), type: 'select', opts: g39Opt([...new Set((S.cls || []).map(r => r[0]).concat(I.classes))].sort(natural)) }, { k: 't', label: t('Teacher'), type: 'select', opts: Object.keys(I.tn).sort((a, b) => natural(tname(a), tname(b))).map(x => [x, tname(x)]) }, { k: 'only', label: t('Only items with issues'), type: 'flag' }]);
   if (!f) return; G39Q = f; const was = QA.only; if (f.only) QA.only = true;
   try { b.dataset.qaa == 'print' ? printHtml(qaSheets(), false) : qaXlsx() } finally { G39Q = null; QA.only = was }
 }, true);
@@ -6783,6 +6800,87 @@ document.addEventListener('click', e => {
   if (raw) raw.click(); else { TAB = id; render() }
 });
 try { g41Nav() } catch (e) { }
+</script>
+<script>
+/* ---------- G42: Excel-like editing in every settings table + live row search ---------- */
+Object.assign(AR, { 'type to search': 'اكتب للبحث', 'Search in this table': 'ابحث في هذا الجدول', 'rows shown': 'صف ظاهر', 'Excel-style grid: arrows / Enter move between cells, Ctrl+D fills down, and you can paste a block copied from Excel.': 'جدول بنمط Excel: الأسهم / Enter للتنقل بين الخلايا، Ctrl+D للنسخ للأسفل، ويمكنك لصق مجموعة خلايا منسوخة من Excel.' });
+const G42 = { q: {} };
+const g42Cells = tr => [...tr.querySelectorAll('[data-e]')];
+const g42Rows = tb => [...tb.querySelectorAll('tr')].filter(tr => tr.querySelector('[data-e]') && tr.style.display != 'none');
+function g42Focus(n, r, c) { setTimeout(() => { const el = document.querySelector('[data-e="' + n + '|' + r + '|' + c + '"]'); if (el) { el.focus(); if (el.select) try { el.select() } catch (x) { } } }, 0) }
+const _g42ed = edTable;
+edTable = function () {
+  let h = _g42ed.apply(this, arguments);
+  h = h.replace('<table class="ed">', '<table class="ed g42x">');
+  return h.replace('<div class="sc"', '<p class="g42h">' + t('Excel-style grid: arrows / Enter move between cells, Ctrl+D fills down, and you can paste a block copied from Excel.') + '</p><div class="sc"');
+};
+document.addEventListener('keydown', e => {
+  const el = e.target, tb = el.closest && el.closest('table.g42x'); if (!tb || !el.dataset || !el.dataset.e) return;
+  const [n, r, c] = el.dataset.e.split('|'), k = e.key, tr = el.closest('tr'), ci = g42Cells(tr).indexOf(el);
+  const vrow = d => { const rows = g42Rows(tb), i = rows.indexOf(tr) + d; return rows[i] || null };
+  const goRow = d => {
+    const nx = vrow(d);
+    if (nx) { const t2 = g42Cells(nx)[ci]; if (t2) { t2.focus(); if (t2.select) try { t2.select() } catch (x) { } } return }
+    if (d > 0 && typeof NEWROW != 'undefined' && NEWROW[n]) { ed(n).push(NEWROW[n]()); render(); g42Focus(n, ed(n).length - 1, g42Cells(tr)[ci].dataset.e.split('|')[2]) }
+  };
+  const isSel = el.tagName == 'SELECT';
+  if (k == 'Enter' && el.tagName != 'BUTTON') { e.preventDefault(); return goRow(e.shiftKey ? -1 : 1) }
+  if (!isSel && !e.ctrlKey && !e.altKey && (k == 'ArrowDown' || k == 'ArrowUp')) { e.preventDefault(); return goRow(k == 'ArrowDown' ? 1 : -1) }
+  if (e.ctrlKey && (k == 'ArrowDown' || k == 'ArrowUp')) { e.preventDefault(); return goRow(k == 'ArrowDown' ? 1 : -1) }
+  if (e.ctrlKey && (k == 'ArrowRight' || k == 'ArrowLeft')) {
+    e.preventDefault(); const cs = g42Cells(tr), d = (k == 'ArrowRight') == (document.documentElement.dir != 'rtl') ? 1 : -1, t2 = cs[ci + d];
+    if (t2) { t2.focus(); if (t2.select) try { t2.select() } catch (x) { } } return
+  }
+  if (e.ctrlKey && (k == 'd' || k == 'D')) {
+    const pv = vrow(-1); if (!pv) return; e.preventDefault();
+    const src = g42Cells(pv)[ci]; if (!src) return; const [, r0, c0] = src.dataset.e.split('|');
+    const v = ed(n)[+r0][+c0]; ed(n)[+r][+c] = v; el.value = v == null ? '' : v; el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+});
+document.addEventListener('paste', e => {
+  const el = e.target, tb = el.closest && el.closest('table.g42x'); if (!tb || !el.dataset || !el.dataset.e) return;
+  const txt = (e.clipboardData && e.clipboardData.getData('text')) || '';
+  if (!/[\t\n]/.test(txt.replace(/\r?\n$/, ''))) return;
+  e.preventDefault();
+  const [n, r0, c0] = el.dataset.e.split('|'), lines = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t'));
+  const rows = g42Rows(tb), start = rows.indexOf(el.closest('tr')), ci0 = g42Cells(el.closest('tr')).indexOf(el);
+  const cols = g42Cells(rows[start]).map(x => +x.dataset.e.split('|')[2]);
+  lines.forEach((cells, li) => {
+    let ri;
+    if (rows[start + li]) ri = +g42Cells(rows[start + li])[0].dataset.e.split('|')[1];
+    else { ed(n).push(NEWROW[n]()); ri = ed(n).length - 1 }
+    cells.forEach((v, k) => {
+      const col = cols[ci0 + k]; if (col === undefined) return; v = String(v).trim();
+      const src = document.querySelector('[data-e="' + n + '|' + (rows[start] ? r0 : 0) + '|' + col + '"]');
+      if (src && src.tagName == 'SELECT') { const o = [...src.options].find(x => x.value.toLowerCase() == v.toLowerCase() || x.textContent.trim().toLowerCase() == v.toLowerCase()); if (!o) return; v = o.value }
+      ed(n)[ri][col] = v;
+    });
+  });
+  render(); g42Focus(n, r0, c0);
+});
+/* live row search above every long table (DOM only, so typing never loses focus) */
+function g42Match(tr, q) { return !q || (tr.textContent + ' ' + [...tr.querySelectorAll('input,select')].map(x => x.tagName == 'SELECT' ? (x.selectedOptions[0] || {}).textContent : x.value).join(' ')).toLowerCase().includes(q) }
+function g42Apply(inp) {
+  const tb = inp._tb; if (!tb || !document.body.contains(tb)) return; const q = inp.value.trim().toLowerCase();
+  const trs = [...tb.querySelectorAll('tr')].slice(1); let n = 0;
+  trs.forEach(tr => { const ok = g42Match(tr, q); tr.style.display = ok ? '' : 'none'; if (ok) n++ });
+  const c = inp.parentNode.querySelector('small'); if (c) c.textContent = q ? n + ' / ' + trs.length + ' ' + t('rows shown') : '';
+  G42.q[inp.dataset.g42a] = inp.value;
+}
+function g42Auto() {
+  const v = document.getElementById('v'); if (!v || v.querySelector('.g40b')) return;
+  [...v.querySelectorAll('table.ed,table.ex')].forEach((tb, i) => {
+    if (tb.closest('.sheet,.g39o') || tb.dataset.g42 || tb.querySelectorAll('tr').length < 9) return;
+    tb.dataset.g42 = '1'; const key = TAB + '|' + (typeof SUB != 'undefined' ? SUB : '') + '|' + i;
+    const w = tb.closest('.sc,.tw') || tb, bar = document.createElement('div'); bar.className = 'g42s';
+    bar.innerHTML = '<input type="search" data-g42a="' + key + '" placeholder="' + t('Search in this table') + '" autocomplete="off"><small></small>';
+    w.parentNode.insertBefore(bar, w); const inp = bar.firstChild; inp._tb = tb;
+    if (G42.q[key]) { inp.value = G42.q[key]; g42Apply(inp) }
+  });
+}
+document.addEventListener('input', e => { const a = e.target; if (a && a.dataset && a.dataset.g42a !== undefined) g42Apply(a) });
+const _g42r = render;
+render = function () { const r = _g42r.apply(this, arguments); try { g42Auto() } catch (x) { console.error(x) } return r };
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
