@@ -7042,9 +7042,11 @@ function g45Apply(sc, tb) {
 }
 function g45Post() {
   const v = document.getElementById('v'); if (!v) return;
+  const dedupe = () => v.querySelectorAll('.g42s').forEach(x => { const i = x.querySelector('input'), tb = i && i._tb; if (!tb || tb.dataset.g45 || tb.closest('.card') && tb.closest('.card').querySelector('.g40b')) x.remove() });
   if (TAB == 'us') { const tb = v.querySelector('.usr table.ed:not(.rm)'); if (tb && !tb.dataset.g45 && g45Rows(tb).length) g45Bar('us', tb, [[2, 'Role'], [3, 'Scope'], [4, 'Can edit'], [5, 'Active']].filter(x => x[0] != 3), 'Search users') }
   if (TAB == 'st') [...v.querySelectorAll('.card')].forEach(cd => { const h = cd.querySelector(':scope > h3'); const tb = cd.querySelector('table.ed'); if (h && tb && !tb.dataset.g45 && h.textContent.trim() == t('Change log')) g45Bar('log', tb, [[1, 'Class'], [2, 'Day'], [6, 'User']], 'Search the change log') });
   if (TAB == 'ab') { const items = [...v.querySelectorAll('.cv')]; if (items.length && !v.querySelector('.g40b[data-g40id=ab]')) g45Cv(v, items) }
+  dedupe();
 }
 /* substitute lessons: cards of small tables - search and class filter hide rows and empty cards */
 function g45Cv(v, tbs) {
