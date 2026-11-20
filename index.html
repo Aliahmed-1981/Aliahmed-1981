@@ -524,6 +524,16 @@ table.ed.g42x td:last-child{width:1%;text-align:center}
   .g40pn .ap .b{flex:1;min-height:44px}
 }
 </style>
+<style id="g46css">
+.g46c{min-width:150px;max-width:100%;height:40px;padding:0 12px;border:1px solid var(--ln);border-radius:10px;background:var(--sf);color:inherit;font:inherit;box-sizing:border-box}
+.g46c:focus{outline:2px solid var(--teal,#0d8a8a);outline-offset:1px}
+.g46p{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.g46p .seg button{white-space:nowrap}
+.g46pl{font-weight:700;display:flex;gap:8px;align-items:center}
+.g46s h4{margin:16px 0 6px;font-size:15px;display:flex;gap:8px;align-items:baseline}
+.g46s h4 small{color:var(--mut);font-weight:400}
+.g46s .cr{margin:0 0 6px}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -7070,6 +7080,126 @@ document.addEventListener('click', e => {
 }, true);
 const _g45r = render;
 render = function () { const r = _g45r.apply(this, arguments); try { g45Post() } catch (x) { console.error(x) } return r };
+</script>
+<script>
+/* ---------- G46: typeable pickers, Master grid merged into the Master sheet (with filters), calendar search + periods + summary ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Search classes': 'ابحث بالفصل', 'Week': 'الأسبوع', 'Month': 'الشهر', 'Term 1': 'الترم 1', 'Term 2': 'الترم 2', 'Term 3': 'الترم 3', 'Year': 'السنة', 'Search events': 'ابحث في الفعاليات', 'event': 'فعالية', 'events': 'فعاليات',
+  'Print summary': 'طباعة الملخص', 'No events in this period.': 'لا توجد فعاليات في هذه الفترة.', 'Days': 'الأيام', 'Classes': 'الفصول', 'Stage': 'المرحلة', 'classes': 'فصل', 'of': 'من', 'Today': 'اليوم', 'Previous': 'السابق', 'Next': 'التالي'
+}).filter(([k]) => !(k in AR))));
+
+/* ===== A. every long picker accepts typing (the real select stays hidden and keeps the value) ===== */
+let _g46n = 0;
+function g46Combos() {
+  document.querySelectorAll('#v select[data-sel],#v select[data-bmt],#v select[data-bms],#v select[data-cfs="cls"],#v select[data-cfs="tch"],#v select[data-ppst]').forEach(sel => {
+    if (sel.dataset.g46 || sel.options.length < 7) return; sel.dataset.g46 = '1';
+    const opts = [...sel.options], id = 'g46dl' + (++_g46n), cur = () => ((sel.selectedOptions[0] || {}).textContent || '').trim();
+    const inp = document.createElement('input'); inp.type = 'search'; inp.className = 'g46c ' + (sel.className || ''); inp.setAttribute('list', id); inp.autocomplete = 'off';
+    inp.value = sel.value === '' && !sel.dataset.g46all ? '' : cur(); inp.placeholder = cur() || t('type to search');
+    const dl = document.createElement('datalist'); dl.id = id; dl.innerHTML = opts.map(o => `<option value="${esc(o.textContent.trim())}"></option>`).join('');
+    sel.style.display = 'none'; sel.parentNode.insertBefore(inp, sel); sel.parentNode.insertBefore(dl, sel);
+    const pick = (txt, partial) => {
+      const q = txt.trim().toLowerCase(); if (!q) return false;
+      let o = opts.find(x => x.textContent.trim().toLowerCase() == q);
+      if (!o && partial) { const m = opts.filter(x => x.textContent.toLowerCase().includes(q)); if (m.length == 1) o = m[0] }
+      if (!o) return false;
+      if (sel.value !== o.value) { sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })) }
+      inp.value = o.textContent.trim(); return true;
+    };
+    inp.addEventListener('focus', () => { inp.dataset.old = inp.value; inp.value = '' });
+    inp.addEventListener('input', e => { if (!e.inputType || e.inputType == 'insertReplacementText') pick(inp.value, false) });
+    inp.addEventListener('change', () => { if (!pick(inp.value, true)) inp.value = inp.dataset.old || cur() });
+    inp.addEventListener('blur', () => { if (!inp.value) inp.value = inp.dataset.old || cur() });
+    inp.addEventListener('keydown', e => { if (e.key == 'Enter') { pick(inp.value, true); e.stopPropagation() } });
+  });
+}
+
+/* ===== B. Master grid is gone from Timetables: Class / Teacher / Room there, the whole school in the Master sheet ===== */
+const _g46tt = rTimetables;
+rTimetables = function () {
+  if (VIEW == 'master') VIEW = 'class';
+  return _g46tt().replace(/<button data-view="master"[^>]*>[\s\S]*?<\/button>/, '');
+};
+const BMF = { st: null, cl: null, dy: null, q: '' };
+const _g46bm = rBigMaster;
+rBigMaster = function () {
+  const f = BMF, oc = I.classes, od = I.days, ob = SEL.bm, q = f.q.trim().toLowerCase(); let h;
+  const stSel = f.st ? stages().filter(s => f.st.includes(s)) : null;
+  try {
+    I.classes = oc.filter(c => (!stSel || stSel.includes(stageOf(c))) && g44In(f.cl, c) && (!q || String(c).toLowerCase().includes(q)));
+    I.days = od.filter(d => g44In(f.dy, String(d)));
+    SEL.bm = stSel && stSel.length == 1 ? stSel[0] : '*';
+    h = _g46bm();
+  } finally { I.classes = oc; I.days = od; SEL.bm = ob }
+  const st = stages().map(x => [x, x]), cl = oc.slice().sort(natural).map(x => [x, x]), dy = od.map(d => [String(d), dayName(d)]);
+  const nC = oc.filter(c => (!stSel || stSel.includes(stageOf(c))) && g44In(f.cl, c) && (!q || String(c).toLowerCase().includes(q))).length;
+  h = h.replace(/<select data-bms>[\s\S]*?<\/select>\s*/, '');                      // the old stage picker: the filter bar replaces it
+  const bar = g40Bar('bm', { qAttr: 'data-g46bq="1"', qVal: f.q, ph: t('Search classes'), count: nC + ' ' + t('classes') + ' · ' + od.filter(d => g44In(f.dy, String(d))).length + ' ' + t('Days'), panel: g44Dim('st', t('Stage'), st, f.st) + g44Dim('cl', t('Classes'), cl, f.cl) + g44Dim('dy', t('Days'), dy, f.dy), active: !!(f.st || f.cl || f.dy), more: [] });
+  return bar + h;
+};
+document.addEventListener('input', e => { const el = e.target; if (el.dataset && el.dataset.g46bq !== undefined) { BMF.q = el.value; render() } });
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-g40a$="|bm"]'); if (!a || TAB != 'bm') return;
+  const pn = a.closest('.g40pn'); if (!pn) return;
+  if (a.dataset.g40a.startsWith('clear')) { BMF.st = BMF.cl = BMF.dy = null } else Object.assign(BMF, g44Read(pn));
+  G40.open.bm = false; render();
+}, true);
+function g46Bands() { document.querySelectorAll('#bmsc tr.band').forEach(b => { const n = b.nextElementSibling; if (!n || !n.classList.contains('ct')) b.remove() }) }
+
+/* ===== C. calendar: search, week / month / term / year, summary and print ===== */
+Object.assign(CAL, { per: 'month', q: '', wk: '' });
+const _g46cv = calVisible;
+calVisible = function () { const q = (CAL.q || '').trim().toLowerCase(); const L = _g46cv(); return q ? L.filter(e => (e.name + ' ' + e.note + ' ' + e.scope + ' ' + t(CAL_LB[e.type])).toLowerCase().includes(q)) : L };
+const g46D = d => tdDate(d), g46Add = (ds, n) => { const d = new Date(ds + 'T00:00'); d.setDate(d.getDate() + n); return g46D(d) };
+function g46Year() {
+  const a = calAcad(), td = tdDate(), y = +td.slice(0, 4), m = +td.slice(5, 7);
+  const s = a.start || (a.sem1 && a.sem1.s) || ((m >= 8 ? y : y - 1) + '-09-01'), e = a.end || (a.sem2 && a.sem2.e) || ((+s.slice(0, 4) + 1) + '-06-30');
+  return [s, e];
+}
+function g46Range() {
+  const p = CAL.per, [ys, ye] = g46Year();
+  if (p == 'week') { const ws = CAL.wk || g46Add(tdDate(), -new Date(tdDate() + 'T00:00').getDay()); return [ws, g46Add(ws, 6)] }
+  if (p == 'year') return [ys, ye];
+  if (p == 't1' || p == 't2' || p == 't3') { const n = Math.round((new Date(ye + 'T00:00') - new Date(ys + 'T00:00')) / 864e5) + 1, k = +p[1] - 1, a = g46Add(ys, Math.floor(n * k / 3)), b = k == 2 ? ye : g46Add(ys, Math.floor(n * (k + 1) / 3) - 1); return [a, b] }
+  const [Y, M] = CAL.m.split('-').map(Number); return [CAL.m + '-01', CAL.m + '-' + pad(new Date(Y, M, 0).getDate())];
+}
+const g46In = L => { const [a, b] = g46Range(); return L.filter(e => e.s <= b && e.e >= a).sort((x, y) => x.s < y.s ? -1 : x.s > y.s ? 1 : x.name < y.name ? -1 : 1) };
+function g46Label() {
+  const [a, b] = g46Range(), p = CAL.per, nm = { week: 'Week', t1: 'Term 1', t2: 'Term 2', t3: 'Term 3', year: 'Year', month: 'Month' }[p];
+  return t(nm) + ' · ' + calFmt(a) + ' → ' + calFmt(b);
+}
+function g46Rows(L, adm) {
+  const by = {}; L.forEach(e => { const k = e.s.slice(0, 7); (by[k] = by[k] || []).push(e) });
+  return Object.keys(by).sort().map(k => { const d = new Date(k + '-01T00:00'), title = d.toLocaleDateString(HL == 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', { month: 'long', year: 'numeric' });
+    return `<h4>${esc(title)} <small>${by[k].length} ${t(by[k].length == 1 ? 'event' : 'events')}</small></h4>` + by[k].map(e => `<div class="cr ${e.type}"><span class="cty ${e.type}">${esc(t(CAL_LB[e.type]))}</span><span class="grow"><b>${esc(e.name)}</b><small class="msg">${esc(calRange(e))} · ${esc(calScopeLabel(e.scope))}${e.note ? ' · ' + esc(e.note) : ''}</small></span>${adm ? `<span class="btns"><button class="b" data-cal="edit" data-id="${esc(e.id)}">${t('Edit')}</button></span>` : ''}</div>`).join('') }).join('');
+}
+const _g46cal = rCal;
+rCal = function () {
+  const adm = calAdmin(), per = CAL.per || 'month';
+  const seg = `<div class="seg">${[['week', 'Week'], ['month', 'Month'], ['t1', 'Term 1'], ['t2', 'Term 2'], ['t3', 'Term 3'], ['year', 'Year']].map(([k, l]) => `<button type="button" data-g46per="${k}" class="${per == k ? 'on' : ''}">${t(l)}</button>`).join('')}</div>`;
+  const L = g46In(calVisible()), top = `<div class="g46p">${seg}<span class="g46pl">${per != 'month' ? `${per == 'week' ? `<button class="cnav" data-g46wk="-7" aria-label="${esc(t('Previous'))}"><span>‹</span></button>` : ''}${esc(g46Label())}${per == 'week' ? `<button class="cnav" data-g46wk="7" aria-label="${esc(t('Next'))}"><span>›</span></button>` : ''}` : ''}</span><span class="grow"></span>${L.length ? `<button class="b" data-g46print="1">${ic('print')} ${t('Print summary')}</button>` : ''}</div>`;
+  const search = `<div class="g40b"><div class="g40sr">${g40Ico}<input type="text" data-g46cq="1" value="${esc(CAL.q || '')}" placeholder="${esc(t('Search events'))}"></div><div class="g40rw"><span class="g40cnt">${L.length} ${t(L.length == 1 ? 'event' : 'events')}</span></div></div>`;
+  const h = _g46cal();
+  if (per == 'month') return h.replace('<div class="cal">', '<div class="cal">' + search + top);
+  const btns = (h.match(/<button[^>]*data-cal="(?:add|imp|tpl|ics)"[^>]*>[\s\S]*?<\/button>/g) || []).join(''), chips = (h.match(/<div class="cfl">[\s\S]*?<\/div>/) || [''])[0];
+  return `<div class="cal g46s">${search}${top}<div class="cbar">${btns}</div>${chips}${L.length ? g46Rows(L, adm) : `<p class="msg">${t('No events in this period.')}</p>`}</div>`;
+};
+document.addEventListener('input', e => { const el = e.target; if (el.dataset && el.dataset.g46cq !== undefined) { CAL.q = el.value; render() } });
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-g46per],[data-g46wk],[data-g46print]'); if (!b || TAB != 'cal') return;
+  if (b.dataset.g46per) { CAL.per = b.dataset.g46per; if (CAL.per == 'week' && !CAL.wk) CAL.wk = ''; return render() }
+  if (b.dataset.g46wk) { CAL.wk = g46Add(g46Range()[0], +b.dataset.g46wk); return render() }
+  if (b.dataset.g46print) return calPrint();
+});
+const _g46cp = calPrint;
+calPrint = function () {
+  const L = g46In(calVisible()); if (!L.length) return toast(t('No events in this period.'), 1);
+  const o = calVisible; calVisible = () => L.slice();
+  try { return _g46cp.apply(this, arguments) } finally { calVisible = o }
+};
+
+const _g46r = render;
+render = function () { const r = _g46r.apply(this, arguments); try { g46Combos(); g46Bands() } catch (e) { console.error(e) } return r };
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
