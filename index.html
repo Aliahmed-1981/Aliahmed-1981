@@ -533,6 +533,7 @@ table.ed.g42x td:last-child{width:1%;text-align:center}
 .g46s h4{margin:16px 0 6px;font-size:15px;display:flex;gap:8px;align-items:baseline}
 .g46s h4 small{color:var(--mut);font-weight:400}
 .g46s .cr{margin:0 0 6px}
+body.g46bm #vzb{display:none!important}
 </style>
 </head><body>
 <script>
@@ -7133,7 +7134,7 @@ rBigMaster = function () {
   } finally { I.classes = oc; I.days = od; SEL.bm = ob }
   const st = stages().map(x => [x, x]), cl = oc.slice().sort(natural).map(x => [x, x]), dy = od.map(d => [String(d), dayName(d)]);
   const nC = oc.filter(c => (!stSel || stSel.includes(stageOf(c))) && g44In(f.cl, c) && (!q || String(c).toLowerCase().includes(q))).length;
-  h = h.replace(/<select data-bms>[\s\S]*?<\/select>\s*/, '');                      // the old stage picker: the filter bar replaces it
+  h = h.replace(/<label><input type="checkbox" data-bmall[\s\S]*?<\/label>\s*/, '').replace(/<select data-bms>[\s\S]*?<\/select>\s*/, '');                      // the old stage picker: the filter bar replaces it
   const bar = g40Bar('bm', { qAttr: 'data-g46bq="1"', qVal: f.q, ph: t('Search classes'), count: nC + ' ' + t('classes') + ' · ' + od.filter(d => g44In(f.dy, String(d))).length + ' ' + t('Days'), panel: g44Dim('st', t('Stage'), st, f.st) + g44Dim('cl', t('Classes'), cl, f.cl) + g44Dim('dy', t('Days'), dy, f.dy), active: !!(f.st || f.cl || f.dy), more: [] });
   return bar + h;
 };
@@ -7177,10 +7178,10 @@ const _g46cal = rCal;
 rCal = function () {
   const adm = calAdmin(), per = CAL.per || 'month';
   const seg = `<div class="seg">${[['week', 'Week'], ['month', 'Month'], ['t1', 'Term 1'], ['t2', 'Term 2'], ['t3', 'Term 3'], ['year', 'Year']].map(([k, l]) => `<button type="button" data-g46per="${k}" class="${per == k ? 'on' : ''}">${t(l)}</button>`).join('')}</div>`;
-  const L = g46In(calVisible()), top = `<div class="g46p">${seg}<span class="g46pl">${per != 'month' ? `${per == 'week' ? `<button class="cnav" data-g46wk="-7" aria-label="${esc(t('Previous'))}"><span>‹</span></button>` : ''}${esc(g46Label())}${per == 'week' ? `<button class="cnav" data-g46wk="7" aria-label="${esc(t('Next'))}"><span>›</span></button>` : ''}` : ''}</span><span class="grow"></span>${L.length ? `<button class="b" data-g46print="1">${ic('print')} ${t('Print summary')}</button>` : ''}</div>`;
+  const L = g46In(calVisible()), top = `<div class="g46p">${seg}<span class="g46pl">${per != 'month' ? `${per == 'week' ? `<button class="cnav" data-g46wk="-7" aria-label="${esc(t('Previous'))}"><span>‹</span></button>` : ''}${esc(g46Label())}${per == 'week' ? `<button class="cnav" data-g46wk="7" aria-label="${esc(t('Next'))}"><span>›</span></button>` : ''}` : ''}</span><span class="grow"></span>${L.length ? `<button class="b" data-g46print="1">${ic('print')} ${t('Print')}</button>` : ''}</div>`;
   const search = `<div class="g40b"><div class="g40sr">${g40Ico}<input type="text" data-g46cq="1" value="${esc(CAL.q || '')}" placeholder="${esc(t('Search events'))}"></div><div class="g40rw"><span class="g40cnt">${L.length} ${t(L.length == 1 ? 'event' : 'events')}</span></div></div>`;
   const h = _g46cal();
-  if (per == 'month') return h.replace('<div class="cal">', '<div class="cal">' + search + top);
+  if (per == 'month') return h.replace(/<button[^>]*data-cal="print"[^>]*>[\s\S]*?<\/button>/, '').replace('<div class="cal">', '<div class="cal">' + search + top);
   const btns = (h.match(/<button[^>]*data-cal="(?:add|imp|tpl|ics)"[^>]*>[\s\S]*?<\/button>/g) || []).join(''), chips = (h.match(/<div class="cfl">[\s\S]*?<\/div>/) || [''])[0];
   return `<div class="cal g46s">${search}${top}<div class="cbar">${btns}</div>${chips}${L.length ? g46Rows(L, adm) : `<p class="msg">${t('No events in this period.')}</p>`}</div>`;
 };
@@ -7199,7 +7200,16 @@ calPrint = function () {
 };
 
 const _g46r = render;
-render = function () { const r = _g46r.apply(this, arguments); try { g46Combos(); g46Bands() } catch (e) { console.error(e) } return r };
+render = function () {
+  const r = _g46r.apply(this, arguments);
+  try {
+    g46Combos(); g46Bands();
+    /* the Master sheet has its own Zoom slider: the floating A- / A+ bar would scale the grid a second time */
+    document.body.classList.toggle('g46bm', TAB == 'bm');
+    const v = document.getElementById('v'); if (v && TAB == 'bm') v.style.setProperty('--vz', 1);
+  } catch (e) { console.error(e) }
+  return r;
+};
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
