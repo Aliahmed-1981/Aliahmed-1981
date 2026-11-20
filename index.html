@@ -463,6 +463,37 @@ html[dir=rtl] .cal .cnav span{display:inline-block;transform:scaleX(-1)}
 </style>
 
 
+<style id="g41css">
+/* two-level navigation: rounded group pills with animated icons + a sub row for the active group */
+nav#g41nav{display:block;padding:12px 20px 0}
+#g41nav .g41g{display:flex;gap:10px;flex-wrap:wrap}
+#g41nav .g41b{position:relative;border:0;background:var(--sf);color:var(--ink);font:inherit;font-weight:600;display:inline-flex;align-items:center;gap:10px;padding:8px 18px 8px 8px;border-radius:999px;cursor:pointer;box-shadow:var(--sh);transition:transform .18s,background .18s,box-shadow .18s}
+[dir=rtl] #g41nav .g41b{padding:8px 8px 8px 18px}
+#g41nav .g41b:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.12)}
+#g41nav .g41b .ic{box-sizing:content-box;width:20px;height:20px;padding:7px;border-radius:50%;background:var(--soft);color:var(--navy);transition:transform .3s}
+#g41nav .g41b:nth-child(5n+1) .ic{background:var(--it1,#e7e3ff);color:var(--ia1,#5b4cf0)}
+#g41nav .g41b:nth-child(5n+2) .ic{background:var(--it2,#dcf5ea);color:var(--ia2,#22a06b)}
+#g41nav .g41b:nth-child(5n+3) .ic{background:var(--it3,#ffe9d6);color:var(--ia3,#e8590c)}
+#g41nav .g41b:nth-child(5n+4) .ic{background:var(--it4,#ffe0ea);color:var(--ia4,#ec4899)}
+#g41nav .g41b:nth-child(5n) .ic{background:#dff1fb;color:#0ea5e9}
+#g41nav .g41b:hover .ic{animation:g41wig .6s ease}
+#g41nav .g41b.on{background:var(--navy);color:#fff;box-shadow:0 8px 20px rgba(23,59,94,.35)}
+#g41nav .g41b.on .ic{background:rgba(255,255,255,.22);color:#fff;fill:rgba(255,255,255,.28);animation:g41pop .5s ease}
+#g41nav .g41b .tag{margin-inline-start:2px}
+#g41nav .g41s{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding:6px;background:var(--sf);border-radius:16px;width:fit-content;max-width:100%;box-shadow:var(--sh);animation:g41in .25s ease}
+#g41nav .g41c{border:0;background:transparent;color:var(--ink);font:inherit;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:12px;cursor:pointer;transition:background .15s,transform .15s}
+#g41nav .g41c .ic{width:16px;height:16px;transition:transform .25s}
+#g41nav .g41c:hover{background:var(--hl);transform:translateY(-1px)}
+#g41nav .g41c:hover .ic{transform:rotate(-10deg) scale(1.15)}
+#g41nav .g41c.on{background:var(--soft);color:var(--navy);font-weight:700;box-shadow:inset 0 0 0 2px var(--navy)}
+@keyframes g41wig{0%{transform:rotate(0)}25%{transform:rotate(-14deg) scale(1.1)}60%{transform:rotate(10deg) scale(1.1)}100%{transform:rotate(0)}}
+@keyframes g41pop{0%{transform:scale(.6)}70%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes g41in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#g41nav *{animation:none!important;transition:none!important}}
+@media (max-width:640px){nav#g41nav{display:none}}
+@media print{nav#g41nav{display:none!important}}
+:root[data-theme=dark] #g41nav .g41b.on,:root[data-theme=dark] #g41nav .g41c.on{color:#fff}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -6712,6 +6743,46 @@ rToday = function () {
   return h.slice(0, i + 6) + d + h.slice(i + 6);
 };
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-g40go]'); if (!b) return; const [tab, sub] = b.dataset.g40go.split('|'); if (sub && typeof QA != 'undefined') QA.sub = sub; if (tab == 'cf') return goConflicts(''); if (TABS.some(x => x[0] == tab)) { TAB = tab; render() } });
+</script>
+<script>
+/* ---------- G41: two-level navigation (groups -> pages) ---------- */
+Object.assign(AR, { 'Home': 'الرئيسية', 'Timetables & sheets': 'الجداول', 'Checks': 'المراجعة', 'Reports & people': 'التقارير والغياب', 'Admin': 'الإدارة' });
+const G41 = [
+  ['home', 'Home', 'clock', ['td', 'cal']],
+  ['tt', 'Timetables & sheets', 'grid', ['tt', 'bm', 'ct']],
+  ['chk', 'Checks', 'alert', ['cf', 'qa']],
+  ['rep', 'Reports & people', 'print', ['rp', 'ab', 'du']],
+  ['adm', 'Admin', 'gear', ['st', 'us']]
+];
+function g41Nav() {
+  let nav = document.getElementById('g41nav');
+  const tabs = document.getElementById('tabs'); if (!tabs) return;
+  if (!nav) { nav = document.createElement('nav'); nav.id = 'g41nav'; nav.className = 'g41'; tabs.insertAdjacentElement('afterend', nav) }
+  tabs.style.display = 'none';
+  const have = TABS.map(x => x[0]), k = (S && S.conflicts && S.conflicts.counts) || { error: 0, warning: 0 };
+  const groups = G41.map(g => ({ id: g[0], l: g[1], i: g[2], ids: g[3].filter(x => have.includes(x)) })).filter(g => g.ids.length);
+  const used = new Set(groups.flatMap(g => g.ids));
+  have.filter(x => !used.has(x)).forEach(x => { const T = TABS.find(y => y[0] == x); groups.push({ id: 'x' + x, l: T[1], i: T[2], ids: [x] }) });
+  const act = groups.find(g => g.ids.includes(TAB)) || groups[0];
+  const lab = id => { const T = TABS.find(y => y[0] == id); return T ? [t(T[1]), T[2]] : ['', ''] };
+  const badge = id => id == 'cf' && k.error + k.warning ? ` <span class="tag ${k.error ? 'e' : 'w'}">${k.error + k.warning}</span>` : '';
+  const row = groups.map(g => {
+    const n = g.ids.includes('cf') ? k.error + k.warning : 0;
+    const go = g.ids.includes(TAB) ? TAB : g.ids[0];
+    return `<button class="g41b${g == act ? ' on' : ''}" data-g41="${go}" data-g41g="${g.id}">${ic(g.i)}<span>${t(g.l)}</span>${n ? ` <span class="tag ${k.error ? 'e' : 'w'}">${n}</span>` : ''}</button>`
+  }).join('');
+  const sub = act && act.ids.length > 1 ? `<div class="g41s">${act.ids.map(id => { const [l, i] = lab(id); return `<button class="g41c${id == TAB ? ' on' : ''}" data-g41="${id}">${ic(i)}<span>${l}</span>${badge(id)}</button>` }).join('')}</div>` : '';
+  nav.innerHTML = `<div class="g41g">${row}</div>${sub}`;
+}
+const _g41r = render;
+render = function () { const r = _g41r.apply(this, arguments); try { g41Nav() } catch (e) { console.error(e) } return r };
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-g41]'); if (!b) return;
+  const id = b.dataset.g41; if (!TABS.some(x => x[0] == id)) return;
+  const raw = document.querySelector('#tabs [data-tab="' + id + '"]');
+  if (raw) raw.click(); else { TAB = id; render() }
+});
+try { g41Nav() } catch (e) { }
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
