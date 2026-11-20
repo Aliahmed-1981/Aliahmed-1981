@@ -6883,6 +6883,29 @@ const _g42r = render;
 render = function () { const r = _g42r.apply(this, arguments); try { g42Auto() } catch (x) { console.error(x) } return r };
 </script>
 <script>
+/* ---------- G43: remove repeated information from the screens ---------- */
+Object.assign(AR, { 'Nothing on the agenda: no events, absences or exams coming up.': 'لا يوجد شيء على الأجندة: لا فعاليات ولا غياب ولا امتحانات قادمة.' });
+function g43Tidy() {
+  const v = document.getElementById('v'); if (!v) return;
+  if (TAB == 'td') {
+    /* conflicts already shown in the header, the Conflicts tile and the Checks tab: drop the donut card */
+    v.querySelectorAll('.g40d .cd').forEach(c => { if (c.querySelector('[data-g40go="cf"]')) c.remove() });
+    /* the tab bar already has these shortcuts */
+    v.querySelectorAll('.td > .card').forEach(c => { if (c.querySelector(':scope > .qa') && /Quick actions|إجراءات/i.test((c.querySelector('h3') || {}).textContent || 'Quick actions')) c.remove() });
+    /* the tiles above already count events / absences / next 7 days: only show a card when it has something to list */
+    const g = v.querySelector('.td > .grid');
+    if (g) {
+      [...g.children].forEach(c => { if (c.querySelector('.empty2')) c.remove(); else c.querySelectorAll('p > button[data-tdgo]').forEach(b => { const p = b.parentNode; b.remove(); if (!p.textContent.trim() && !p.children.length) p.remove() }) });
+      if (!g.children.length) g.outerHTML = '<p class="msg2 g43e">' + t('Nothing on the agenda: no events, absences or exams coming up.') + '</p>';
+    }
+  }
+  if (TAB == 'cf') v.querySelectorAll('.kpis [data-ctype]').forEach(b => { if (b.querySelector('b') && b.querySelector('b').textContent.trim() == '0') b.remove() });
+  if (TAB == 'rp') v.querySelectorAll('.card').forEach(c => { const h = c.querySelector(':scope > h3'); if (h && h.textContent.trim() == t('Teacher workload (periods per week)')) c.remove() });
+}
+const _g43r = render;
+render = function () { const r = _g43r.apply(this, arguments); try { g43Tidy() } catch (e) { console.error(e) } return r };
+</script>
+<script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
 </body></html>
