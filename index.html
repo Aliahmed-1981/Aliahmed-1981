@@ -535,6 +535,25 @@ table.ed.g42x td:last-child{width:1%;text-align:center}
 .g46s .cr{margin:0 0 6px}
 body.g46bm #vzb{display:none!important}
 </style>
+<style id="g47css">
+.g47m textarea{width:100%;min-height:240px;border:1px solid var(--ln);border-radius:10px;padding:10px;background:var(--sf);color:inherit;font:13px/1.6 ui-monospace,Consolas,monospace;box-sizing:border-box;direction:auto}
+.g47m .ft{flex-wrap:wrap}
+.g47m a.b{text-decoration:none;display:inline-flex;gap:6px;align-items:center}
+.g47sh{margin:8px 0 0}
+</style>
+<style id="g48css">
+@media (max-width:640px){
+  #v .seg{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:0;background:var(--sf)}
+  #v .seg button{box-shadow:0 0 0 .5px var(--ln);flex-direction:column;gap:3px;padding:8px 4px;font-size:12px;line-height:1.25;text-align:center;overflow:hidden;overflow-wrap:anywhere}
+  #v .seg button svg{flex:none}
+}
+</style>
+<style id="g49css">
+.g49top{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:0 0 10px}
+.g49top label{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.g49pn{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.g49pn label{display:flex;flex-direction:column;gap:3px;font-size:12px}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -7092,7 +7111,7 @@ Object.assign(AR, Object.fromEntries(Object.entries({
 /* ===== A. every long picker accepts typing (the real select stays hidden and keeps the value) ===== */
 let _g46n = 0;
 function g46Combos() {
-  document.querySelectorAll('#v select[data-sel],#v select[data-bmt],#v select[data-bms],#v select[data-cfs="cls"],#v select[data-cfs="tch"],#v select[data-ppst]').forEach(sel => {
+  document.querySelectorAll('#v select[data-sel],#v select[data-bmt],#v select[data-bms],#v select[data-cfs="cls"],#v select[data-cfs="tch"],#v select[data-ppst],#v select[data-exrp="teacher"],#v select[data-exrp="key"],#v select[data-exrp="date"]').forEach(sel => {
     if (sel.dataset.g46 || sel.options.length < 7) return; sel.dataset.g46 = '1';
     const opts = [...sel.options], id = 'g46dl' + (++_g46n), cur = () => ((sel.selectedOptions[0] || {}).textContent || '').trim();
     const inp = document.createElement('input'); inp.type = 'search'; inp.className = 'g46c ' + (sel.className || ''); inp.setAttribute('list', id); inp.autocomplete = 'off';
@@ -7210,6 +7229,93 @@ render = function () {
   } catch (e) { console.error(e) }
   return r;
 };
+</script>
+<script>
+/* ---------- G47: share a class / teacher / room timetable as text (WhatsApp, copy, device share) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Share': 'مشاركة', 'Share the timetable': 'مشاركة الجدول', 'WhatsApp': 'واتساب', 'Copy text': 'نسخ النص', 'Copied': 'تم النسخ', 'Share via device': 'مشاركة من الجهاز', 'Close': 'إغلاق',
+  'Weekly timetable': 'الجدول الأسبوعي', 'No lessons to share.': 'لا توجد حصص للمشاركة.', 'You can edit the text before sending.': 'يمكنك تعديل النص قبل الإرسال.'
+}).filter(([k]) => !(k in AR))));
+const g47Hm = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+function g47Id() { return VIEW == 'teacher' ? SEL.t : VIEW == 'room' ? SEL.r : SEL.c }
+function g47Name(id) { return VIEW == 'teacher' ? (tname(id) || id) : id }
+function g47Text() {
+  const id = g47Id(); if (!id) return '';
+  const L = S.lessons.filter(l => l.sl && !l.sl.brk && (VIEW == 'teacher' ? (l.t || []).includes(id) : VIEW == 'room' ? l.r == id : l.c == id));
+  if (!L.length) return '';
+  const out = [`*${g47Name(id)} – ${t('Weekly timetable')}*`, (S.set && (S.set.school || (S.set.brand && S.set.brand.nameEn))) || ''].filter(Boolean);
+  I.days.forEach(d => {
+    const day = L.filter(l => l.d == d).sort((a, b) => a.sl.s - b.sl.s || natural(a.c, b.c)); if (!day.length) return;
+    out.push('', '*' + dayName(d) + '*');
+    day.forEach(l => out.push(`${l.sl.label || l.p} ${g47Hm(l.sl.s)}–${g47Hm(l.sl.e)}  ${l.s || ''}${VIEW == 'class' ? ((l.t || []).length ? ' (' + l.t.map(x => tname(x) || x).join(', ') + ')' : '') : ' – ' + l.c}${VIEW != 'room' && l.r ? ' · ' + l.r : ''}`));
+  });
+  return out.join('\n');
+}
+const _g47tt = rTimetables;
+rTimetables = function () {
+  const h = _g47tt(); if (!g47Id()) return h;
+  return h.replace(/(<span class="msg">)/, `<button class="b" data-g47="open">${ic('share')} ${t('Share')}</button> $1`);
+};
+function g47Open() {
+  const txt = g47Text(); if (!txt) return toast(t('No lessons to share.'), 1);
+  const o = document.createElement('div'); o.className = 'g39o';
+  const dev = typeof navigator.share == 'function';
+  o.innerHTML = `<div class="g39m g47m" role="dialog"><h3>${t('Share the timetable')}</h3><p class="msg">${t('You can edit the text before sending.')}</p><textarea id="g47t">${esc(txt)}</textarea>
+<div class="ft"><button class="b" data-g47="x">${t('Close')}</button><button class="b" data-g47="copy">${ic('copy')} ${t('Copy text')}</button>${dev ? `<button class="b" data-g47="dev">${t('Share via device')}</button>` : ''}<a class="b pri" data-g47="wa" target="_blank" rel="noopener" href="#">${t('WhatsApp')}</a></div></div>`;
+  const ta = o.querySelector('#g47t'), wa = o.querySelector('[data-g47=wa]');
+  const upd = () => { wa.href = 'https://wa.me/?text=' + encodeURIComponent(ta.value) }; upd(); ta.addEventListener('input', upd);
+  o.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('[data-g47]');
+    if (e.target === o || (b && b.dataset.g47 == 'x')) return o.remove();
+    if (!b) return;
+    if (b.dataset.g47 == 'copy') { try { await navigator.clipboard.writeText(ta.value) } catch (x) { ta.select(); try { document.execCommand('copy') } catch (y) { } } toast(t('Copied')) }
+    if (b.dataset.g47 == 'dev') { try { await navigator.share({ title: g47Name(g47Id()), text: ta.value }) } catch (x) { } }
+  });
+  document.addEventListener('keydown', function kd(e) { if (e.key == 'Escape' && document.body.contains(o)) { document.removeEventListener('keydown', kd); o.remove() } });
+  document.body.appendChild(o);
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-g47="open"]'); if (b) g47Open() });
+(function () { const sp = document.querySelector('symbol#i-grid'); if (sp && !document.querySelector('symbol#i-share')) sp.parentNode.insertAdjacentHTML('beforeend', '<symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>') })();
+</script>
+<script>
+/* ---------- G49: exam reports use the one standard bar (search + filters + count + More) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Search the reports': 'ابحث في التقارير', 'Reports': 'التقارير', 'Report': 'التقرير', 'Date': 'التاريخ', 'Sitting': 'الجلسة', 'Teacher': 'المدرس', 'All dates': 'كل التواريخ', 'All teachers': 'كل المدرسين', 'sheets': 'ورقة', 'Print preview': 'معاينة الطباعة', 'Print / PDF': 'طباعة / PDF', 'Excel': 'Excel'
+}).filter(([k]) => !(k in AR))));
+const g49Hit = (g, q) => {
+  q = q.trim().toLowerCase(); if (!q) return g;
+  const has = v => String(v == null ? '' : v).toLowerCase().includes(q);
+  if (has(g.title) || (g.info || []).some(p => p.some(has))) return g;
+  const rows = g.rows.filter(r => r.sec ? has(r.sec) : r.some(has));
+  return rows.some(r => !r.sec) ? Object.assign({}, g, { rows }) : null;
+};
+const _g49g = exGroups;
+exGroups = function () {
+  const R = EX.rep || {}, q = R.q || ''; let G = _g49g.apply(this, arguments);
+  if (R.k == 'daily' && R.teacher) { const nm = exName(R.teacher); G = G.map(g => Object.assign({}, g, { rows: g.rows.filter(r => r.sec || r.includes(nm)) })).filter(g => g.rows.length) }
+  return q.trim() ? G.map(g => g49Hit(g, q)).filter(Boolean) : G;
+};
+const _g49r = exRep;
+exRep = function () {
+  const h = _g49r.apply(this, arguments), R = EX.rep, x = h.indexOf('data-exa="xlsx"'), i = x < 0 ? -1 : h.indexOf('</button></div>', x), j = h.indexOf('<div class="card"><h3>' + t('Print preview')); if (i < 0 || j < i) return h;
+  const extra = h.slice(i + 15, j).replace(/\s*<\/div>\s*$/, '');
+  const S2 = exSessions(), dates = [...new Set(S2.map(s => s.date))], withDuty = [...new Set(exAs().map(a => a.t))].sort((a, b) => natural(exName(a), exName(b)));
+  const opt = (v, l, cur) => `<option value="${esc(v)}"${cur == v ? ' selected' : ''}>${esc(l)}</option>`;
+  const panel = `<div class="g49pn"><label>${t('Date')}<select data-exrp="date"><option value="">${t('All dates')}</option>${dates.map(d => opt(d, d + ' ' + exDay(d), R.date)).join('')}</select></label>
+<label>${t('Sitting')}<select data-exrp="key"><option value="">—</option>${S2.filter(s => !R.date || s.date == R.date).map(s => opt(s.key, s.date + ' ' + s.name + ' ' + s.start + '-' + s.end, R.key)).join('')}</select></label>
+<label>${t('Teacher')}<select data-exrp="teacher"><option value="">${t('All teachers')}</option>${withDuty.map(id => opt(id, exName(id), R.teacher)).join('')}</select></label></div>`;
+  const top = `<div class="g49top"><label>${t('Report')}<select data-exrp="k">${EX_REPS.map(([k, l]) => opt(k, t(l), R.k)).join('')}</select></label>${R.k == 'sig' ? `<label>${t('Print preview')}<select data-exrp="por"><option value="1"${R.por ? ' selected' : ''}>${t('Portrait')}</option><option value="0"${!R.por ? ' selected' : ''}>${t('Landscape')}</option></select></label>` : ''}${pfFitBox()}</div>`;
+  const act = !!(R.date || R.key || R.teacher), n = EX.rp ? EX.rp.sh.length : 0;
+  const bar = g40Bar('ex', { qAttr: 'data-g49q="1"', qVal: R.q || '', ph: t('Search the reports'), count: n + ' ' + t('sheets'), panel, active: act, more: [[t('Print / PDF'), 'data-exa="print"', 'print'], [t('Excel'), 'data-exa="xlsx"', 'up']] });
+  return `<div class="card"><h3>${t('Reports')}</h3>${top}${bar}${extra}</div>` + h.slice(j);
+};
+let _g49t;
+document.addEventListener('input', e => { const el = e.target; if (el.dataset && el.dataset.g49q !== undefined) { EX.rep.q = el.value; clearTimeout(_g49t); _g49t = setTimeout(render, 250) } });
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-g40a$="|ex"]'); if (!a) return;
+  if (a.dataset.g40a.startsWith('clear')) { const R = EX.rep; R.date = ''; R.key = ''; R.teacher = ''; R.q = '' }
+  G40.open.ex = false; render();
+}, true);
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
