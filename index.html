@@ -554,6 +554,32 @@ body.g46bm #vzb{display:none!important}
 .g49pn{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .g49pn label{display:flex;flex-direction:column;gap:3px;font-size:12px}
 </style>
+<style id="g51css">
+#g51f{position:fixed;inset-inline-end:16px;bottom:18px;z-index:3000;width:50px;height:50px;border-radius:50%;border:0;background:var(--coral,#e8604c);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.28);cursor:pointer;display:flex;align-items:center;justify-content:center;font:700 22px/1 inherit}
+#g51f .dot{position:absolute;top:2px;inset-inline-end:2px;width:13px;height:13px;border-radius:50%;background:#f5b301;border:2px solid #fff}
+#g51f:hover{transform:scale(1.06)}
+#g51p{position:fixed;inset-inline-end:16px;bottom:78px;z-index:3001;width:min(400px,calc(100vw - 24px));height:min(600px,calc(100vh - 110px));display:none;flex-direction:column;background:var(--sf);color:var(--ink);border:1px solid var(--ln);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.32);overflow:hidden}
+#g51p.on{display:flex}
+#g51p .hd{display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--navy,#1e3a5f);color:#fff}
+#g51p .hd b{flex:1;font-size:15px}#g51p .hd button{background:none;border:0;color:#fff;cursor:pointer;font-size:18px;padding:2px 6px}
+#g51p .ctx{padding:6px 14px;font-size:12px;color:var(--mut);border-bottom:1px solid var(--ln)}
+#g51p .th{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.g51m{max-width:92%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.6}
+.g51m.u{align-self:flex-end;background:var(--wns,#fbe9e5)}
+.g51m.a{align-self:flex-start;background:var(--hl,#f1ece3)}
+.g51m ol,.g51m ul{margin:6px 0;padding-inline-start:20px}.g51m p{margin:4px 0}
+.g51m table{border-collapse:collapse;font-size:12px;margin:4px 0}.g51m td,.g51m th{border-bottom:1px solid var(--ln);padding:2px 8px;text-align:start}
+.g51hint{background:#fff6dd;border:1px solid #f1d58a;border-radius:12px;padding:8px 10px;font-size:13px;margin:0 0 4px}
+.g51ch{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.g51c{border:1px solid var(--ln);background:var(--sf);color:inherit;border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+.g51c:hover{border-color:var(--coral,#e8604c)}.g51c.go{background:var(--navy,#1e3a5f);color:#fff;border-color:var(--navy,#1e3a5f)}
+#g51p form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--ln)}
+#g51p form input{flex:1;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--ln);border-radius:10px;background:var(--sf);color:inherit}
+#g51p .ft{padding:0 12px 8px;font-size:11.5px;color:var(--mut);display:flex;gap:10px;justify-content:space-between}
+#g51p .ft button{background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+@media (max-width:640px){#g51f{bottom:76px;inset-inline-end:12px;width:46px;height:46px}#g51p{inset-inline:8px;width:auto;bottom:132px;height:min(560px,calc(100vh - 190px))}}
+@media print{#g51f,#g51p{display:none!important}}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -7374,6 +7400,180 @@ function g50Post() {
 }
 const _g50r = render;
 render = function () { const r = _g50r.apply(this, arguments); try { g50Post() } catch (x) { console.error(x) } return r };
+</script>
+<script>
+/* ---------- G51: contextual assistant (no outside service): knows the page, suggests what you may need, answers questions about the timetable data ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Assistant': 'المساعد', 'Ask about this page or the timetables…': 'اسأل عن هذه الصفحة أو عن الجداول…', 'Send': 'إرسال', 'You are in': 'أنت في', 'Suggested': 'اقتراح', 'Hide the assistant button': 'إخفاء زر المساعد',
+  'Ctrl+/ brings it back': 'Ctrl+/ يعيده', 'Open': 'افتح', 'Ask me': 'اسألني', 'Try one of these:': 'جرّب أحد هذه:'
+}).filter(([k]) => !(k in AR))));
+const G51 = { open: false, msgs: [], acts: [] };
+const g51Off = () => { try { return localStorage.getItem('g51off') == '1' } catch (e) { return false } };
+const g51Ar = () => HL == 'ar';
+const g51N = s => String(s == null ? '' : s).toLowerCase().replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[ً-ٰٟـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي').replace(/[^a-z0-9ء-ي ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const g51L = (ar, en) => g51Ar() ? ar : en;
+/* ---- where the person is ---- */
+function g51Page() { return TAB + (TAB == 'st' ? ':' + SUB : '') + (TAB == 'tt' ? ':' + VIEW : '') }
+function g51Label() {
+  const tb = TABS.find(x => x[0] == TAB), nm = tb ? t(tb[1]) : TAB;
+  if (TAB == 'st') { const s = SUBS.find(x => x[0] == SUB); return nm + (s ? ' › ' + t(s[1]) : '') }
+  if (TAB == 'tt') return nm + ' › ' + t(({ class: 'Class', teacher: 'Teacher', room: 'Room' })[VIEW] || VIEW) + (g47Id && g47Id() ? ' ' + (VIEW == 'teacher' ? (tname(g47Id()) || g47Id()) : g47Id()) : '');
+  return nm;
+}
+/* ---- knowledge: what each page offers (ar / en) ---- */
+const g51KB = [
+  { id: 'print', p: ['tt', 'rp', 'bm'], kw: 'طباعه اطبع pdf print ورقه جدول', q: ['إزاي أطبع جدول فصل أو مدرس؟', 'How do I print a class or teacher timetable?'], go: { tab: 'rp' }, goL: ['افتح التقارير والطباعة', 'Open Reports & Print'],
+    a: ['<ol><li>افتح «التقارير والطباعة» واختر النوع: فصول، مدرسون، غرف، Master أو تعارضات.</li><li>من «الفلاتر» اختر فصلاً واحداً أو مدرساً واحداً أو مجموعة (مرحلة، مادة…).</li><li>سطر «سيُطبع» يعرض ما سيخرج، وكل ورقة تُطبع مرة واحدة.</li><li>اضغط «طباعة / PDF».</li></ol>', '<ol><li>Open Reports & Print and pick the type.</li><li>Use Filters to choose one class, one teacher or a group.</li><li>“Will print” shows what comes out, each sheet once.</li><li>Press Print / PDF.</li></ol>'] },
+  { id: 'share', p: ['tt'], kw: 'مشاركه واتساب ارسل شير share whatsapp', q: ['إزاي أشارك جدول على واتساب؟', 'How do I share a timetable on WhatsApp?'],
+    a: ['اختر فصلاً أو مدرساً أو غرفة في «الجداول» واضغط <b>مشاركة</b>. النص قابل للتعديل، ومنه: واتساب، نسخ النص، أو مشاركة من الجهاز.', 'Pick a class, teacher or room, press <b>Share</b>. Edit the text if you like, then WhatsApp, copy or device share.'] },
+  { id: 'master', p: ['bm', 'tt'], kw: 'ماستر master شيت يوم مرحله', q: ['إيه هو Master sheet؟', 'What is the Master sheet?'], go: { tab: 'bm' }, goL: ['افتح Master sheet', 'Open Master sheet'],
+    a: ['كل فصول المرحلة في ورقة واحدة ليوم واحد. اختر المرحلة والفصول والأيام من الفلاتر، وتطبع من «المزيد».', 'All classes of a stage on one sheet for a day. Choose stage, classes and days in Filters, print from More.'] },
+  { id: 'cf', p: ['cf', 'td'], kw: 'تعارض تعارضات conflict حل', q: ['إيه هي التعارضات وإزاي أفلترها؟', 'What are conflicts and how do I filter them?'], go: { tab: 'cf' }, goL: ['افتح التعارضات', 'Open Conflicts'],
+    a: ['التعارض يظهر لما مدرس أو فصل أو غرفة يكون في مكانين في نفس الحصة. من «الفلاتر» اختر المرحلة أو الفصل أو المدرس أو النوع أو الخطورة. وزر الطباعة يسأل عن فلاتر التقرير.', 'A conflict is a teacher, class or room in two places in one period. Use Filters (stage, class, teacher, type, severity). Print asks for its own filters.'] },
+  { id: 'qa', p: ['qa'], kw: 'جوده quality حمل load ساعات', q: ['إيه اللي بتعرضه صفحة الجودة؟', 'What does the Quality page show?'],
+    a: ['فحص جودة الجدول بأقسام: المدرسون، الفصول، الحمل (Load) والحدود. تقدر تفلتر وتطبع بفصل أو مدرس واحد.', 'Quality checks of the timetable by Teachers, Classes, Load and Limits. Filter and print for one class or teacher.'] },
+  { id: 'cal', p: ['cal'], kw: 'تقويم اجازات احداث ترم اسبوع شهر calendar', q: ['إزاي أشوف أحداث أسبوع أو ترم وأطبعها؟', 'How do I see and print events of a week or term?'], go: { tab: 'cal' }, goL: ['افتح التقويم', 'Open Calendar'],
+    a: ['في التقويم اختر الفترة: أسبوع، شهر، ترم (السنة ٣ تيرمات متساوية) أو سنة. اكتب في البحث للوصول لحدث، وزر الطباعة الواحد يطبع الملخص.', 'In Calendar pick week, month, term (year = 3 equal terms) or year. Search for an event; the single Print button prints the summary.'] },
+  { id: 'absence', p: ['ab'], kw: 'غياب اجازه بديل بدلاء absence substitute', q: ['إزاي أسجّل غياب مدرس؟', 'How do I record a teacher absence?'],
+    a: ['اختر التاريخ، واستخدم «إلى» لعدة أيام. اختر اليوم كاملاً أو حصصاً محددة (بدون حصص يُسجَّل الغياب أيضاً). عاد المدرس مبكراً؟ اقطع الإجازة من وقت معين فتتحرر الحصص التالية من البدلاء.', 'Pick the date (“Until” for several days), the whole day or specific lessons. Teacher back early? Cut the leave from a time and later lessons are released.'] },
+  { id: 'exam', p: ['ct'], kw: 'امتحان امتحانات لجنه لجان مراقبه توزيع exam invigilation', q: ['إزاي أعمل جدول امتحان وأوزّع المراقبين؟', 'How do I build an exam timetable and assign invigilators?'],
+    a: ['<ol><li>ابدأ بإنشاء جدول جديد واختر النوع.</li><li>عرّف الفترات مرة واحدة من «الفترات».</li><li>«القواعد والتوزيع»: عدد المراقبين والاحتياط لكل لجنة.</li><li>ولّد التوزيع تلقائياً ثم عدّله يدوياً (يظهر تحذير لو المدرس مشغول).</li><li>اقفل التوزيع بعد الاعتماد.</li></ol>', '<ol><li>Create a new timetable and pick its type.</li><li>Define periods once.</li><li>Rules & allocation: supervisors and reserves per room.</li><li>Generate, then adjust by hand.</li><li>Lock when approved.</li></ol>'] },
+  { id: 'examrep', p: ['ct'], kw: 'تقرير كشف توقيع توقيعات طباعه امتحان report signature', q: ['إزاي أطبع كشوف التوقيع للمراقبين؟', 'How do I print invigilator signature sheets?'],
+    a: ['من «التقارير» داخل الجداول المخصصة اختر التقرير، ثم من «الفلاتر» التاريخ والجلسة والمدرس. في كشف التوقيع اليومي اختر التجميع (مرحلة / رئيس دور / لجنة). الطباعة من «المزيد».', 'In the reports of a custom timetable choose the report, then Date, Sitting, Teacher in Filters. For daily signatures pick the grouping. Print from More.'] },
+  { id: 'assign', p: ['st:assign', 'st:teachers'], kw: 'اسناد اسنادات مدرس مادة فصل assignment', q: ['إزاي أضيف إسناد مدرس لمادة وفصل؟', 'How do I assign a teacher to a subject and class?'], go: { tab: 'st', sub: 'assign' }, goL: ['افتح الإسنادات', 'Open Assignments'],
+    a: ['في «الإسنادات» أضف صفاً: الفصل، المادة، المدرس، وهل هو أساسي ونشط. استخدم شريط البحث والفلاتر للوصول لفصل أو مدرس. الجدول بنمط Excel: Enter والأسهم للتنقل، Ctrl+D لنسخ الخلية لأسفل، ويمكن لصق خلايا من Excel.', 'In Assignments add a row: class, subject, teacher, primary and active. Use search and filters. Excel-like: Enter/arrows, Ctrl+D fills down, paste from Excel.'] },
+  { id: 'util', p: ['st:teachers'], kw: 'utilization استغلال حمل اقسام قسم مرحله مدرس', q: ['إيه تقرير Utilization؟', 'What is the Utilization report?'],
+    a: ['يعرض استغلال حصص المدرسين. تفلتر بالمرحلة والقسم والفصول والمادة، وتطبع الورقة مجمّعة حسب القسم أو المرحلة أو المدرس.', 'Shows how teachers’ lessons are used. Filter by stage, department, classes, subject; print grouped by department, stage or teacher.'] },
+  { id: 'users', p: ['us'], kw: 'مستخدم مستخدمين صلاحيات دور نطاق user role scope', q: ['إزاي أضبط صلاحيات المستخدمين؟', 'How do I set user permissions?'],
+    a: ['«افتراضات الأدوار» تحدد ما يستطيعه كل دور، ويمكن تعديل شخص بعينه من القائمة. «النطاق»: * للكل أو مراحل وفصول وأكواد مدرسين. المدرس يحتاج كوده هنا ليرى مهامه في الامتحانات. ابحث وفلتر بالدور والتعديل والنشاط.', 'Role defaults set what each role may do; change one person in the list. Scope: * or stages, classes, teacher IDs. Search and filter by role, edit right, active.'] },
+  { id: 'nav', p: ['*'], kw: 'تنقل صفحة اذهب بحث سريع ctrl كونترول navigate jump', q: ['إزاي أنتقل بسرعة لأي صفحة أو فصل أو مدرس؟', 'How do I jump quickly to a page, class or teacher?'],
+    a: ['اضغط <b>Ctrl+K</b> (أو / خارج خانة الكتابة) واكتب اسم الصفحة أو الفصل أو المدرس.', 'Press <b>Ctrl+K</b> (or / outside a text box) and type a page, class or teacher.'] },
+  { id: 'filters', p: ['*'], kw: 'فلتر فلاتر بحث تصفيه filter search', q: ['إزاي أستخدم البحث والفلاتر؟', 'How do I use search and filters?'],
+    a: ['في أعلى كل قائمة: اكتب في البحث فتتصفى النتائج أثناء الكتابة. زر «الفلاتر» يفتح الأبعاد (مرحلة، فصول، مدرسون، مادة…) مع «الكل» وبحث صغير للقوائم الطويلة، ثم «تطبيق» أو «مسح». العدّاد يعرض عدد النتائج.', 'Type in the search box; results filter as you type. Filters opens stage, classes, teachers, subject… with All and a mini-search, then Apply or Clear. The counter shows the results.'] },
+  { id: 'excel', p: ['*'], kw: 'اكسل excel لصق نسخ جدول خلايا', q: ['هل أقدر أستخدم اختصارات Excel في الجداول؟', 'Can I use Excel shortcuts in tables?'],
+    a: ['أيوه في الجداول القابلة للتعديل: <b>Enter</b> والأسهم للتنقل، <b>Ctrl+الأسهم</b> للقفز، <b>Ctrl+D</b> لنسخ الخلية لأسفل، ولصق مجموعة خلايا من Excel.', 'Yes in editable tables: Enter/arrows move, Ctrl+arrows jump, Ctrl+D fills down, paste cells from Excel.'] },
+  { id: 'tips', p: ['*'], kw: 'نصائح مساعدة تلميحات help tips', q: ['فين نصائح الشرح بالخطوات لكل صفحة؟', 'Where are the step-by-step tips for each page?'],
+    a: ['زر «مساعدة» في أعلى الصفحة يعرض نصائح الصفحة الحالية، وتقدر توقفها أو تعيدها من نفس القائمة.', 'The Help button at the top shows tips for the current page; turn them off or on from the same menu.'] }
+];
+/* ---- data questions ---- */
+const g51DayWords = { 0: ['الاحد', 'sunday', 'sun'], 1: ['الاثنين', 'الاتنين', 'monday', 'mon'], 2: ['الثلاثاء', 'التلات', 'الثلاثاء', 'tuesday', 'tue'], 3: ['الاربعاء', 'الاربعا', 'wednesday', 'wed'], 4: ['الخميس', 'thursday', 'thu'], 5: ['الجمعه', 'friday', 'fri'], 6: ['السبت', 'saturday', 'sat'] };
+const g51Ord = { اولي: 1, الاولي: 1, ثانيه: 2, الثانيه: 2, ثالثه: 3, الثالثه: 3, رابعه: 4, الرابعه: 4, خامسه: 5, الخامسه: 5, سادسه: 6, السادسه: 6, سابعه: 7, السابعه: 7, ثامنه: 8, الثامنه: 8, تاسعه: 9, التاسعه: 9, عاشره: 10, العاشره: 10 };
+const g51Stop = new Set('مين مين ميس مستر استاذ استاذه مدرس المدرس دكتور جدول جدوله جدولها حصص حصه الحصه فصل الفصل يوم في فاضي فاضيه عند عن كام كم ايه هو هي ال و من الي على'.split(' '));
+function g51Teacher(qn) {
+  const qt = qn.split(' ').filter(x => x.length >= 2 && !g51Stop.has(x)), ids = teachersWithLessons(), best = [];
+  ids.forEach(id => { const nt = g51N(tname(id) || id).split(' ').filter(Boolean); const hits = nt.filter(x => x.length >= 2 && qt.includes(x)).length; if (hits) best.push([id, hits, nt.length]) });
+  if (!best.length) return [];
+  const mx = Math.max(...best.map(b => b[1])); return best.filter(b => b[1] == mx).map(b => b[0]);
+}
+function g51Class(qn) { const qc = qn.replace(/ /g, ''); return I.classes.filter(c => { const k = g51N(c).replace(/ /g, ''), k2 = k.replace(/^(g|grade|class)/, ''); return qc.includes(k) || (k2.length >= 2 && new RegExp('(^|[^0-9a-z])' + k2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^0-9a-z])').test(qn)) }).sort((a, b) => b.length - a.length).slice(0, 1) }
+function g51Day(qn) { for (const d of I.days) { const w = (g51DayWords[d] || []).concat([g51N(dayName(d))]); if (w.some(x => new RegExp('(^| )' + x + '( |$)').test(qn) || qn.includes(x) && x.length > 3)) return d } return null }
+function g51Period(qn) { let m = qn.match(/(?:الحصه|حصه|period|p)\s*(\d{1,2})/); if (m) return +m[1]; m = qn.match(/(?:الحصه|حصه)\s+(\S+)/); if (m && g51Ord[m[1]]) return g51Ord[m[1]]; for (const w of qn.split(' ')) if (g51Ord[w]) return g51Ord[w]; return null }
+const g51Tm = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+function g51Table(L, who) {
+  const days = I.days.filter(d => L.some(l => l.d == d)); if (!days.length) return '<p>' + g51L('لا توجد حصص.', 'No lessons.') + '</p>';
+  return days.map(d => `<p><b>${esc(dayName(d))}</b></p><table>${L.filter(l => l.d == d).sort((a, b) => a.p - b.p).map(l => `<tr><td>${esc(l.sl ? l.sl.label : l.p)}</td><td>${l.sl ? g51Tm(l.sl.s) : ''}</td><td>${esc(l.s || '')}</td><td>${esc(who == 'class' ? (l.t || []).map(x => tname(x) || x).join(', ') : l.c)}</td></tr>`).join('')}</table>`).join('');
+}
+function g51Act(fn) { G51.acts.push(fn); return G51.acts.length - 1 }
+const g51Go = (ar, en, fn) => `<div class="g51ch"><button class="g51c go" data-g51go="${g51Act(fn)}">${g51L(ar, en)}</button></div>`;
+function g51Data(q) {
+  const qn = g51N(q); if (!qn) return null;
+  const has = re => re.test(qn);
+  if (has(/تعارض|conflict/)) { const c = (S.conflicts && S.conflicts.counts) || {}, e = c.error || 0, w = c.warning || 0; return `<p>${g51L(`عندك <b>${e}</b> تعارض خطأ و<b>${w}</b> تحذير.`, `You have <b>${e}</b> errors and <b>${w}</b> warnings.`)}</p>` + g51Go('افتح التعارضات', 'Open Conflicts', () => { TAB = 'cf'; render() }) }
+  const day = g51Day(qn), per = g51Period(qn);
+  if (has(/فاضي|فاضيه|متاح|متاحين|غير مشغول|free|available/)) {
+    const d = day == null ? (I.days.includes(new Date().getDay()) ? new Date().getDay() : null) : day;
+    if (d == null || per == null) return `<p>${g51L('حدد اليوم والحصة، مثلاً: «مين فاضي الحصة 3 يوم الأحد؟»', 'Give the day and period, e.g. “who is free period 3 on Sunday?”')}</p>`;
+    const busy = new Set(S.lessons.filter(l => l.d == d && l.p == per).flatMap(l => l.t || [])), free = teachersWithLessons().filter(x => !busy.has(x)).sort((a, b) => natural(tname(a) || a, tname(b) || b));
+    return `<p>${g51L(`المتاحون في الحصة ${per} يوم ${esc(dayName(d))} (${free.length}):`, `Free in period ${per} on ${esc(dayName(d))} (${free.length}):`)}</p><p>${free.map(x => esc(tname(x) || x)).join('، ') || '—'}</p>`;
+  }
+  const cls = g51Class(qn), subj = [...new Set(S.lessons.map(l => l.s).filter(Boolean))].filter(s => qn.includes(g51N(s)));
+  if (cls.length && subj.length && has(/مين|who|بيدرس|يدرس|teach/)) {
+    const ts = [...new Set(S.lessons.filter(l => l.c == cls[0] && subj.includes(l.s)).flatMap(l => l.t || []))];
+    return `<p>${esc(subj[0])} – ${esc(cls[0])}: <b>${ts.map(x => esc(tname(x) || x)).join('، ') || '—'}</b></p>`;
+  }
+  const th = g51Teacher(qn);
+  if (th.length == 1) { const id = th[0], L = S.lessons.filter(l => (l.t || []).includes(id));
+    if (has(/كم|كام|عدد|how many|load/)) return `<p>${esc(tname(id) || id)}: <b>${L.length}</b> ${g51L('حصة في الأسبوع', 'lessons per week')}</p>`;
+    const sub = day != null ? L.filter(l => l.d == day) : L;
+    return `<p><b>${esc(tname(id) || id)}</b> (${L.length} ${g51L('حصة', 'lessons')})</p>${g51Table(sub, 'teacher')}` + g51Go('افتح جدوله', 'Open the timetable', () => { TAB = 'tt'; VIEW = 'teacher'; SEL.t = id; render() }) }
+  if (th.length > 1 && th.length <= 6) return `<p>${g51L('قصدك مين؟', 'Which one?')}</p><div class="g51ch">${th.map(id => `<button class="g51c" data-g51ask="${esc(tname(id) || id)}">${esc(tname(id) || id)}</button>`).join('')}</div>`;
+  if (cls.length) { const c = cls[0], L = S.lessons.filter(l => l.c == c), sub = day != null ? L.filter(l => l.d == day) : L;
+    return `<p><b>${esc(c)}</b> (${L.length} ${g51L('حصة', 'lessons')})</p>${g51Table(sub, 'class')}` + g51Go('افتح جدول الفصل', 'Open the class timetable', () => { TAB = 'tt'; VIEW = 'class'; SEL.c = c; render() }) }
+  return null;
+}
+function g51Kb(q) {
+  const qt = g51N(q).split(' ').filter(x => x.length >= 3 && !g51Stop.has(x)); if (!qt.length) return null;
+  const pg = g51Page(), here = it => it.p.some(p => p == '*' || pg.startsWith(p));
+  let best = null, bs = 0; g51KB.forEach(it => { const text = g51N(it.kw + ' ' + it.q[0] + ' ' + it.q[1]); let s = qt.filter(x => text.includes(x)).length; if (s && here(it)) s += .5; if (s > bs) { bs = s; best = it } });
+  return bs >= 1 ? best : null;
+}
+const g51Ans = it => it.a[g51Ar() ? 0 : 1] + (it.go ? g51Go(it.goL[0], it.goL[1], () => { TAB = it.go.tab; if (it.go.sub) SUB = it.go.sub; render() }) : '');
+function g51Sugg() { const pg = g51Page(); return g51KB.filter(it => it.p.some(p => p != '*' && pg.startsWith(p))).concat(g51KB.filter(it => it.p.includes('*'))).slice(0, 5) }
+/* ---- a proactive idea based on the screen (never pops up; shows as a dot and as a card when the panel opens) ---- */
+function g51Hint() {
+  try {
+    const c = (S.conflicts && S.conflicts.counts) || {};
+    if (TAB == 'tt' && !(g47Id && g47Id())) return { t: g51L('لم تختر شيئاً بعد. اختر فصلاً أو مدرساً أو غرفة لعرض جدوله.', 'Nothing selected yet. Pick a class, teacher or room.') };
+    if (TAB == 'rp' && PP.k != 'conf' && typeof g44Count == 'function' && g44Count(PP.k) == 0) return { t: g51L('الفلاتر الحالية لا تطابق شيئاً. امسحها لعرض كل الأوراق.', 'These filters match nothing. Clear them to see every sheet.'), go: [g51L('امسح الفلاتر', 'Clear filters'), () => { PH.f = { st: null, cl: null, tc: null, sj: null, rm: null, dy: null }; PH.q = ''; render() }] };
+    if ((TAB == 'td' || TAB == 'tt') && (c.error || 0) > 0) return { t: g51L(`فيه ${c.error} تعارض يحتاج مراجعة.`, `${c.error} conflicts need review.`), go: [g51L('افتح التعارضات', 'Open Conflicts'), () => { TAB = 'cf'; render() }] };
+  } catch (e) { }
+  return null;
+}
+/* ---- UI ---- */
+function g51Msg(r, h) { G51.msgs.push({ r, h }); }
+function g51Draw() {
+  const p = document.getElementById('g51p'); if (!p) return;
+  const th = p.querySelector('.th'), hint = g51Hint(), pgs = g51Sugg();
+  p.querySelector('.ctx').textContent = t('You are in') + ': ' + g51Label();
+  G51.acts = [];
+  let h = '';
+  if (!G51.msgs.length) {
+    h += `<div class="g51m a"><p>${g51L('أهلاً! أنا مساعد البرنامج. أعرف أنت في أي صفحة وأقترح عليك اللي ممكن تحتاجه، وأجاوب عن الجداول مباشرة.', 'Hi! I know which page you are on and suggest what you may need. I also answer questions about the timetables.')}</p>
+${hint ? `<div class="g51hint"><b>${t('Suggested')}:</b> ${esc(hint.t)}${hint.go ? `<div class="g51ch"><button class="g51c go" data-g51go="${g51Act(hint.go[1])}">${esc(hint.go[0])}</button></div>` : ''}</div>` : ''}
+<p><b>${g51L('أسئلة عن هذه الصفحة:', 'About this page:')}</b></p><div class="g51ch">${pgs.map(it => `<button class="g51c" data-g51q="${it.id}">${esc(it.q[g51Ar() ? 0 : 1])}</button>`).join('')}</div>
+<p style="margin-top:10px"><b>${g51L('أو اسألني عن الجداول:', 'Or ask about the timetables:')}</b></p><div class="g51ch">${[g51L('جدول فصل ' + (I.classes[0] || ''), 'Timetable of ' + (I.classes[0] || '')), g51L('مين فاضي الحصة 3 يوم الأحد', 'Who is free period 3 on Sunday'), g51L('كام تعارض عندنا؟', 'How many conflicts?')].map(x => `<button class="g51c" data-g51ask="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
+  }
+  G51.msgs.forEach(m => { h += `<div class="g51m ${m.r}">${m.r == 'u' ? esc(m.h) : m.h}</div>` });
+  th.innerHTML = h; th.scrollTop = th.scrollHeight;
+  const f = document.getElementById('g51f'); if (f) { const d = f.querySelector('.dot'); if (d) d.style.display = hint ? '' : 'none' }
+}
+function g51Ask(q) {
+  q = String(q || '').trim(); if (!q) return;
+  g51Msg('u', q);
+  let ans = null; try { ans = g51Data(q) } catch (e) { console.error(e) }
+  if (!ans) { const it = g51Kb(q); if (it) ans = `<p><b>${esc(it.q[g51Ar() ? 0 : 1])}</b></p>` + g51Ans(it) }
+  if (!ans) ans = `<p>${g51L('ما لقيتش إجابة لهذا السؤال.', 'I could not find an answer to that.')} ${t('Try one of these:')}</p><div class="g51ch">${g51Sugg().map(it => `<button class="g51c" data-g51q="${it.id}">${esc(it.q[g51Ar() ? 0 : 1])}</button>`).join('')}</div>`;
+  g51Msg('a', ans); g51DrawKeep();
+}
+function g51DrawKeep() { const p = document.getElementById('g51p'); if (!p) return; const th = p.querySelector('.th'); th.innerHTML = G51.msgs.map(m => `<div class="g51m ${m.r}">${m.r == 'u' ? esc(m.h) : m.h}</div>`).join(''); th.scrollTop = th.scrollHeight }
+function g51Mount() {
+  if (document.getElementById('g51f') || g51Off()) return;
+  const f = document.createElement('button'); f.id = 'g51f'; f.type = 'button'; f.title = t('Assistant'); f.setAttribute('aria-label', t('Assistant')); f.innerHTML = '؟<span class="dot" style="display:none"></span>';
+  const p = document.createElement('div'); p.id = 'g51p'; p.setAttribute('role', 'dialog');
+  p.innerHTML = `<div class="hd"><b>${t('Assistant')}</b><button type="button" data-g51x title="${t('Close')}">✕</button></div><div class="ctx"></div><div class="th"></div><form><input type="text" placeholder="${esc(t('Ask about this page or the timetables…'))}" autocomplete="off"><button class="b pri" type="submit">${t('Send')}</button></form><div class="ft"><button type="button" data-g51off>${t('Hide the assistant button')}</button><span>${t('Ctrl+/ brings it back')}</span></div>`;
+  document.body.appendChild(f); document.body.appendChild(p);
+}
+function g51Toggle(on) {
+  g51Mount(); const p = document.getElementById('g51p'); if (!p) return; G51.open = on == null ? !G51.open : on;
+  p.classList.toggle('on', G51.open); if (G51.open) { G51.msgs = []; g51Draw(); const i = p.querySelector('input'); if (i && innerWidth > 640) i.focus() }
+}
+/* messages keep their own action indexes, so actions are stored per message */
+document.addEventListener('click', e => {
+  const T = e.target; if (!T.closest) return;
+  if (T.closest('#g51f')) return g51Toggle();
+  if (T.closest('[data-g51x]')) return g51Toggle(false);
+  if (T.closest('[data-g51off]')) { try { localStorage.setItem('g51off', '1') } catch (x) { } g51Toggle(false); const f = document.getElementById('g51f'); if (f) f.remove(); return }
+  const q = T.closest('[data-g51q]'); if (q) { const it = g51KB.find(x => x.id == q.dataset.g51q); if (it) { g51Msg('u', it.q[g51Ar() ? 0 : 1]); g51Msg('a', g51Ans(it)); g51DrawKeep() } return }
+  const a = T.closest('[data-g51ask]'); if (a) return g51Ask(a.dataset.g51ask);
+  const g = T.closest('[data-g51go]'); if (g) { const fn = G51.acts[+g.dataset.g51go]; if (fn) { fn(); if (innerWidth <= 640) g51Toggle(false) } }
+});
+document.addEventListener('submit', e => { if (e.target.closest && e.target.closest('#g51p')) { e.preventDefault(); const i = e.target.querySelector('input'); const v = i.value; i.value = ''; g51Ask(v) } });
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key == '/') { e.preventDefault(); try { localStorage.removeItem('g51off') } catch (x) { } g51Mount(); g51Toggle(true) }
+  if (e.key == 'Escape' && G51.open) g51Toggle(false);
+});
+const _g51r = render;
+render = function () { const r = _g51r.apply(this, arguments); try { if (S && !S.register && document.getElementById('v')) { g51Mount(); const f = document.getElementById('g51f'); if (f) { const h = g51Hint(), d = f.querySelector('.dot'); if (d) d.style.display = h ? '' : 'none'; if (G51.open) { const c = document.querySelector('#g51p .ctx'); if (c) c.textContent = t('You are in') + ': ' + g51Label() } } } } catch (x) { console.error(x) } return r };
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
