@@ -7318,6 +7318,64 @@ document.addEventListener('click', e => {
 }, true);
 </script>
 <script>
+/* ---------- G50: Settings lists (teachers, classes, rooms, subjects, assignments) use the same bar: search + Filters + count ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Search teachers': 'ابحث في المدرسين', 'Search classes': 'ابحث في الفصول', 'Search rooms': 'ابحث في الغرف', 'Search subjects': 'ابحث في المواد', 'Search assignments': 'ابحث في الإسنادات',
+  'teachers': 'مدرس', 'Language': 'اللغة', 'Subject': 'المادة', 'Classes': 'الفصول', 'Stage': 'المرحلة', 'Schedule': 'الجدول', 'Department': 'القسم', 'Placement': 'التوزيع', 'Priority': 'الأولوية', 'Teacher': 'المدرس', 'Primary': 'أساسي', 'Active': 'نشط', 'Class': 'الفصل', 'rows': 'صف'
+}).filter(([k]) => !(k in AR))));
+Object.assign(G45, { cls: { q: '', f: {} }, room: { q: '', f: {} }, subj: { q: '', f: {} }, asg: { q: '', f: {} } });
+const G50 = { th: { f: {} } };
+/* ---- teachers: the custom list gets the filters too ---- */
+function g50ThList() {
+  const T = ed('Teachers'), A = ed('Assignments'), q = lc(TH.q), f = G50.th.f;
+  const mine = id => A.filter(x => x[2] == id);
+  const list = T.map((r, i) => [r, i]).filter(([r]) => (!q || lc(r[0] + ' ' + r[1]).includes(q))
+    && (!f.lg || f.lg.includes(String(r[4] || '')))
+    && (!f.sj || mine(r[0]).some(x => f.sj.includes(String(x[1]))))
+    && (!f.cl || mine(r[0]).some(x => f.cl.includes(String(x[0]))))
+    && (!f.st || mine(r[0]).some(x => f.st.includes(String(stageOf(x[0])))))).sort((a, b) => tname0(a[0]).localeCompare(tname0(b[0])));
+  G50.thN = list.length; setTimeout(() => { const c = document.querySelector('.g40b[data-g40id="th"] .g40cnt'); if (c) c.textContent = G50.thN + ' / ' + T.length + ' ' + t('teachers') }, 0);
+  return list.length ? list.map(([r, i]) => thRow(r, i)).join('') : `<div class="empty">${t('No teachers yet.')}</div>`;
+}
+thListHtml = g50ThList;
+rTH = (function (_old) {
+  return function () {
+    if (G38.sub == 'util') return _old.apply(this, arguments);
+    const T = ed('Teachers'), A = ed('Assignments'), f = G50.th.f, act = Object.values(f).some(Boolean);
+    const u = a => [...new Set(a.map(String).filter(Boolean))].sort(natural).map(x => [x, x]);
+    const panel = g44Dim('st', t('Stage'), u(A.map(x => stageOf(x[0]))), f.st) + g44Dim('cl', t('Classes'), u(A.map(x => x[0])), f.cl) + g44Dim('sj', t('Subject'), u(A.map(x => x[1])), f.sj) + g44Dim('lg', t('Language'), u(T.map(r => r[4])), f.lg);
+    const bar = g40Bar('th', { qAttr: 'id="thq" data-thq', qVal: TH.q, ph: t('Search teachers'), count: T.length + ' ' + t('teachers'), panel, active: act, more: [] });
+    return _old.apply(this, arguments).replace(/<div class="thbar"><input id="thq"[^>]*>/, bar + '<div class="thbar">');
+  };
+})(rTH);
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-g40a$="|th"]'); if (!a) return; const pn = a.closest('.g40pn'); if (!pn) return;
+  G50.th.f = a.dataset.g40a.startsWith('clear') ? {} : g44Read(pn); G40.open.th = false; render();
+}, true);
+/* ---- the table based lists ---- */
+const g50Ix = (tb, lb) => { const h = tb.querySelector('tr'); return h ? [...h.children].findIndex(c => c.textContent.trim().startsWith(t(lb))) : -1 };
+function g50Mount(sc, tb, labels, ph) {
+  if (!tb || tb.dataset.g45 || !g45Rows(tb).length) return;
+  const cols = labels.map(l => [g50Ix(tb, l), l]).filter(x => x[0] >= 0);
+  g45Bar(sc, tb, cols, ph);
+  const rows = g45Rows(tb), has = cols.some(([ix]) => { const n = new Set(rows.map(r => g45Val(r.children[ix])).filter(Boolean)).size; return n > 1 && n <= 40 });
+  const bar = document.querySelector('.g40b[data-g40id="' + sc + '"]'); if (bar && !has) { const fb = bar.querySelector('.g40fb'); if (fb) fb.remove() }
+}
+function g50Post() {
+  const v = document.getElementById('v'); if (!v || TAB != 'st') return;
+  const tbs = [...v.querySelectorAll('table.ed')].filter(tb => !tb.closest('.sheet,.g39o'));
+  if (SUB == 'classes') { g50Mount('cls', tbs[0], ['Schedule'], 'Search classes'); g50Mount('room', tbs[1], [], 'Search rooms') }
+  if (SUB == 'subjects') g50Mount('subj', tbs[0], ['Department', 'Placement', 'Priority'], 'Search subjects');
+  if (SUB == 'assign') {
+    const old = v.querySelector('.bar [data-af]'); if (old) { AF = ''; const b = old.closest('.bar'); if (b) b.remove() }
+    g50Mount('asg', tbs[0], ['Class', 'Subject', 'Teacher', 'Primary', 'Active'], 'Search assignments');
+  }
+  v.querySelectorAll('.g42s').forEach(x => { const i = x.querySelector('input'), tb = i && i._tb; if (!tb || tb.dataset.g45) x.remove() });
+}
+const _g50r = render;
+render = function () { const r = _g50r.apply(this, arguments); try { g50Post() } catch (x) { console.error(x) } return r };
+</script>
+<script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
 </body></html>
