@@ -7924,6 +7924,22 @@ exAssign = function () {
 };
 </script>
 <script>
+/* ---------- G55: "Coming up" on Today shows only what has not finished yet (today's sittings whose end time passed are dropped, so the next one shows). The Today page refreshes itself every minute. ---------- */
+const _g55Up = tdUpcoming;
+tdUpcoming = function (ds) {
+  const now = new Date(), hm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  return _g55Up.apply(this, arguments).filter(u => u.date != ds || String(u.end || u.start || '99:99').slice(0, 5) > hm);
+};
+setInterval(() => {
+  try {
+    if (TAB != 'td' || document.hidden || !S || S.register) return;
+    const a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    if (document.querySelector('.swal2-container,.g39o,#g54pop')) return;
+    render();
+  } catch (e) { }
+}, 60000);
+</script>
+<script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
 </body></html>
