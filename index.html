@@ -7940,6 +7940,17 @@ setInterval(() => {
 }, 60000);
 </script>
 <script>
+/* ---------- G56: accessibility: icon-only buttons (delete, copy, edit, refresh) get a tooltip + aria-label ---------- */
+const g56Map = { 'i-trash': 'Delete', 'i-copy': 'Copy link', 'i-edit': 'Edit', 'i-refresh': 'Refresh' };
+function g56Label(root) {
+  (root || document).querySelectorAll('button:not([title]):not([aria-label])').forEach(b => {
+    if (b.innerText.trim()) return; const u = b.querySelector('use'); if (!u) return;
+    const id = (u.getAttribute('href') || u.getAttribute('xlink:href') || '').replace('#', ''), k = g56Map[id]; if (k) { const x = t(k); b.title = x; b.setAttribute('aria-label', x) }
+  });
+}
+const _g56r = render; render = function () { const r = _g56r.apply(this, arguments); try { g56Label(document.getElementById('v')) } catch (e) { } return r };
+</script>
+<script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
 </script>
 </body></html>
