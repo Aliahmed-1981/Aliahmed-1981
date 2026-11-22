@@ -1,5 +1,12 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head>
+<meta property="og:type" content="website">
+<meta property="og:title" content="VIA SOP – نظام جداول المدرسة">
+<meta property="og:description" content="جداول الحصص والغياب والامتحانات في مكان واحد. اطلب الانضمام من هذا الرابط وسيُفعَّل حسابك بعد موافقة الإدارة.">
+<meta property="og:locale" content="ar_AR">
+<meta name="twitter:card" content="summary">
+<meta name="description" content="جداول الحصص والغياب والامتحانات في مكان واحد. School timetables, absence and exams in one place.">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VIA Timetable</title>
 <link rel="manifest" href="manifest.webmanifest" id="mf">
@@ -579,6 +586,20 @@ body.g46bm #vzb{display:none!important}
 #g51p .ft button{background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
 @media (max-width:640px){#g51f{bottom:76px;inset-inline-end:12px;width:46px;height:46px}#g51p{inset-inline:8px;width:auto;bottom:132px;height:min(560px,calc(100vh - 190px))}}
 @media print{#g51f,#g51p{display:none!important}}
+</style>
+<style id="g52css">
+.g52c .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.g52c .lnk{font:12.5px ui-monospace,Consolas,monospace;direction:ltr;text-align:left;background:var(--hl,#f1ece3);border:1px solid var(--ln);border-radius:8px;padding:6px 10px;overflow:auto;white-space:nowrap;flex:1;min-width:200px}
+.g52c textarea{width:100%;min-height:96px;border:1px solid var(--ln);border-radius:10px;padding:8px;background:var(--sf);color:inherit;font:13px/1.6 inherit;box-sizing:border-box}
+.g52r{border:1px solid var(--ln);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--sf)}
+.g52r.p{border-color:var(--gold,#f1c04c);background:#fffaf0}
+.g52r h4{margin:0 0 4px;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.g52r .dt{font-size:12.5px;color:var(--mut);margin:2px 0}
+.g52r .ap{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:8px}
+.g52r .ap label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--mut)}
+.g52r select,.g52r input[type=text]{font:inherit;padding:5px 8px;border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:inherit;min-width:140px}
+.g52tag{font-size:11.5px;padding:1px 9px;border-radius:999px;background:#eee}
+.g52tag.ok{background:#d1fadf;color:#067647}.g52tag.no{background:#fee4e2;color:#b42318}.g52tag.wt{background:#fef0c7;color:#b54708}
 </style>
 </head><body>
 <script>
@@ -7574,6 +7595,147 @@ document.addEventListener('keydown', e => {
 });
 const _g51r = render;
 render = function () { const r = _g51r.apply(this, arguments); try { if (S && !S.register && document.getElementById('v')) { g51Mount(); const f = document.getElementById('g51f'); if (f) { const h = g51Hint(), d = f.querySelector('.dot'); if (d) d.style.display = h ? '' : 'none'; if (G51.open) { const c = document.querySelector('#g51p .ctx'); if (c) c.textContent = t('You are in') + ': ' + g51Label() } } } } catch (x) { console.error(x) } return r };
+</script>
+<script>
+/* ---------- G52: registration by a shared link (WhatsApp). Public join form + the administrator's requests list. Server: Join.gs ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Registration link': 'لينك التسجيل', 'Join requests': 'طلبات الانضمام', 'Link is ON': 'اللينك يعمل', 'Link is OFF': 'اللينك متوقف', 'Turn on': 'تشغيل', 'Turn off': 'إيقاف', 'New link': 'لينك جديد', 'Copy link': 'نسخ اللينك',
+  'Message to send': 'الرسالة المقترحة', 'Send on WhatsApp': 'إرسال على واتساب', 'Copied': 'تم النسخ', 'Refresh': 'تحديث', 'No requests yet.': 'لا توجد طلبات بعد.', 'Approve': 'موافقة', 'Reject': 'رفض',
+  'Role to give': 'الدور الذي سيُمنح', 'Scope': 'النطاق', 'Teacher': 'مدرس', 'Staff': 'موظف', 'Parent': 'ولي أمر', 'Student': 'طالب', 'Approved': 'تمت الموافقة', 'Rejected': 'مرفوض', 'Waiting': 'بانتظار القرار',
+  'Requested as': 'طلب الانضمام كـ', 'Teacher ID or name…': 'كود المدرس أو اسمه…', 'Class / stage / teacher ID, or *': 'فصل / مرحلة / كود مدرس، أو *', 'Make a new link? The old one stops working.': 'إنشاء لينك جديد؟ اللينك القديم سيتوقف.',
+  'Yes, new link': 'نعم، لينك جديد', 'Reject this request?': 'رفض هذا الطلب؟', 'Yes, reject': 'نعم، ارفض', 'Account ready for': 'تم تجهيز حساب', 'Username': 'اسم المستخدم', 'WhatsApp message to the person': 'رسالة واتساب للشخص',
+  'Coordinator': 'منسق', 'Head of department': 'رئيس قسم', 'Viewer': 'مشاهد', 'Choose': 'اختر', 'Link not active yet. Press Turn on.': 'اللينك غير مفعّل. اضغط تشغيل.', 'Waiting for your decision': 'بانتظار قرارك'
+}).filter(([k]) => !(k in AR))));
+const JN = { loaded: false, list: [], link: { on: false, code: '', base: '' }, busy: false, msg: null };
+const jnBase = () => (JN.link.base && !/script[.]google[.]com/.test(JN.link.base) ? JN.link.base : (window.APP_BASE || (location.origin + location.pathname))).replace(/[?#].*$/, '');
+const jnUrl = () => JN.link.code ? jnBase().replace(/\/?$/, '/') + '?join=' + encodeURIComponent(JN.link.code) : '';
+const jnText = () => (HL == 'ar' ? '📅 برنامج VIA SOP لجداول المدرسة: الجداول والغياب والامتحانات في مكان واحد.\nللانضمام سجّل طلبك من هذا الرابط، وسيتم تفعيل حسابك بعد موافقة الإدارة 👇\n' : '📅 VIA SOP school timetable app: timetables, absence and exams in one place.\nTo join, send your request from this link; your account is activated after the school approves it 👇\n') + jnUrl();
+const jnRole = { teacher: 'Teacher', staff: 'Staff', parent: 'Parent', student: 'Student' };
+function jnDetail(r) {
+  const d = r.detail || {}, L = { teacherId: ['كود المدرس', 'Teacher ID'], subject: ['المادة', 'Subject'], department: ['القسم', 'Department'], jobTitle: ['الوظيفة', 'Job'], childName: ['اسم الابن/الابنة', 'Child'], childCode: ['كود الطالب', 'Student code'], childClass: ['فصل الابن', 'Child class'], studentCode: ['كود الطالب', 'Student code'], studentClass: ['الفصل', 'Class'], note: ['ملاحظة', 'Note'] };
+  return Object.keys(d).map(k => `<b>${esc(L[k] ? L[k][HL == 'ar' ? 0 : 1] : k)}:</b> ${esc(d[k])}`).join(' · ');
+}
+function jnDefaults(r) {
+  const d = r.detail || {};
+  if (r.role == 'teacher') { const tc = (S.tch || []).find(x => x[0] == d.teacherId || String(x[1]).toLowerCase() == String(r.name).toLowerCase()); return { role: 'teacher', scope: tc ? tc[0] : (d.teacherId || '') } }
+  if (r.role == 'parent') return { role: 'viewer', scope: d.childClass || '' };
+  if (r.role == 'student') return { role: 'viewer', scope: d.studentClass || '' };
+  return { role: 'viewer', scope: '' };
+}
+function jnCard() {
+  const pend = JN.list.filter(x => x.status == 'pending').length, u = jnUrl();
+  const rows = JN.list.map(r => {
+    const df = jnDefaults(r), st = r.status == 'pending' ? ['wt', 'Waiting'] : r.status == 'approved' ? ['ok', 'Approved'] : ['no', 'Rejected'];
+    const sc = `<datalist id="jn-sc"></datalist>`;
+    return `<div class="g52r ${r.status == 'pending' ? 'p' : ''}" data-jn="${esc(r.id)}"><h4>${esc(r.name)} <span class="g52tag ${st[0]}">${t(st[1])}</span> <span class="g52tag">${t('Requested as')} ${t(jnRole[r.role] || r.role)}</span></h4>
+<div class="dt">${esc(r.email)}${r.phone ? ' · ' + esc(r.phone) : ''} · ${esc(r.time)}</div><div class="dt">${jnDetail(r)}</div>
+${r.status == 'pending' ? `<div class="ap"><label>${t('Role to give')}<select data-jn-role>${[['teacher', 'Teacher'], ['viewer', 'Viewer'], ['coordinator', 'Coordinator'], ['hod', 'Head of department']].map(([v, l]) => `<option value="${v}"${df.role == v ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
+<label>${t('Scope')}<input type="text" data-jn-scope list="jn-sc" value="${esc(df.scope)}" placeholder="${esc(t('Class / stage / teacher ID, or *'))}"></label>
+<button class="b pri" data-jn-do="approve">${t('Approve')}</button><button class="b" data-jn-do="reject">${t('Reject')}</button></div>` : (r.note || r.by ? `<div class="dt">${esc(r.by || '')} ${esc(r.decided || '')} ${esc(r.note || '')}</div>` : '')}</div>`;
+  }).join('');
+  const opts = [...new Set([...(S.cls || []).map(x => x[0]), ...(S.cls || []).map(x => x[1]), ...(S.tch || []).map(x => x[0]), '*'])].filter(Boolean).map(x => `<option value="${esc(x)}">`).join('');
+  return `<div class="card g52c"><h3>${ic('share')} ${t('Registration link')} <span class="g52tag ${JN.link.on ? 'ok' : 'no'}">${t(JN.link.on ? 'Link is ON' : 'Link is OFF')}</span></h3>
+${JN.link.on ? `<div class="row"><div class="lnk" id="jn-url">${esc(u)}</div><button class="b" data-jn-a="copy">${ic('copy')} ${t('Copy link')}</button></div>
+<p class="msg" style="margin:8px 0 4px">${t('Message to send')}</p><textarea id="jn-txt">${esc(jnText())}</textarea>
+<div class="row" style="margin-top:6px"><a class="b pri" id="jn-wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(jnText())}">${t('Send on WhatsApp')}</a><button class="b" data-jn-a="copytxt">${t('Copy')}</button><button class="b" data-jn-a="rotate">${t('New link')}</button><button class="b" data-jn-a="off">${t('Turn off')}</button></div>` : `<p class="msg">${t('Link not active yet. Press Turn on.')}</p><button class="b pri" data-jn-a="on">${t('Turn on')}</button>`}
+<h3 style="margin-top:14px">${t('Join requests')} ${pend ? `<span class="g52tag wt">${pend} ${t('Waiting for your decision')}</span>` : ''} <button class="b" data-jn-a="reload" style="margin-inline-start:8px">${t('Refresh')}</button></h3>
+${rows || `<p class="msg">${t('No requests yet.')}</p>`}<datalist id="jn-sc">${opts}</datalist></div>`;
+}
+async function jnLoad(quiet) {
+  if (JN.busy) return; JN.busy = true;
+  try { const r = await srv('api_joinList'); JN.list = r.list || []; JN.link = r.link || JN.link; JN.loaded = true } catch (e) { JN.loaded = true; JN.err = true } finally { JN.busy = false }
+  if (TAB == 'us') render();
+}
+async function jnAct(a) {
+  try {
+    if (['on', 'off', 'rotate'].includes(a)) { if (a == 'rotate' && !(await confirmBox(t('Make a new link? The old one stops working.'), t('Yes, new link')))) return; JN.link = await srv('api_joinLink', a); render() }
+  } catch (e) { }
+}
+const jnConfirm = (msg, yes) => (typeof ask == 'function' ? ask(msg, yes) : Promise.resolve(confirm(msg)));
+const confirmBox = jnConfirm;
+document.addEventListener('click', async e => {
+  const T = e.target; if (!T.closest) return;
+  const a = T.closest('[data-jn-a]'); if (a) {
+    const k = a.dataset.jnA;
+    if (k == 'reload') return jnLoad();
+    if (k == 'copy') { try { await navigator.clipboard.writeText(jnUrl()) } catch (x) { } return toast(t('Copied')) }
+    if (k == 'copytxt') { const ta = document.getElementById('jn-txt'); try { await navigator.clipboard.writeText(ta.value) } catch (x) { ta.select(); try { document.execCommand('copy') } catch (y) { } } return toast(t('Copied')) }
+    return jnAct(k);
+  }
+  const d = T.closest('[data-jn-do]'); if (d) {
+    const row = d.closest('[data-jn]'), id = row.dataset.jn, req = JN.list.find(x => x.id == id), dec = d.dataset.jnDo;
+    const role = row.querySelector('[data-jn-role]').value, scope = row.querySelector('[data-jn-scope]').value.trim();
+    if (dec == 'reject' && !(await confirmBox(t('Reject this request?'), t('Yes, reject')))) return;
+    try {
+      const r = await srv('api_joinDecide', id, dec, role, scope, ''); JN.list = r.list || JN.list; render();
+      if (dec == 'approve') jnDone(r, req);
+    } catch (x) { }
+  }
+});
+document.addEventListener('input', e => { if (e.target.id == 'jn-txt') { const w = document.getElementById('jn-wa'); if (w) w.href = 'https://wa.me/?text=' + encodeURIComponent(e.target.value) } });
+function jnDone(r, req) {
+  const msg = (HL == 'ar' ? `أهلاً ${r.name}، تم قبول طلبك على برنامج VIA SOP ✅\nسجّل الدخول بالإيميل (أو اسم المستخدم ${r.username}) وكلمة السر التي اخترتها:\n` : `Hello ${r.name}, your request to join VIA SOP was approved ✅\nSign in with your e-mail (or username ${r.username}) and the password you chose:\n`) + jnBase();
+  const o = document.createElement('div'); o.className = 'g39o';
+  o.innerHTML = `<div class="g39m" role="dialog"><h3>${t('Account ready for')} ${esc(r.name)}</h3><p>${t('Username')}: <b>${esc(r.username || '')}</b></p><p class="msg">${t('WhatsApp message to the person')}</p><textarea style="width:100%;min-height:110px;box-sizing:border-box" id="jn-m2">${esc(msg)}</textarea><div class="ft"><button class="b" data-x>${t('Close')}</button><a class="b pri" target="_blank" rel="noopener" href="https://wa.me/${String(req && req.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg)}">${t('Send on WhatsApp')}</a></div></div>`;
+  o.addEventListener('click', ev => { if (ev.target === o || ev.target.closest('[data-x]')) o.remove() }); document.body.appendChild(o);
+}
+const _g52r = render;
+render = function () {
+  const r = _g52r.apply(this, arguments);
+  try {
+    if (TAB == 'us' && S && S.role == 'admin') {
+      const v = document.getElementById('v'); if (!v) return r;
+      if (!JN.loaded && !JN.busy) jnLoad(true);
+      v.querySelectorAll('.g52c').forEach(x => x.remove());
+      if (JN.loaded && !JN.err) v.insertAdjacentHTML('afterbegin', jnCard());
+    }
+  } catch (x) { console.error(x) }
+  return r;
+};
+
+/* ---------- the public join form (opened by ?join=CODE, only when nobody is signed in) ---------- */
+const JOIN_CODE = (() => { try { return new URLSearchParams(location.search).get('join') || '' } catch (e) { return '' } })();
+function jnForm() {
+  const LGI = 'width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--ln,#ccd);border-radius:10px;font:inherit;background:var(--sf,#fff);color:inherit', LGL = 'display:block;text-align:start;margin:10px 0 4px;font-size:13px;color:var(--mut,#5c6f77)';
+  let d = document.getElementById('lg-ov');
+  if (!d) { d = document.createElement('div'); d.id = 'lg-ov'; d.style.cssText = 'position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg,#f3f6f8);padding:16px;overflow:auto'; document.body.appendChild(d) }
+  const F = (id, ar, en, extra) => `<label style="${LGL}" for="${id}">${ar} &middot; ${en}</label><input id="${id}" style="${LGI}" ${extra || ''}>`;
+  d.innerHTML = `<form class="card" id="jn-f" style="max-width:460px;width:100%;margin:auto" autocomplete="on"><h3 style="margin:0 0 2px">VIA SOP</h3>
+<p style="margin:0 0 6px;color:var(--mut,#5c6f77)">طلب انضمام للبرنامج &middot; Request to join<br><small>سيُفعَّل حسابك بعد موافقة الإدارة &middot; Your account is activated after the school approves it</small></p>
+<label style="${LGL}" for="jn-role">أنا &middot; I am a</label><select id="jn-role" style="${LGI}"><option value="teacher">مدرس &middot; Teacher</option><option value="staff">موظف &middot; Staff</option><option value="parent">ولي أمر &middot; Parent</option><option value="student">طالب &middot; Student</option></select>
+${F('jn-name', 'الاسم الكامل', 'Full name', 'autocomplete="name" required')}${F('jn-email', 'البريد الإلكتروني', 'E-mail', 'type="email" autocomplete="email" required dir="ltr"')}${F('jn-phone', 'رقم الواتساب', 'WhatsApp number', 'type="tel" autocomplete="tel" dir="ltr"')}
+<div id="jn-x"></div>
+${F('jn-pw', 'كلمة السر (8 حروف على الأقل)', 'Password (8+ characters)', 'type="password" autocomplete="new-password" required dir="ltr"')}${F('jn-pw2', 'أعد كتابة كلمة السر', 'Repeat password', 'type="password" autocomplete="new-password" required dir="ltr"')}
+<div style="position:absolute;left:-9999px" aria-hidden="true"><input id="jn-web" tabindex="-1" autocomplete="off"></div>
+<p id="jn-m" role="alert" style="min-height:20px;margin:10px 0;white-space:pre-line"></p>
+<button class="b pri" id="jn-b" type="submit" style="padding:10px 26px;width:100%">إرسال الطلب &middot; Send request</button>
+<p style="margin:12px 0 0"><a href="${location.pathname}" id="jn-si">لدي حساب &middot; I already have an account</a></p></form>`;
+  const $ = x => document.getElementById(x), ex = () => {
+    const r = $('jn-role').value, f = (id, ar, en, req) => F(id, ar, en, req ? 'required' : '');
+    $('jn-x').innerHTML = r == 'teacher' ? f('jn-d1', 'كود المدرس (إن وُجد)', 'Teacher ID (if you have one)') + f('jn-d2', 'المادة', 'Subject')
+      : r == 'staff' ? f('jn-d1', 'الوظيفة', 'Job title') + f('jn-d2', 'القسم', 'Department')
+      : r == 'parent' ? f('jn-d1', 'اسم الابن / الابنة بالكامل', 'Child full name', 1) + f('jn-d2', 'فصل الابن / الابنة', 'Child class', 1) + f('jn-d3', 'كود الطالب (إن وُجد)', 'Student code (if known)')
+      : f('jn-d1', 'الفصل', 'Class', 1) + f('jn-d2', 'كود الطالب (إن وُجد)', 'Student code (if known)');
+  }; ex(); $('jn-role').onchange = ex;
+  const say = (m, good) => { const e = $('jn-m'); e.style.color = good ? 'var(--ok,#26806F)' : 'var(--bad,#c33)'; e.textContent = m || '' };
+  const MS = { 'This registration link is not active. Ask the school for a new link.': 'اللينك غير مفعّل. اطلب لينك جديد من المدرسة.', 'Please enter your full name.': 'اكتب اسمك بالكامل.', 'Please enter a valid e-mail.': 'اكتب بريدًا إلكترونيًا صحيحًا.', 'The password must be at least 8 characters.': 'كلمة السر 8 حروف على الأقل.', 'That password is too easy to guess.': 'كلمة السر سهلة التخمين، اختر غيرها.', 'A request for this e-mail is already waiting for approval.': 'يوجد طلب بهذا البريد بانتظار الموافقة.', 'This e-mail already has an account. Use Forgot password to sign in.': 'هذا البريد له حساب بالفعل. سجّل الدخول أو استخدم «نسيت كلمة السر».', "Please enter your child's full name and class.": 'اكتب اسم الابن/الابنة وفصله.', 'Please enter your class.': 'اكتب فصلك.', 'Too many requests are waiting. Try again later.': 'طلبات كثيرة الآن. جرّب لاحقًا.' };
+  $('jn-f').onsubmit = async e => {
+    e.preventDefault(); if ($('jn-pw').value !== $('jn-pw2').value) return say('كلمتا السر غير متطابقتين.\nPasswords do not match.');
+    const r = $('jn-role').value, v = id => ($(id) ? $(id).value.trim() : ''), detail = r == 'teacher' ? { teacherId: v('jn-d1'), subject: v('jn-d2') } : r == 'staff' ? { jobTitle: v('jn-d1'), department: v('jn-d2') } : r == 'parent' ? { childName: v('jn-d1'), childClass: v('jn-d2'), childCode: v('jn-d3') } : { studentClass: v('jn-d1'), studentCode: v('jn-d2') };
+    $('jn-b').disabled = true; say('...', true);
+    try {
+      const res = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'api_joinSubmit', args: [JOIN_CODE, { role: r, name: v('jn-name'), email: v('jn-email'), phone: v('jn-phone'), pw: $('jn-pw').value, website: v('jn-web'), detail }], tok: '' }), credentials: 'omit', redirect: 'follow' });
+      const j = JSON.parse(await res.text()); $('jn-b').disabled = false;
+      if (!(j && j.ok)) { const m = String((j && j.error) || 'Error').replace(/^Error:\s*/, ''); return say((MS[m] ? MS[m] + '\n' : '') + m) }
+      $('jn-f').innerHTML = `<h3 style="margin:0 0 6px">تم استلام طلبك ✅ &middot; Request received</h3><p>سيراجع المسؤول طلبك ويفعّل حسابك. بعد الموافقة سجّل الدخول بالبريد الإلكتروني وكلمة السر التي اخترتها.</p><p style="color:var(--mut,#5c6f77)">The administrator will review your request. After approval, sign in with your e-mail and the password you chose.</p><p><a href="${location.pathname}">تسجيل الدخول &middot; Sign in</a></p>`;
+    } catch (x) { $('jn-b').disabled = false; say('مشكلة في الاتصال. جرّب مرة أخرى.\nConnection problem. Try again.') }
+  };
+}
+if (JOIN_CODE) {
+  const _sl = window.showLogin;
+  window.showLogin = function (msg) { if (!window.TOK && JOIN_CODE) { if (!document.getElementById('jn-f')) jnForm(); return } return _sl.apply(this, arguments) };
+  const go = () => { if (!window.TOK) window.showLogin('') }; if (document.readyState != 'loading') setTimeout(go, 0);
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
