@@ -601,6 +601,37 @@ body.g46bm #vzb{display:none!important}
 .g52tag{font-size:11.5px;padding:1px 9px;border-radius:999px;background:#eee}
 .g52tag.ok{background:#d1fadf;color:#067647}.g52tag.no{background:#fee4e2;color:#b42318}.g52tag.wt{background:#fef0c7;color:#b54708}
 </style>
+<style id="g53css">
+.g53b{position:fixed;inset-inline:0;bottom:0;z-index:900;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 14px;background:#fffaf0;border-top:2px solid var(--gold,#f1c04c);box-shadow:0 -4px 14px #0002}
+.g53b span{font-weight:600}
+.g53ok{margin:0 0 10px;font-size:12.5px;color:var(--mut)}
+</style>
+<style id="g54css">
+.g54t{width:100%;border-collapse:collapse}
+.g54t th{background:var(--hl,#f1ece3);font-size:12.5px;text-align:start;padding:7px 8px;border:1px solid var(--ln)}
+.g54t td{padding:6px 8px;border:1px solid var(--ln);vertical-align:top}
+.g54t tr.rs td{background:#f7f9fb}
+.g54n{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:8px;margin:2px 0;min-height:32px}
+.g54n:hover,.g54n:focus-within{background:#eef5f3}
+.g54n.bad{background:#fee4e2}
+.g54n .nm{font-weight:600}.g54n small{color:var(--mut)}
+.g54n .g54a{display:flex;gap:4px;margin-inline-start:auto;opacity:0;transition:opacity .12s}
+.g54n:hover .g54a,.g54n:focus-within .g54a,.g54n.on .g54a{opacity:1}
+@media(hover:none){.g54n .g54a{opacity:1}}
+.g54a button{font:12px inherit;padding:3px 9px;border:1px solid var(--ln);border-radius:999px;background:var(--sf);color:inherit;cursor:pointer;white-space:nowrap}
+.g54a button:hover{background:#e3efec}.g54a .x{color:#b42318}
+#g54pop{position:fixed;z-index:3000;width:min(380px,94vw);max-height:min(460px,70vh);display:flex;flex-direction:column;background:var(--sf,#fff);border:1px solid var(--ln);border-radius:14px;box-shadow:0 10px 34px #0003}
+#g54pop h5{margin:0;padding:10px 12px 4px;font-size:14px}
+#g54pop .q{margin:4px 10px;padding:7px 10px;border:1px solid var(--ln);border-radius:9px;font:inherit;background:var(--sf);color:inherit}
+#g54pop .ls{overflow:auto;padding:4px 6px 8px}
+.g54o{display:block;width:100%;text-align:start;border:0;background:none;color:inherit;font:inherit;padding:7px 8px;border-radius:8px;cursor:pointer}
+.g54o:hover{background:#eef5f3}
+.g54o .tg{display:block;font-size:11.5px;margin-top:2px}
+.g54o .tg.ok{color:#067647}.g54o .tg.sf{color:#b54708}.g54o .tg.bl{color:#b42318}
+.g54o.bl .nm{opacity:.75}
+@media(max-width:640px){.g54t,.g54t tbody,.g54t tr,.g54t td{display:block;width:auto}.g54t tr:first-child{display:none}.g54t tr{border:1px solid var(--ln);border-radius:12px;margin:8px 0;padding:6px 8px;background:var(--sf)}.g54t td{border:0;padding:3px 2px}.g54t td[data-l]::before{content:attr(data-l) ': ';color:var(--mut);font-size:12px}.g54t td.nv::before{display:block;margin-bottom:2px}.g54t tr.rs{background:#f7f9fb}.g54n{flex-wrap:wrap}.g54n .g54a{margin-inline-start:0;width:100%}.g54t select{width:100%}}
+@media(max-width:640px){#g54pop{inset-inline:3vw!important;top:auto!important;bottom:10px;width:auto;max-height:75vh}}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -7751,6 +7782,132 @@ if (JOIN_CODE) {
   const go = () => { if (!window.TOK) window.showLogin('') }; if (document.readyState != 'loading') setTimeout(go, 0);
   (async () => { try { const res = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'api_joinOptions', args: [JOIN_CODE], tok: '' }), credentials: 'omit' }); const j = JSON.parse(await res.text()); const o = j && (j.r || j.data || j.result); if (j && j.ok && o && o.subjects) { JOPT = o; if (document.getElementById('jn-f') && !document.getElementById('jn-name').value) jnForm() } } catch (e) { } })();
 }
+</script>
+<script>
+/* ---------- G53: save feedback in the exam module. Rules: sticky "unsaved" bar + a second Save button. Manual assignment: every edit is saved at once, now with a "Saved" confirmation. ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'You have unsaved changes': 'عندك تعديلات لم تُحفظ', 'Discard changes': 'تراجع عن التعديلات', 'Changes here are saved automatically, one by one.': 'أي تعديل هنا يُحفظ تلقائيًا فور تنفيذه.',
+  'Days that have already passed are kept as they are when you generate or refill.': 'الأيام التي انتهت تبقى كما هي عند إعادة التوزيع أو ملء الفراغات.'
+}).filter(([k]) => !(k in AR))));
+const g53Dirty = () => { try { return TAB == 'ct' && EX.sub == 'rules' && EX.rules && exTt() && JSON.stringify(EX.rules) !== JSON.stringify(exTt().rules) } catch (e) { return false } };
+function g53Bar() {
+  let b = document.getElementById('g53b'), on = g53Dirty();
+  if (!on) { if (b) b.remove(); return }
+  if (!b) { b = document.createElement('div'); b.id = 'g53b'; b.className = 'g53b'; b.innerHTML = `<span>${t('You have unsaved changes')}</span><button class="b pri" data-exa="saverules">${ic('check')} ${t('Save the rules')}</button><button class="b" data-g53="discard">${t('Discard changes')}</button>`; (document.getElementById('v') || document.body).appendChild(b) }
+}
+const _g53Rules = exRules;
+exRules = function () {
+  const h = _g53Rules.apply(this, arguments); if (!h) return h;
+  return h + `<div class="card"><p class="exbar"><button class="b pri" data-exa="saverules">${ic('check')} ${t('Save the rules')}</button></p><p class="g53ok">${t('Days that have already passed are kept as they are when you generate or refill.')}</p></div>`;
+};
+const _g53Assign = exAssign;
+exAssign = function () { const h = _g53Assign.apply(this, arguments); return h ? `<p class="g53ok">${ic('check')} ${t('Changes here are saved automatically, one by one.')}</p>` + h : h };
+const _g53Call = exCall;
+exCall = async function (fn) {
+  const r = await _g53Call.apply(this, arguments);
+  if (r && (fn == 'api_ivSet' || fn == 'api_ivReplace') && !r.needConfirm && !r.preview) UX.done(t('Saved'));
+  return r;
+};
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-g53=discard]'); if (b) { EX.rules = null; EX.pool.set = null; render() } });
+['input', 'change'].forEach(ev => document.addEventListener(ev, () => setTimeout(g53Bar, 0)));
+const _g53r = render; render = function () { const r = _g53r.apply(this, arguments); try { g53Bar() } catch (x) { } return r };
+</script>
+<script>
+/* ---------- G54: Assignments tab as an organised table. Hover a name: Swap / Replace (and Lock / Remove). Replace lists every teacher with a status: free, has another duty that day, or unavailable (with the reason). ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Swap': 'تبديل', 'Replace': 'استبدال', 'Free': 'متاح', 'Duty that day': 'له مهمة اليوم', 'Replace with': 'استبدال بـ', 'Swap with': 'تبديل مع', 'Search teacher…': 'ابحث عن مدرس…',
+  'Replace anyway': 'استبدل رغم ذلك', 'already has another duty that day': 'لديه مهمة أخرى في نفس اليوم', 'isHead': 'مسؤول (لا يراقب حسب القواعد)', 'notInPool': 'خارج قائمة المراقبين', 'duties': 'مهام',
+  'Same sitting': 'نفس الفترة', 'Other sittings that day': 'فترات أخرى في نفس اليوم', 'Close': 'إغلاق', 'No.': 'م', 'Reserve': 'احتياطي'
+}).filter(([k]) => !(k in AR))));
+const g54Rules = () => (exTt() && exTt().rules) || {};
+const g54Time = k => { const p = String(k || '').split('|'); return p[1] ? p[1] + (p[2] ? '-' + p[2] : '') : '' };
+const g54Where = x => { const s = exSesRows().find(r => r.id == x.slot); return (s ? s.room : t('Reserve')) };
+function g54Tags(id, a) {
+  const R = g54Rules(), A = exAs(), o = { block: [], soft: [], load: 0 };
+  A.forEach(x => { if (x.t == id) o.load++ });
+  if ((R.excluded || []).includes(id)) o.block.push(t('excluded'));
+  if ((R.only || []).length && !R.only.includes(id)) o.block.push(t('notInPool'));
+  if ((R.roles || []).some(r => r.t == id) && !R.headsInvigilate) o.block.push(t('isHead'));
+  if (((R.unavailable || {})[id] || []).includes(a.date)) o.block.push(t('unavailable'));
+  A.filter(x => x.t == id && x.id != a.id && x.date == a.date).forEach(x => {
+    const line = g54Time(x.key) + ' ' + g54Where(x) + ' (' + t(x.type == 'main' ? 'Main' : 'Reserve') + ')';
+    if (x.key == a.key) o.block.push(t(x.type == 'reserve' || a.type == 'reserve' ? 'both' : 'overlap') + ': ' + g54Where(x));
+    else o.soft.push(line);
+  });
+  return o;
+}
+function g54Close() { const p = document.getElementById('g54pop'); if (p) p.remove(); document.querySelectorAll('.g54n.on').forEach(n => n.classList.remove('on')) }
+function g54Open(kind, id, anchor) {
+  g54Close(); const a = exAs().find(x => x.id == id); if (!a) return;
+  const p = document.createElement('div'); p.id = 'g54pop'; p.dataset.kind = kind; p.dataset.id = id;
+  const body = () => {
+    const q = (p.querySelector('.q') ? p.querySelector('.q').value : '').trim().toLowerCase(); let rows = [];
+    if (kind == 'rw') {
+      rows = Object.keys(EX.D.names).filter(x => x != a.t && ((g54Rules().only || []).length ? g54Rules().only.includes(x) : true)).map(x => ({ id: x, g: g54Tags(x, a) }))
+        .filter(r => !q || (exName(r.id) + ' ' + r.id).toLowerCase().includes(q))
+        .sort((x, y) => (x.g.block.length ? 2 : x.g.soft.length ? 1 : 0) - (y.g.block.length ? 2 : y.g.soft.length ? 1 : 0) || x.g.load - y.g.load || natural(exName(x.id), exName(y.id)));
+      return rows.map(r => { const c = r.g.block.length ? 'bl' : r.g.soft.length ? 'sf' : 'ok';
+        return `<button class="g54o ${r.g.block.length ? 'bl' : ''}" data-g54pick="${esc(r.id)}" data-lv="${c}"><span class="nm">${esc(exName(r.id))}</span> <small>${esc(r.id)} · ${r.g.load} ${t('duties')}</small>
+<span class="tg ${c}">${r.g.block.length ? '⛔ ' + esc(r.g.block.join(' · ')) : r.g.soft.length ? '⚠ ' + t('Duty that day') + ': ' + esc(r.g.soft.join(' | ')) : '✓ ' + t('Free')}</span></button>` }).join('') || `<p class="msg">${t('Nothing here yet.')}</p>`;
+    }
+    const others = exAs().filter(x => x.id != a.id && x.date == a.date && (!q || exName(x.t).toLowerCase().includes(q)));
+    others.sort((x, y) => (x.key == a.key ? 0 : 1) - (y.key == a.key ? 0 : 1) || (x.key < y.key ? -1 : 1) || natural(exName(x.t), exName(y.t)));
+    let last = ''; return others.map(x => { const grp = x.key == a.key ? t('Same sitting') : t('Other sittings that day') + ' ' + g54Time(x.key); const hd = grp != last ? `<h5 style="padding:8px 8px 2px;font-size:12px;color:var(--mut)">${esc(grp)}</h5>` : ''; last = grp;
+      return hd + `<button class="g54o" data-g54pick="${esc(x.id)}"><span class="nm">${esc(exName(x.t))}</span> <small>${esc(x.t)} · ${t(x.type == 'main' ? 'Main' : 'Reserve')} · ${esc(g54Where(x))}</small></button>` }).join('') || `<p class="msg">${t('Nothing here yet.')}</p>`;
+  };
+  p.innerHTML = `<h5>${kind == 'rw' ? '↻ ' + t('Replace with') : '⇄ ' + t('Swap with')}: ${esc(exName(a.t))} <small style="color:var(--mut)">${esc(a.date)} ${esc(g54Time(a.key))}</small><button class="b" data-g54x style="float:inline-end;padding:0 8px">✕</button></h5><input class="q" placeholder="${esc(t('Search teacher…'))}"><div class="ls"></div>`;
+  const ls = p.querySelector('.ls'), fill = () => { ls.innerHTML = body() }; fill(); p.querySelector('.q').oninput = fill; document.body.appendChild(p);
+  const r = anchor.getBoundingClientRect(), W = Math.min(380, innerWidth * .94), H = p.offsetHeight;
+  let left = document.dir == 'rtl' || document.documentElement.dir == 'rtl' ? r.right - W : r.left; left = Math.max(8, Math.min(left, innerWidth - W - 8)); let top = r.bottom + 6; if (top + H > innerHeight - 8) top = Math.max(8, r.top - H - 6);
+  p.style.left = left + 'px'; p.style.top = top + 'px'; const n = anchor.closest('.g54n'); if (n) n.classList.add('on'); setTimeout(() => p.querySelector('.q').focus(), 30);
+}
+document.addEventListener('click', async e => {
+  const T = e.target; if (!T.closest) return;
+  if (T.closest('[data-g54x]')) return g54Close();
+  const b = T.closest('[data-g54a]'); if (b) {
+    const id = b.dataset.id, k = b.dataset.g54a;
+    if (k == 'rw' || k == 'sw') return g54Open(k, id, b);
+    if (k == 'lk') { const x = exAs().find(q => q.id == id); return exSetOp({ k: 'lock', id, locked: !(x && x.locked) }) }
+    if (k == 'rm') { const x = exAs().find(q => q.id == id); if (!(await UX.ask(t('Remove') + ': ' + exName(x.t) + '?', '', { danger: true, yes: t('Remove') }))) return; return exSetOp({ k: 'remove', id }) }
+  }
+  const pk = T.closest('[data-g54pick]'); if (pk) {
+    const p = document.getElementById('g54pop'), kind = p.dataset.kind, id = p.dataset.id, to = pk.dataset.g54pick, a = exAs().find(x => x.id == id);
+    if (kind == 'rw') {
+      const g = g54Tags(to, a);
+      if (g.soft.length && !g.block.length && !(await UX.ask(exName(to) + ' ' + t('already has another duty that day'), '<div style="text-align:start">' + g.soft.map(esc).join('<br>') + '</div>', { yes: t('Replace anyway'), danger: true }))) return;
+      g54Close(); return exSetOp({ k: 'replace', id, t: to });
+    }
+    g54Close(); return exSetOp({ k: 'swap', id, id2: to });
+  }
+  if (!T.closest('#g54pop')) g54Close();
+}, true);
+document.addEventListener('keydown', e => { if (e.key == 'Escape') g54Close() });
+function g54Person(a, bad, can) {
+  return `<div class="g54n${bad ? ' bad' : ''}"><span class="nm">${esc(exName(a.t))}</span><small>${esc(a.t)}</small>${a.locked ? '🔒' : ''}${can ? `<span class="g54a"><button data-g54a="sw" data-id="${a.id}" title="${t('Swap')}">⇄ ${t('Swap')}</button><button data-g54a="rw" data-id="${a.id}" title="${t('Replace')}">↻ ${t('Replace')}</button><button data-g54a="lk" data-id="${a.id}" title="${t(a.locked ? 'Unlock' : 'Lock')}">${a.locked ? '🔓' : '🔒'}</button><button class="x" data-g54a="rm" data-id="${a.id}" title="${t('Remove')}">✕</button></span>` : ''}</div>`;
+}
+const _g54 = exAssign;
+exAssign = function () {
+  const base = _g54.apply(this, arguments); if (!base) return base;
+  const A = exAs(), F = EX.filt, S2 = exSessions(), bad = new Set(exConfs().map(c => c.id).filter(Boolean)), dates = [...new Set(S2.map(s => s.date))], can = exCan('ct_inv');
+  const cut = base.indexOf('<div class="card"><div class="row"><label>'), end = base.indexOf('<div class="card"><h3>' + t('Workload'));
+  if (cut < 0 || end < 0) return base;
+  const q = F.q.trim().toLowerCase(); let any = false, h = '';
+  const head = base.slice(cut, base.indexOf('</div>', base.indexOf('data-exfl="q"')) + 6);      // the filter row stays as it is
+  dates.filter(d => !F.date || d == F.date).forEach(d => {
+    const day = S2.filter(s => s.date == d).map(s => {
+      const rooms = s.rows.filter(r => !q || (r.room + ' ' + r.subject).toLowerCase().includes(q)), res = A.filter(a => a.type == 'reserve' && a.key == s.key);
+      const mine = rooms.filter(r => !F.teacher || A.some(a => a.type == 'main' && a.slot == r.id && a.t == F.teacher));
+      if (F.teacher && !mine.length && !res.some(a => a.t == F.teacher)) return '';
+      any = true; const list = F.teacher ? mine : rooms;
+      const add = (v) => can ? `<select data-exadd="${v}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select>` : '';
+      return `<div class="ses"><h5>${esc(s.name)} · ${esc(s.start)}-${esc(s.end)}</h5><div class="tw"><table class="g54t"><tr><th style="width:36px">${t('No.')}</th><th>${t('Room')}</th><th>${t('Subject')}</th><th>${t('Students')}</th><th style="min-width:260px">${t('Main invigilators')}</th><th>${can ? t('Add a teacher') : ''}</th></tr>${list.map((r, i) => `<tr><td data-l="${t('No.')}">${i + 1}</td><td data-l="${t('Room')}"><b>${esc(r.room)}</b></td><td data-l="${t('Subject')}">${esc(r.subject)}${r.grade ? ` <small>(${esc(r.grade)})</small>` : ''}</td><td data-l="${t('Students')}">${esc(r.students)}${r.seats ? ` <small>${esc(r.seats)}</small>` : ''}</td><td class="nv" data-l="${t('Main invigilators')}">${A.filter(a => a.type == 'main' && a.slot == r.id).map(a => g54Person(a, bad.has(a.id), can)).join('') || '<small>—</small>'}</td><td>${add('main|' + r.id + '|' + s.key)}</td></tr>`).join('')}
+<tr class="rs"><td colspan="4"><b>${t('Reserve invigilators')}</b></td><td class="nv">${res.map(a => g54Person(a, bad.has(a.id), can)).join('') || '<small>—</small>'}</td><td>${add('reserve||' + s.key)}</td></tr></table></div></div>`;
+    }).join('');
+    if (day) h += `<h4>${esc(d)} · ${esc(exDay(d))}</h4>${day}`;
+  });
+  if (!any) h += `<p class="msg">${t('Nothing here yet.')}</p>`;
+  return base.slice(0, cut) + head + h + '</div>' + base.slice(end);
+};
 </script>
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
