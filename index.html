@@ -608,6 +608,17 @@ body.g46bm #vzb{display:none!important}
 </style>
 <style id="g54css">
 .g54t{width:100%;border-collapse:collapse}
+.g54c{display:flex;flex-wrap:wrap;gap:2px 6px}.g54c .g54n{flex:1 1 230px}
+details.g54dt>summary,details.g54s>summary{cursor:pointer;list-style:none;font-weight:700;padding:2px 0}
+details.g54dt>summary::-webkit-details-marker,details.g54s>summary::-webkit-details-marker{display:none}
+details.g54dt>summary::before,details.g54s>summary::before{content:'▸ ';color:var(--mut)}
+details.g54dt[open]>summary::before,details.g54s[open]>summary::before{content:'▾ '}
+details.g54s>summary h5{display:inline;margin:0}
+details.g54dt{padding:10px 14px}
+.g54days{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;position:sticky;top:0;z-index:5;background:var(--sf,#fff);padding:6px 0}
+.g54days button{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--ln);border-radius:999px;background:var(--sf);color:inherit;cursor:pointer}
+.g54days button.on{background:var(--pri,#173B5E);color:#fff;border-color:transparent}.g54days button i{font-style:normal;color:#b42318;margin-inline-start:4px}
+.g54t td{padding:4px 8px}
 .g54t th{background:var(--hl,#f1ece3);font-size:12.5px;text-align:start;padding:7px 8px;border:1px solid var(--ln)}
 .g54t td{padding:6px 8px;border:1px solid var(--ln);vertical-align:top}
 .g54t tr.rs td{background:#f7f9fb}
@@ -7863,6 +7874,7 @@ function g54Open(kind, id, anchor) {
 }
 document.addEventListener('click', async e => {
   const T = e.target; if (!T.closest) return;
+  const dc = T.closest('[data-g54d]'); if (dc) { EX.filt.date = dc.dataset.g54d; return render() }
   if (T.closest('[data-g54x]')) return g54Close();
   const b = T.closest('[data-g54a]'); if (b) {
     const id = b.dataset.id, k = b.dataset.g54a;
@@ -7891,7 +7903,8 @@ exAssign = function () {
   const A = exAs(), F = EX.filt, S2 = exSessions(), bad = new Set(exConfs().map(c => c.id).filter(Boolean)), dates = [...new Set(S2.map(s => s.date))], can = exCan('ct_inv');
   const cut = base.indexOf('<div class="card"><div class="row"><label>'), end = base.indexOf('<div class="card"><h3>' + t('Workload'));
   if (cut < 0 || end < 0) return base;
-  const q = F.q.trim().toLowerCase(); let any = false, h = '';
+  if (EX.g54for !== EX.id) { EX.g54for = EX.id; if (!F.date && dates.length) { const td = new Date(), iso = td.getFullYear() + '-' + String(td.getMonth() + 1).padStart(2, '0') + '-' + String(td.getDate()).padStart(2, '0'); F.date = dates.find(d => d >= iso) || dates[dates.length - 1] } }
+  const q = F.q.trim().toLowerCase(); let any = false, h = `<div class="g54days"><button data-g54d=""${!F.date ? ' class="on"' : ''}>${t('All dates')}</button>${dates.map(d => { const nb = A.filter(a => a.date == d && bad.has(a.id)).length; return `<button data-g54d="${d}"${F.date == d ? ' class="on"' : ''}>${esc(d.slice(5))} ${esc(exDay(d).slice(0, 3))}${nb ? `<i>⚠${nb}</i>` : ''}</button>` }).join('')}</div>`;
   const head = base.slice(cut, base.indexOf('</div>', base.indexOf('data-exfl="q"')) + 6);      // the filter row stays as it is
   dates.filter(d => !F.date || d == F.date).forEach(d => {
     const day = S2.filter(s => s.date == d).map(s => {
@@ -7900,13 +7913,14 @@ exAssign = function () {
       if (F.teacher && !mine.length && !res.some(a => a.t == F.teacher)) return '';
       any = true; const list = F.teacher ? mine : rooms;
       const add = (v) => can ? `<select data-exadd="${v}"><option value="">+ ${t('Add a teacher')}</option>${exTOpts()}</select>` : '';
-      return `<div class="ses"><h5>${esc(s.name)} · ${esc(s.start)}-${esc(s.end)}</h5><div class="tw"><table class="g54t"><tr><th style="width:36px">${t('No.')}</th><th>${t('Room')}</th><th>${t('Subject')}</th><th>${t('Students')}</th><th style="min-width:260px">${t('Main invigilators')}</th><th>${can ? t('Add a teacher') : ''}</th></tr>${list.map((r, i) => `<tr><td data-l="${t('No.')}">${i + 1}</td><td data-l="${t('Room')}"><b>${esc(r.room)}</b></td><td data-l="${t('Subject')}">${esc(r.subject)}${r.grade ? ` <small>(${esc(r.grade)})</small>` : ''}</td><td data-l="${t('Students')}">${esc(r.students)}${r.seats ? ` <small>${esc(r.seats)}</small>` : ''}</td><td class="nv" data-l="${t('Main invigilators')}">${A.filter(a => a.type == 'main' && a.slot == r.id).map(a => g54Person(a, bad.has(a.id), can)).join('') || '<small>—</small>'}</td><td>${add('main|' + r.id + '|' + s.key)}</td></tr>`).join('')}
-<tr class="rs"><td colspan="4"><b>${t('Reserve invigilators')}</b></td><td class="nv">${res.map(a => g54Person(a, bad.has(a.id), can)).join('') || '<small>—</small>'}</td><td>${add('reserve||' + s.key)}</td></tr></table></div></div>`;
+      return `<details class="ses g54s" open><summary><h5>${esc(s.name)} · ${esc(s.start)}-${esc(s.end)}</h5></summary><div class="tw"><table class="g54t"><tr><th style="width:36px">${t('No.')}</th><th>${t('Room')}</th><th>${t('Subject')}</th><th>${t('Students')}</th><th style="min-width:260px">${t('Main invigilators')}</th><th>${can ? t('Add a teacher') : ''}</th></tr>${list.map((r, i) => `<tr><td data-l="${t('No.')}">${i + 1}</td><td data-l="${t('Room')}"><b>${esc(r.room)}</b></td><td data-l="${t('Subject')}">${esc(r.subject)}${r.grade ? ` <small>(${esc(r.grade)})</small>` : ''}</td><td data-l="${t('Students')}">${esc(r.students)}${r.seats ? ` <small>${esc(r.seats)}</small>` : ''}</td><td class="nv" data-l="${t('Main invigilators')}">${A.filter(a => a.type == 'main' && a.slot == r.id).map(a => g54Person(a, bad.has(a.id), can)).join('') || '<small>—</small>'}</td><td>${add('main|' + r.id + '|' + s.key)}</td></tr>`).join('')}
+<tr class="rs"><td colspan="4"><b>${t('Reserve invigilators')}</b></td><td class="nv">${res.map(a => g54Person(a, bad.has(a.id), can)).join('') || '<small>—</small>'}</td><td>${add('reserve||' + s.key)}</td></tr></table></div></details>`;
     }).join('');
     if (day) h += `<h4>${esc(d)} · ${esc(exDay(d))}</h4>${day}`;
   });
   if (!any) h += `<p class="msg">${t('Nothing here yet.')}</p>`;
-  return base.slice(0, cut) + head + h + '</div>' + base.slice(end);
+  const fold = (x, key) => { const i = x.search(/<div class="card"><h3>/); if (i < 0) return x; const j = x.lastIndexOf('</div>'); let y = x.slice(0, i) + x.slice(i).replace(/<div class="card"><h3>([\s\S]*?)<\/h3>/, '<details class="card g54dt"><summary><b>$1</b></summary>'); const k = y.lastIndexOf('</div>'); return y.slice(0, k) + '</details>' + y.slice(k + 6) };
+  return fold(base.slice(0, cut)) + head + h + '</div>' + fold(base.slice(end));
 };
 </script>
 <script>
