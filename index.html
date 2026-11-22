@@ -7613,12 +7613,13 @@ const jnText = () => (HL == 'ar' ? '📅 برنامج VIA SOP لجداول ال�
 const jnRole = { teacher: 'Teacher', staff: 'Staff', parent: 'Parent', student: 'Student' };
 function jnDetail(r) {
   const d = r.detail || {}, L = { teacherId: ['كود المدرس', 'Teacher ID'], subject: ['المادة', 'Subject'], department: ['القسم', 'Department'], jobTitle: ['الوظيفة', 'Job'], childName: ['اسم الابن/الابنة', 'Child'], childCode: ['كود الطالب', 'Student code'], childClass: ['فصل الابن', 'Child class'], studentCode: ['كود الطالب', 'Student code'], studentClass: ['الفصل', 'Class'], note: ['ملاحظة', 'Note'] };
-  return Object.keys(d).map(k => `<b>${esc(L[k] ? L[k][HL == 'ar' ? 0 : 1] : k)}:</b> ${esc(d[k])}`).join(' · ');
+  const kids = Array.isArray(d.children) && d.children.length ? d.children.map(c => `<b>${HL == 'ar' ? 'ابن/ابنة' : 'Child'}:</b> ${esc(c.name)} (${esc(c.class)}${c.code ? ' · ' + esc(c.code) : ''})`).join(' · ') : '';
+  return kids + (kids ? ' · ' : '') + Object.keys(d).filter(k => !(kids && /^child|^children$/.test(k))).map(k => `<b>${esc(L[k] ? L[k][HL == 'ar' ? 0 : 1] : k)}:</b> ${esc(d[k])}`).join(' · ');
 }
 function jnDefaults(r) {
   const d = r.detail || {};
   if (r.role == 'teacher') { const tc = (S.tch || []).find(x => x[0] == d.teacherId || String(x[1]).toLowerCase() == String(r.name).toLowerCase()); return { role: 'teacher', scope: tc ? tc[0] : (d.teacherId || '') } }
-  if (r.role == 'parent') return { role: 'viewer', scope: d.childClass || '' };
+  if (r.role == 'parent') return { role: 'viewer', scope: Array.isArray(d.children) && d.children.length ? [...new Set(d.children.map(c => c.class))].join(', ') : (d.childClass || '') };
   if (r.role == 'student') return { role: 'viewer', scope: d.studentClass || '' };
   return { role: 'viewer', scope: '' };
 }
@@ -7694,6 +7695,7 @@ render = function () {
 };
 
 /* ---------- the public join form (opened by ?join=CODE, only when nobody is signed in) ---------- */
+let JOPT = null;
 const JOIN_CODE = (() => { try { return new URLSearchParams(location.search).get('join') || '' } catch (e) { return '' } })();
 function jnForm() {
   const LGI = 'width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--ln,#ccd);border-radius:10px;font:inherit;background:var(--sf,#fff);color:inherit', LGL = 'display:block;text-align:start;margin:10px 0 4px;font-size:13px;color:var(--mut,#5c6f77)';
@@ -7710,21 +7712,33 @@ ${F('jn-pw', 'كلمة السر (8 حروف على الأقل)', 'Password (8+ c
 <p id="jn-m" role="alert" style="min-height:20px;margin:10px 0;white-space:pre-line"></p>
 <button class="b pri" id="jn-b" type="submit" style="padding:10px 26px;width:100%">إرسال الطلب &middot; Send request</button>
 <p style="margin:12px 0 0"><a href="${location.pathname}" id="jn-si">لدي حساب &middot; I already have an account</a></p></form>`;
-  const $ = x => document.getElementById(x), ex = () => {
+  const $ = x => document.getElementById(x), OTH = '__other__';
+  const pick = (id, ar, en, list, req) => list && list.length
+    ? `<label style="${LGL}" for="${id}">${ar} &middot; ${en}</label><select id="${id}" data-pk style="${LGI}" ${req ? 'required' : ''}><option value="">— اختر · Choose —</option>${list.map(x => `<option>${esc(x)}</option>`).join('')}<option value="${OTH}">أخرى (أكتبها) · Other (type it)</option></select><input id="${id}-o" style="${LGI};display:none;margin-top:6px" placeholder="اكتبها هنا · type here">`
+    : F(id, ar, en, req ? 'required' : '');
+  const pv = id => { const e = $(id); if (!e) return ''; if (e.tagName == 'SELECT') return e.value == OTH ? $(id + '-o').value.trim() : e.value; return e.value.trim() };
+  const kidHtml = (i) => `<fieldset class="jn-kid" style="border:1px solid var(--ln,#ccd);border-radius:10px;margin:10px 0;padding:0 10px 10px"><legend style="font-size:13px">ابن / ابنة <span class="jn-n">${i + 1}</span> &middot; Child</legend>${F('jn-kn' + i, 'الاسم بالكامل', 'Full name', 'required data-kn')}${pick('jn-kc' + i, 'الفصل', 'Class', JOPT && JOPT.classes, 1)}${F('jn-kd' + i, 'كود الطالب (إن وُجد)', 'Student code (if known)', 'data-kd')}<button type="button" class="b jn-rm" style="margin-top:8px">حذف · Remove</button></fieldset>`;
+  let kidN = 0; const kids = () => [...document.querySelectorAll('.jn-kid')];
+  const renum = () => kids().forEach((k, i) => { k.querySelector('.jn-n').textContent = i + 1; k.querySelector('.jn-rm').style.display = kids().length > 1 ? '' : 'none' });
+  const addKid = () => { $('jn-kids').insertAdjacentHTML('beforeend', kidHtml(kidN++)); renum() };
+  const ex = () => {
     const r = $('jn-role').value, f = (id, ar, en, req) => F(id, ar, en, req ? 'required' : '');
-    $('jn-x').innerHTML = r == 'teacher' ? f('jn-d1', 'كود المدرس (إن وُجد)', 'Teacher ID (if you have one)') + f('jn-d2', 'المادة', 'Subject')
+    $('jn-x').innerHTML = r == 'teacher' ? f('jn-d1', 'كود المدرس (إن وُجد)', 'Teacher ID (if you have one)') + pick('jn-d2', 'المادة', 'Subject', JOPT && JOPT.subjects)
       : r == 'staff' ? f('jn-d1', 'الوظيفة', 'Job title') + f('jn-d2', 'القسم', 'Department')
-      : r == 'parent' ? f('jn-d1', 'اسم الابن / الابنة بالكامل', 'Child full name', 1) + f('jn-d2', 'فصل الابن / الابنة', 'Child class', 1) + f('jn-d3', 'كود الطالب (إن وُجد)', 'Student code (if known)')
-      : f('jn-d1', 'الفصل', 'Class', 1) + f('jn-d2', 'كود الطالب (إن وُجد)', 'Student code (if known)');
+      : r == 'parent' ? '<div id="jn-kids"></div><button type="button" class="b" id="jn-addk" style="margin:4px 0">+ إضافة ابن / ابنة آخر &middot; Add another child</button>'
+      : pick('jn-d1', 'الفصل', 'Class', JOPT && JOPT.classes, 1) + f('jn-d2', 'كود الطالب (إن وُجد)', 'Student code (if known)');
+    if (r == 'parent') { kidN = 0; addKid(); $('jn-addk').onclick = () => { if (kids().length < 8) addKid() } }
   }; ex(); $('jn-role').onchange = ex;
+  d.onchange = e => { const t = e.target; if (t && t.dataset && 'pk' in t.dataset) { const o = $(t.id + '-o'); o.style.display = t.value == '__other__' ? '' : 'none'; if (t.value == '__other__') o.focus() } };
+  d.onclick = e => { const b = e.target.closest && e.target.closest('.jn-rm'); if (b) { b.closest('.jn-kid').remove(); renum() } };
   const say = (m, good) => { const e = $('jn-m'); e.style.color = good ? 'var(--ok,#26806F)' : 'var(--bad,#c33)'; e.textContent = m || '' };
   const MS = { 'This registration link is not active. Ask the school for a new link.': 'اللينك غير مفعّل. اطلب لينك جديد من المدرسة.', 'Please enter your full name.': 'اكتب اسمك بالكامل.', 'Please enter a valid e-mail.': 'اكتب بريدًا إلكترونيًا صحيحًا.', 'The password must be at least 8 characters.': 'كلمة السر 8 حروف على الأقل.', 'That password is too easy to guess.': 'كلمة السر سهلة التخمين، اختر غيرها.', 'A request for this e-mail is already waiting for approval.': 'يوجد طلب بهذا البريد بانتظار الموافقة.', 'This e-mail already has an account. Use Forgot password to sign in.': 'هذا البريد له حساب بالفعل. سجّل الدخول أو استخدم «نسيت كلمة السر».', "Please enter your child's full name and class.": 'اكتب اسم الابن/الابنة وفصله.', 'Please enter your class.': 'اكتب فصلك.', 'Too many requests are waiting. Try again later.': 'طلبات كثيرة الآن. جرّب لاحقًا.' };
   $('jn-f').onsubmit = async e => {
     e.preventDefault(); if ($('jn-pw').value !== $('jn-pw2').value) return say('كلمتا السر غير متطابقتين.\nPasswords do not match.');
-    const r = $('jn-role').value, v = id => ($(id) ? $(id).value.trim() : ''), detail = r == 'teacher' ? { teacherId: v('jn-d1'), subject: v('jn-d2') } : r == 'staff' ? { jobTitle: v('jn-d1'), department: v('jn-d2') } : r == 'parent' ? { childName: v('jn-d1'), childClass: v('jn-d2'), childCode: v('jn-d3') } : { studentClass: v('jn-d1'), studentCode: v('jn-d2') };
+    const r = $('jn-role').value, v = pv, detail = r == 'teacher' ? { teacherId: v('jn-d1'), subject: v('jn-d2') } : r == 'staff' ? { jobTitle: v('jn-d1'), department: v('jn-d2') } : r == 'parent' ? { children: kids().map(k => ({ name: k.querySelector('[data-kn]').value.trim(), class: pv(k.querySelector('select,input[id^=jn-kc]').id), code: k.querySelector('[data-kd]').value.trim() })) } : { studentClass: v('jn-d1'), studentCode: v('jn-d2') };
     $('jn-b').disabled = true; say('...', true);
     try {
-      const res = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'api_joinSubmit', args: [JOIN_CODE, { role: r, name: v('jn-name'), email: v('jn-email'), phone: v('jn-phone'), pw: $('jn-pw').value, website: v('jn-web'), detail }], tok: '' }), credentials: 'omit', redirect: 'follow' });
+      const res = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'api_joinSubmit', args: [JOIN_CODE, { role: r, name: $('jn-name').value.trim(), email: $('jn-email').value.trim(), phone: $('jn-phone').value.trim(), pw: $('jn-pw').value, website: $('jn-web').value.trim(), detail }], tok: '' }), credentials: 'omit', redirect: 'follow' });
       const j = JSON.parse(await res.text()); $('jn-b').disabled = false;
       if (!(j && j.ok)) { const m = String((j && j.error) || 'Error').replace(/^Error:\s*/, ''); return say((MS[m] ? MS[m] + '\n' : '') + m) }
       $('jn-f').innerHTML = `<h3 style="margin:0 0 6px">تم استلام طلبك ✅ &middot; Request received</h3><p>سيراجع المسؤول طلبك ويفعّل حسابك. بعد الموافقة سجّل الدخول بالبريد الإلكتروني وكلمة السر التي اخترتها.</p><p style="color:var(--mut,#5c6f77)">The administrator will review your request. After approval, sign in with your e-mail and the password you chose.</p><p><a href="${location.pathname}">تسجيل الدخول &middot; Sign in</a></p>`;
@@ -7735,6 +7749,7 @@ if (JOIN_CODE) {
   const _sl = window.showLogin;
   window.showLogin = function (msg) { if (!window.TOK && JOIN_CODE) { if (!document.getElementById('jn-f')) jnForm(); return } return _sl.apply(this, arguments) };
   const go = () => { if (!window.TOK) window.showLogin('') }; if (document.readyState != 'loading') setTimeout(go, 0);
+  (async () => { try { const res = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'api_joinOptions', args: [JOIN_CODE], tok: '' }), credentials: 'omit' }); const j = JSON.parse(await res.text()); const o = j && (j.r || j.data || j.result); if (j && j.ok && o && o.subjects) { JOPT = o; if (document.getElementById('jn-f') && !document.getElementById('jn-name').value) jnForm() } } catch (e) { } })();
 }
 </script>
 <script>
