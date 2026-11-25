@@ -693,6 +693,23 @@ a.b:hover{background:var(--hl)}a.b.pri{background:var(--teal);color:#fff;border-
 .g59r .cm{margin:8px 0;padding:8px 10px;background:#f6f9fb;border-radius:8px;line-height:1.55}.g59r .cm[dir=rtl]{text-align:right}
 @media(max-width:640px){.g59 .row>*{flex:1 1 140px}.g59m{width:70px}}
 </style>
+<style id="g60css">
+.g60q{width:58px;text-align:center;font-weight:700;direction:ltr;padding:6px 4px}
+.g60q.bad{border-color:var(--bad);background:var(--bads)}
+.g60h small{display:block;font-weight:400;color:var(--mut);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g60bp td{padding:4px 5px;vertical-align:top}.g60bp input[type=text],.g60bp select{width:100%;box-sizing:border-box;font-size:13px;padding:5px 7px}
+.g60bp td.no{font-weight:700;text-align:center;padding-top:10px}
+.g60bar{position:relative;height:12px;border-radius:6px;background:var(--hl);min-width:120px}
+.g60bar i{display:block;height:100%;border-radius:6px}.g60bar b{position:absolute;top:-3px;width:2px;height:18px;background:#14262e;opacity:.55}
+.g60c0{background:#d1291f}.g60c1{background:#e0a21b}.g60c2{background:#2fa39a}.g60c3{background:#2e9b5b}
+.g60sec{border:1px solid #cfd8dc;border-radius:10px;margin:10px 0;padding:6px 10px;page-break-inside:avoid}
+.g60sec h3{margin:2px 0 6px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.g60sec table{margin:4px 0}.g60sec td,.g60sec th{font-size:12px}
+.g60bl{display:flex;flex-wrap:wrap;gap:4px 10px;margin:4px 0;font-size:11.5px}.g60bl span{background:#eef3f6;border-radius:999px;padding:1px 9px}
+.g60lg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11px;margin:6px 0;color:#455a64}.g60lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:4px;vertical-align:-1px}
+.g60nt{font-size:11.5px;margin:3px 0;color:#37474f}
+.g60sw{background:var(--hl);border-radius:12px;padding:10px 14px;margin:10px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+</style>
 </head><body>
 <script>
 /* personal link token: ?k=TOKEN in the address, remembered on this device */
@@ -8449,6 +8466,198 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'New academic year': 'سنة دراسية جديدة', 'After you start the new year in the timetable (Settings), move the students up one grade here. Student records, old marks and history are all kept; only the class changes. Grade 12 become Graduated. Do it once per year.': 'بعد بدء السنة الجديدة في الجداول (الإعدادات)، انقل الطلاب هنا إلى الصف التالي. سجلات الطلاب والدرجات القديمة والتاريخ كلها تبقى؛ يتغيّر الفصل فقط. طلاب الصف 12 يصبحون «تخرّج». نفّذها مرة واحدة في السنة.',
   'Preview': 'معاينة', 'Year': 'السنة', 'Active students': 'الطلاب المقيّدون', 'The move was already done for this year.': 'تم النقل بالفعل لهذه السنة.', 'Not recognised (stay as they are)': 'غير معروف (يبقون كما هم)',
   'Move students up': 'انقل الطلاب للصف التالي', 'Move students up one grade?': 'نقل الطلاب إلى الصف التالي؟', 'students': 'طالب', 'Records and old marks are kept. Do this once per year.': 'السجلات والدرجات القديمة تبقى. نفّذها مرة واحدة في السنة.', 'Yes, move': 'نعم، انقل', 'Done': 'تم'
+}).filter(([k]) => !(k in AR))));
+</script>
+<script>
+/* ---------- Grades: question-by-question exams (blueprint, scores, skill report). Server: Grades.gs (api_grSaveBlueprint, api_grSaveScores, api_grItems, api_grCatSave) ---------- */
+GR.bp = null; GR.it = { key: '', R: null, busy: false }; GR.cat = { text: '' };
+const G60_TYPES = ['MCQ', 'True / False', 'Fill in the blank', 'Matching', 'Short answer', 'Constructed response', 'Oral / Practical'];
+const G60_BLOOM_AR = { Remember: 'تذكّر', Understand: 'فهم', Apply: 'تطبيق', Analyze: 'تحليل', Evaluate: 'تقييم', Create: 'ابتكار' };
+const g60Num = v => { const x = Number(String(v == null ? '' : v).replace(',', '.')); return String(v).trim() === '' || isNaN(x) ? null : x };
+const g60Pre = s => String(s || '').toLowerCase().replace(/[^a-z]/g, '').slice(0, 3);
+const g60Cat = (kind, subj) => (GR.D.cat || []).filter(r => r[0] == kind && (!r[1] || g60Pre(r[1]) == g60Pre(subj))).map(r => [r[3], r[4]]);
+const g60Key = () => [GR.term, GR.cls, GR.subj].join('|');
+const g60Exam = () => { const G = GR.grid; return G && G.c == GR.cls && G.s == GR.subj && G.term == GR.term && G.exam ? G.exam : null };
+const g60Lock = () => { const e = g60Exam(); return !e || !GR.grid.canEnter || (e.locked && !GR.D.mgr) };
+function g60Head() {
+  const cl = g59Cls(), sl = g59SubjOf(GR.cls);
+  return `<div class="row">${g59TermSel('term', GR.term)}<label>${t('Class')}<select data-g59f="cls">${g59Opt(cl, GR.cls)}</select></label>
+<label>${t('Subject')}<select data-g59f="subj">${g59Opt(sl, GR.subj)}</select></label>${GR.subj ? `<span class="msg">${t('Teacher')}: <b>${esc(g59Tch(GR.cls, GR.subj) || '–')}</b></span>` : ''}</div>`;
+}
+/* ----- entry: the question-by-question grid, or the switch to it ----- */
+const _g60Entry = g59Entry;
+g59Entry = function () {
+  const e = g60Exam(); if (GR.bp && GR.bp.k != g60Key()) GR.bp = null;
+  if (!e) return _g60Entry();
+  if (e.mode != 'Q' && !GR.bp) {
+    const base = _g60Entry();
+    if (g60Lock() || !GR.grid.rows) return base;
+    return base + `<div class="g60sw"><span>${t('Want to enter every question of this exam, with its skill and standard, to get a skills report for parents?')}</span><button class="b" data-g60a="bpnew">${ic('plus')} ${t('Question-by-question mode')}</button></div>`;
+  }
+  const G = GR.grid, qs = e.qs || [], dis = g60Lock();
+  let h = `<div class="card"><h3>${ic('book')} ${t('Enter marks')} · ${t('Question by question')}</h3>${g60Head()}`;
+  h += `<div class="row"><span>${t('Out of')}: <b>${e.mode == 'Q' ? e.max : '–'}</b></span>${e.mode == 'Q' && !dis ? `<button class="b" data-g60a="bpedit">${t('Edit questions')}</button>` : ''}${e.locked ? `<span class="g59l g59l1">${ic('lock')} ${t('Locked')}</span>` : ''}</div>`;
+  if (GR.bp) h += g60Bp();
+  if (e.mode == 'Q') {
+    h += `<div class="g59s" id="g60st">${g60Stat()}</div><div class="tw"><table class="g59t"><tr><th>#</th><th>${t('Student')}</th>${qs.map((q, i) => `<th class="n g60h" title="${esc([q.skill, q.std, q.bloom].filter(Boolean).join(' · '))}">Q${i + 1}<small>/ ${q.max}</small></th>`).join('')}<th class="n">${t('Total')}</th><th class="n">%</th><th>${t('Absent')}</th><th>${t('Not taking it')}</th></tr>`;
+    G.rows.forEach((r, i) => {
+      const v = g60Val(r), tot = g60Tot(v, qs), off = dis || v.st;
+      h += `<tr data-g60r="${esc(r.id)}"><td class="n">${i + 1}</td><td>${esc(r.name)}${r.ar ? `<br><small class="msg" dir="rtl">${esc(r.ar)}</small>` : ''}</td>${qs.map(q => `<td class="n"><input type="text" class="g59m g60q" data-g60s="${esc(r.id)}" data-q="${q.no}" data-max="${q.max}" value="${esc(v.st ? '' : (v.sc[q.no] == null ? '' : v.sc[q.no]))}" inputmode="decimal" autocomplete="off"${off ? ' disabled' : ''}></td>`).join('')}
+<td class="n" data-g60t="${esc(r.id)}"><b>${tot.e == null ? '' : tot.e}</b></td><td class="n" data-g60p="${esc(r.id)}">${tot.p == null ? '' : tot.p + '%'}</td>
+<td><input type="checkbox" data-g60k="AB" data-id="${esc(r.id)}"${v.st == 'AB' ? ' checked' : ''}${dis ? ' disabled' : ''}></td><td><input type="checkbox" data-g60k="NA" data-id="${esc(r.id)}"${v.st == 'NA' ? ' checked' : ''}${dis ? ' disabled' : ''}></td></tr>`;
+    });
+    h += `</table></div>${G.rows.length ? '' : `<p class="msg">${t('No students in this class.')}</p>`}`;
+    if (!dis) h += `<div class="row"><button class="b pri" data-g60a="save"${Object.keys(GR.edit).length ? '' : ' disabled'}>${ic('check')} ${t('Save marks')}</button></div>`;
+  }
+  return h + '</div>';
+};
+const g60Val = r => { const x = GR.edit[r.id]; return x ? { sc: x.sc || {}, st: x.st || '' } : { sc: Object.assign({}, r.sc || {}), st: r.st || '' } };
+function g60Tot(v, qs) {
+  let e = 0, n = 0, m = 0; qs.forEach(q => { const x = v.sc[q.no]; if (x != null && x !== '') { e += Number(x); n++; m += q.max } });
+  const all = qs.reduce((a, q) => a + q.max, 0);
+  return { e: n ? Math.round(e * 100) / 100 : null, n, p: n == qs.length && all ? Math.round(e / all * 1000) / 10 : null };
+}
+function g60Stat() {
+  const G = GR.grid, qs = G.exam.qs || []; let done = 0, part = 0, none = 0, sum = 0, ab = 0;
+  G.rows.forEach(r => { const v = g60Val(r); if (v.st == 'NA') return; if (v.st == 'AB') { ab++; return } const t0 = g60Tot(v, qs); if (t0.p != null) { done++; sum += t0.p } else if (t0.n) part++; else none++ });
+  return `<span>${t('Complete')}: <b>${done}</b></span><span>${t('Incomplete')}: <b>${part}</b></span><span>${t('Not started')}: <b>${none}</b></span><span>${t('Absent')}: <b>${ab}</b></span><span>${t('Average')}: <b>${done ? Math.round(sum / done * 10) / 10 + '%' : '–'}</b></span>`;
+}
+/* ----- blueprint editor ----- */
+function g60Bp() {
+  const B = GR.bp, subj = GR.subj, dl = (id, kind) => `<datalist id="${id}">${g60Cat(kind, subj).map(([v, x]) => `<option value="${esc(v)}">${esc(x)}</option>`).join('')}</datalist>`;
+  const other = GR.D.cfg.terms.filter(x => x != GR.term);
+  return `<div class="card" style="background:var(--hl)"><h3>${t('Exam questions')}</h3><p class="msg">${t('For each question: its mark, type, curriculum strand and skill, the standard it covers and its Bloom level. Choose from the list or type a new value; new values are remembered for next time.')}</p>
+${dl('g60dl-strand', 'strand')}${dl('g60dl-sub', 'substrand')}${dl('g60dl-skill', 'skill')}${dl('g60dl-std', 'standard')}
+<div class="tw"><table class="g59t g60bp"><tr><th>#</th><th>${t('Mark')}</th><th>${t('Type')}</th><th>${t('Strand')}</th><th>${t('Substrand')}</th><th>${t('Skill')}</th><th>${t('Standard')}</th><th>Bloom</th><th>DOK</th><th></th></tr>
+${B.qs.map((q, i) => `<tr><td class="no">${i + 1}</td><td style="width:62px"><input type="text" data-g60b="${i}.max" value="${esc(q.max)}" inputmode="decimal" dir="ltr"></td>
+<td style="min-width:120px"><select data-g60b="${i}.type"><option value=""></option>${G60_TYPES.map(x => `<option${x == q.type ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></td>
+<td><input type="text" list="g60dl-strand" data-g60b="${i}.strand" value="${esc(q.strand)}"></td><td><input type="text" list="g60dl-sub" data-g60b="${i}.sub" value="${esc(q.sub)}"></td>
+<td><input type="text" list="g60dl-skill" data-g60b="${i}.skill" value="${esc(q.skill)}"></td><td><input type="text" list="g60dl-std" data-g60b="${i}.std" value="${esc(q.std)}" dir="ltr"></td>
+<td style="min-width:105px"><select data-g60b="${i}.bloom"><option value=""></option>${(GR.D.bloom || []).map(x => `<option value="${x}"${x == q.bloom ? ' selected' : ''}>${x}</option>`).join('')}</select></td>
+<td style="width:64px"><select data-g60b="${i}.dok"><option value=""></option>${[1, 2, 3, 4].map(x => `<option${x == q.dok ? ' selected' : ''}>${x}</option>`).join('')}</select></td>
+<td><button class="b" data-g60a="bprm" data-i="${i}" title="${t('Remove')}" aria-label="${t('Remove')}">${ic('trash')}</button></td></tr>`).join('')}</table></div>
+<div class="row"><button class="b" data-g60a="bpadd">${ic('plus')} ${t('Add question')}</button><button class="b" data-g60a="bpadd5">+5</button><button class="b" data-g60a="bpdup">${t('Copy last row')}</button>
+${other.length ? `<label>${t('Copy questions from term')}<select data-g60cp="1"><option value=""></option>${other.map(x => `<option>${esc(x)}</option>`).join('')}</select></label>` : ''}
+<span class="msg">${t('Total')}: <b id="g60tot">${B.qs.reduce((a, q) => a + (g60Num(q.max) || 0), 0)}</b></span></div>
+<div class="row"><button class="b pri" data-g60a="bpsave">${ic('check')} ${t('Save questions')}</button><button class="b" data-g60a="bpx">${t('Cancel')}</button></div></div>`;
+}
+const g60NewQ = (qs, from) => Object.assign({ no: qs.reduce((a, q) => Math.max(a, +q.no || 0), 0) + 1, max: '1', type: '', strand: '', sub: '', skill: '', std: '', bloom: '', dok: '' }, from || {}, { no: qs.reduce((a, q) => Math.max(a, +q.no || 0), 0) + 1 });
+/* ----- parent report with skills ----- */
+const _g60Sheet = g59Sheet;
+const g60Cls = p => g59Lvl(p);
+function g60Bar(p, avg) { if (p == null) return ''; return `<div class="g60bar"><i class="g60c${g60Cls(p)}" style="width:${Math.min(100, p)}%"></i>${avg != null ? `<b style="left:${Math.min(99, avg)}%" title="${esc(t('Class average'))} ${avg}%"></b>` : ''}</div>` }
+function g60Note(d, ar) {
+  const sk = (d.skill || []).filter(x => x.pct != null); if (sk.length < 2) return '';
+  const best = sk.slice().sort((a, b) => b.pct - a.pct)[0], weak = sk.slice().sort((a, b) => a.pct - b.pct)[0]; if (best.k == weak.k) return '';
+  return ar ? `نقطة القوة: ${best.k} (${best.pct}%). مهارة تحتاج تدريباً: ${weak.k} (${weak.pct}%).` : `Strength: ${best.k} (${best.pct}%). Practise: ${weak.k} (${weak.pct}%).`;
+}
+g59Sheet = function (r) {
+  const base = _g60Sheet(r), det = r.subjects.filter(s => s.det && s.det.skill && s.det.skill.length); if (!det.length) return base;
+  const R = GR.rep.R, cf = R.cfg.lv;
+  const sec = s => {
+    const d = s.det, ss = d.skillStd || {};
+    return `<div class="g60sec"><h3><span>${esc(s.subject)}</span>${s.lvl != null ? `<span class="g59l g59l${s.lvl}">${s.mark} / ${s.max} · ${s.pct}%</span>` : `<span class="g59l g59l1">${t('Incomplete')}</span>`}</h3>
+<table><tr><th>${t('Skill')}</th><th>${t('Standard')}</th><th style="width:34%">${t('Result')}</th><th>%</th></tr>${d.skill.map(x => `<tr><td>${esc(x.k)}</td><td dir="ltr">${esc(ss[x.k] || '')}</td><td>${g60Bar(x.pct, x.avg)}</td><td><b>${g59Fmt(x.pct)}</b></td></tr>`).join('')}</table>
+${d.bloom && d.bloom.length ? `<div class="g60bl"><b>Bloom:</b> ${d.bloom.map(x => `<span>${esc(x.k)} / ${G60_BLOOM_AR[x.k] || ''} ${x.pct}%</span>`).join('')}</div>` : ''}
+${g60Note(d, false) ? `<div class="g60nt" dir="ltr">${esc(g60Note(d, false))}</div><div class="g60nt" dir="rtl">${esc(g60Note(d, true))}</div>` : ''}</div>`;
+  };
+  const lg = `<div class="g60lg">${cf.map((p, i) => `<span><i class="g60c${i}"></i>${esc(p[0])} · ${esc(p[1])}</span>`).join('')}<span>▏${t('Class average')}</span></div>`;
+  return base.replace(/<div class="cm" dir="ltr">/, det.map(sec).join('') + lg + '<div class="cm" dir="ltr">');
+};
+/* ----- class analysis: question / skill view of one exam ----- */
+const _g60An = g59Analysis;
+g59Analysis = function () {
+  const A = GR.an, h = _g60An(), e = g60Exam();
+  if (!A.cls || !A.subject) return h;
+  const key = [GR.term, A.cls, A.subject].join('|');
+  if (GR.it.key != key && !GR.it.busy) g60Items(key, A.cls, A.subject);
+  const R = GR.it.key == key ? GR.it.R : null; if (!R || !R.items.length) return h;
+  const bar = p => p == null ? '' : `<div class="g60bar"><i class="g60c${g60Cls(p)}" style="width:${Math.min(100, p)}%"></i></div>`;
+  const dim = (k, l) => R.dims[k] && R.dims[k].length ? `<h4>${t(l)}</h4><table class="g59t"><tr><th>${t(l)}</th><th style="width:40%">${t('Class result')}</th><th class="n">%</th></tr>${R.dims[k].map(x => `<tr><td>${esc(x.k)}</td><td>${bar(x.pct)}</td><td class="n"><b>${g59Fmt(x.pct)}</b></td></tr>`).join('')}</table>` : '';
+  return h + `<div class="card"><h3>${t('Question analysis')} · ${esc(A.subject)} · ${esc(A.cls)}</h3><div class="tw"><table class="g59t"><tr><th>#</th><th>${t('Skill')}</th><th>${t('Standard')}</th><th>Bloom</th><th>${t('Type')}</th><th class="n">${t('Answered')}</th><th style="width:22%">${t('Class result')}</th><th class="n">%</th></tr>${R.items.map((q, i) => `<tr><td class="n">Q${i + 1}</td><td>${esc(q.skill)}</td><td dir="ltr">${esc(q.std)}</td><td>${esc(q.bloom)}</td><td>${esc(q.type)}</td><td class="n">${q.n}</td><td>${bar(q.pct)}</td><td class="n"><b>${g59Fmt(q.pct)}</b></td></tr>`).join('')}</table></div>${dim('skill', 'Skill')}${dim('standard', 'Standard')}${dim('bloom', 'Bloom level')}${dim('strand', 'Strand')}</div>`;
+};
+async function g60Items(key, c, s) { GR.it.busy = true; try { const [term] = key.split('|'); GR.it = { key, R: await srv('api_grItems', term, c, s), busy: false } } catch (e) { GR.it = { key, R: { items: [], dims: {} }, busy: false } } render() }
+/* ----- setup: pick-lists ----- */
+const _g60Setup = g59Setup;
+g59Setup = function () {
+  const rows = (GR.D.cat || []).slice().sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || a[3].localeCompare(b[3]));
+  return _g60Setup() + `<div class="card"><h3>${t('Pick-lists for questions')}</h3><p class="msg">${t('Strands, substrands, skills and standards that teachers can choose from. Teachers can also type new ones; they are added here automatically. Subject: leave empty for all, or write Math / English / Science.')}</p>
+<div class="row"><label>${t('Type')}<select id="g60nk">${['strand', 'substrand', 'skill', 'standard'].map(k => `<option value="${k}">${t(k[0].toUpperCase() + k.slice(1))}</option>`).join('')}</select></label>
+<label>${t('Subject')}<input type="text" id="g60ns" style="width:110px"></label><label>${t('Value')}<input type="text" id="g60nv" style="width:220px"></label><label>${t('Description')}<input type="text" id="g60nd" style="width:240px"></label><button class="b" data-g60a="catadd">${ic('plus')} ${t('Add')}</button></div>
+<details><summary>${t('Paste many (one per line: type, subject, value, description — tab separated)')}</summary><textarea data-g60i="cat" placeholder="standard&#9;Math&#9;1.OA.C.6&#9;Add and subtract within 20">${esc(GR.cat.text)}</textarea><div class="row"><button class="b" data-g60a="catpaste">${t('Add these')}</button></div></details>
+<div class="tw" style="max-height:340px;overflow:auto"><table class="g59t"><tr><th>${t('Type')}</th><th>${t('Subject')}</th><th>${t('Value')}</th><th>${t('Description')}</th><th></th></tr>${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td><button class="b" data-g60a="catrm" data-k="${esc(r[0] + '|' + r[1] + '|' + r[3])}" aria-label="${t('Remove')}" title="${t('Remove')}">${ic('trash')}</button></td></tr>`).join('')}</table></div></div>`;
+};
+/* ----- wiring ----- */
+const g60Wrap = fn => async function () { try { await fn.apply(this, arguments) } catch (e) { } };
+document.addEventListener('click', g60Wrap(async e => {
+  if (TAB != 'gr') return; const b = e.target.closest('[data-g60a]'); if (!b) return; const a = b.dataset.g60a, B = GR.bp;
+  if (a == 'bpnew') { const ex = g60Exam(), has = (GR.grid.rows || []).some(r => r.mark !== '' || r.st); if (has && !(await UX.ask(t('Switch to question-by-question?'), esc(t('The total marks already typed for this exam are replaced by the question scores.')), { danger: true, yes: t('Yes, switch') }))) return; GR.bp = { k: g60Key(), qs: [] }; for (let i = 0; i < 3; i++) GR.bp.qs.push(g60NewQ(GR.bp.qs)); return render() }
+  if (a == 'bpedit') { GR.bp = { k: g60Key(), qs: (g60Exam().qs || []).map(q => Object.assign({}, q)) }; return render() }
+  if (a == 'bpx') { GR.bp = null; return render() }
+  if (a == 'bpadd') { B.qs.push(g60NewQ(B.qs)); return render() }
+  if (a == 'bpadd5') { for (let i = 0; i < 5; i++) B.qs.push(g60NewQ(B.qs)); return render() }
+  if (a == 'bpdup') { const l = B.qs[B.qs.length - 1]; B.qs.push(g60NewQ(B.qs, l)); return render() }
+  if (a == 'bprm') { B.qs.splice(+b.dataset.i, 1); return render() }
+  if (a == 'bpsave') {
+    if (!B.qs.length) { toast(t('Add at least one question.'), 1); return }
+    const bad = B.qs.findIndex(q => { const m = g60Num(q.max); return m == null || m <= 0 }); if (bad >= 0) { toast(t('Question') + ' ' + (bad + 1) + ': ' + t('the maximum must be a number above 0.'), 1); return }
+    await srv('api_grSaveBlueprint', GR.term, GR.cls, GR.subj, B.qs); GR.bp = null; GR.it = { key: '', R: null, busy: false }; toast(t('Saved')); GR.D = await srv('api_grBoot'); GR.grid = null; GR.edit = {}; return render()
+  }
+  if (a == 'save') {
+    const e0 = g60Exam(); if (!e0 || e0.mode != 'Q') return; const qs = e0.qs;
+    const ents = Object.entries(GR.edit).map(([id, v]) => ({ id, st: v.st || '', sc: v.st ? {} : v.sc }));
+    const bad = ents.find(x => Object.entries(x.sc || {}).some(([q, val]) => { if (val === '' || val == null) return false; const n = g60Num(val), m = (qs.find(z => z.no == q) || {}).max; return n == null || n < 0 || n > m }));
+    if (bad) { toast(t('A score is not valid.'), 1); return }
+    const r = await srv('api_grSaveScores', GR.term, GR.cls, GR.subj, ents); GR.edit = {}; GR.it = { key: '', R: null, busy: false }; toast(t('Saved') + ' (' + r.saved + ')'); GR.grid = null; return g59Grid();
+  }
+  if (a == 'catadd') {
+    const v = (document.getElementById('g60nv').value || '').trim(); if (!v) return;
+    const cat = GR.D.cat.concat([[document.getElementById('g60nk').value, (document.getElementById('g60ns').value || '').trim(), '', v, (document.getElementById('g60nd').value || '').trim()]]);
+    const r = await srv('api_grCatSave', cat); GR.D.cat = r.cat; return render()
+  }
+  if (a == 'catrm') { const cat = GR.D.cat.filter(r => (r[0] + '|' + r[1] + '|' + r[3]) != b.dataset.k); const r = await srv('api_grCatSave', cat); GR.D.cat = r.cat; return render() }
+  if (a == 'catpaste') {
+    const add = GR.cat.text.split(/\r?\n/).map(l => l.split('\t')).filter(c => c.length >= 3).map(c => [c[0].trim().toLowerCase(), (c[1] || '').trim(), '', (c[2] || '').trim(), (c[3] || '').trim()]);
+    if (!add.length) { toast(t('Nothing to import.'), 1); return }
+    const have = new Set(GR.D.cat.map(r => r[0] + '|' + r[1].toLowerCase() + '|' + r[3].toLowerCase())), fresh = add.filter(r => !have.has(r[0] + '|' + r[1].toLowerCase() + '|' + r[3].toLowerCase()));
+    const r = await srv('api_grCatSave', GR.D.cat.concat(fresh)); GR.D.cat = r.cat; GR.cat.text = ''; toast(t('Imported') + ': ' + fresh.length); return render()
+  }
+}));
+document.addEventListener('change', g60Wrap(async e => {
+  if (TAB != 'gr') return; const T = e.target, d = T.dataset || {};
+  if (d.g60b !== undefined) { const [i, k] = d.g60b.split('.'); GR.bp.qs[+i][k] = T.value; return }
+  if (d.g60cp) { if (!T.value) return; const r = await srv('api_grMarks', T.value, GR.cls, GR.subj); if (r.exam && r.exam.qs && r.exam.qs.length) { GR.bp.qs = r.exam.qs.map((q, i) => Object.assign({}, q, { no: i + 1 })); render() } else toast(t('No questions found in that term.'), 1); return }
+  if (d.g60k == 'AB' || d.g60k == 'NA') { const r = GR.grid.rows.find(x => x.id == d.id), cur = GR.edit[d.id] || { sc: Object.assign({}, r.sc || {}), st: r.st || '' }; cur.st = T.checked ? d.g60k : ''; if (T.checked) cur.sc = {}; GR.edit[d.id] = cur; render() }
+}));
+document.addEventListener('input', e => {
+  if (TAB != 'gr') return; const T = e.target, d = T.dataset || {};
+  if (d.g60b !== undefined) { const [i, k] = d.g60b.split('.'); GR.bp.qs[+i][k] = T.value; const tt = document.getElementById('g60tot'); if (tt) tt.textContent = GR.bp.qs.reduce((a, q) => a + (g60Num(q.max) || 0), 0); return }
+  if (d.g60i == 'cat') { GR.cat.text = T.value; return }
+  if (d.g60s === undefined) return;
+  const G = GR.grid, r = G.rows.find(x => x.id == d.g60s), cur = GR.edit[r.id] || { sc: Object.assign({}, r.sc || {}), st: r.st || '' }; cur.st = ''; cur.sc[d.q] = T.value.replace(',', '.'); GR.edit[r.id] = cur;
+  const n = g60Num(cur.sc[d.q]); T.classList.toggle('bad', cur.sc[d.q] !== '' && (n == null || n < 0 || n > +d.max));
+  const tot = g60Tot(cur, G.exam.qs), c1 = document.querySelector(`[data-g60t="${CSS.escape(r.id)}"]`), c2 = document.querySelector(`[data-g60p="${CSS.escape(r.id)}"]`);
+  if (c1) c1.innerHTML = `<b>${tot.e == null ? '' : tot.e}</b>`; if (c2) c2.textContent = tot.p == null ? '' : tot.p + '%';
+  const st = document.getElementById('g60st'); if (st) st.innerHTML = g60Stat(); const sb = document.querySelector('[data-g60a=save]'); if (sb) sb.disabled = false;
+});
+document.addEventListener('keydown', e => {
+  if (TAB != 'gr' || e.key != 'Enter' || !e.target.dataset || e.target.dataset.g60s === undefined) return; e.preventDefault();
+  const q = e.target.dataset.q, col = [...document.querySelectorAll(`[data-g60s][data-q="${q}"]:not(:disabled)`)], i = col.indexOf(e.target);
+  if (col[i + 1]) { col[i + 1].focus(); col[i + 1].select(); return }
+  const qs = [...document.querySelectorAll('[data-g60s]:not(:disabled)')].map(x => x.dataset.q), nx = [...new Set(qs)], k = nx.indexOf(q), nxt = nx[k + 1];
+  if (nxt != null) { const f = document.querySelector(`[data-g60s][data-q="${nxt}"]:not(:disabled)`); if (f) { f.focus(); f.select() } }
+});
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Question by question': 'سؤالاً سؤالاً', 'Question-by-question mode': 'وضع الأسئلة التفصيلي', 'Want to enter every question of this exam, with its skill and standard, to get a skills report for parents?': 'تريد إدخال كل سؤال في هذا الامتحان مع مهارته والـ Standard الخاص به للحصول على تقرير مهارات لولي الأمر؟',
+  'Switch to question-by-question?': 'التحويل إلى الأسئلة التفصيلية؟', 'The total marks already typed for this exam are replaced by the question scores.': 'الدرجات الكلية المكتوبة لهذا الامتحان سيحل محلها درجات الأسئلة.', 'Yes, switch': 'نعم، حوّل',
+  'Edit questions': 'تعديل الأسئلة', 'Total': 'المجموع', 'Complete': 'مكتمل', 'Incomplete': 'غير مكتمل', 'Not started': 'لم يبدأ', 'Exam questions': 'أسئلة الامتحان',
+  'For each question: its mark, type, curriculum strand and skill, the standard it covers and its Bloom level. Choose from the list or type a new value; new values are remembered for next time.': 'لكل سؤال: درجته ونوعه والـ Strand والمهارة والـ Standard ومستوى Bloom. اختر من القائمة أو اكتب قيمة جديدة؛ القيم الجديدة تُحفظ للمرة القادمة.',
+  'Type': 'النوع', 'Strand': 'المحور', 'Substrand': 'المحور الفرعي', 'Skill': 'المهارة', 'Standard': 'الـ Standard', 'Remove': 'إزالة', 'Add question': 'إضافة سؤال', 'Copy last row': 'نسخ آخر سطر', 'Copy questions from term': 'نسخ الأسئلة من فترة',
+  'Save questions': 'حفظ الأسئلة', 'Add at least one question.': 'أضف سؤالاً واحداً على الأقل.', 'Question': 'السؤال', 'the maximum must be a number above 0.': 'الدرجة العظمى يجب أن تكون رقماً أكبر من 0.', 'No questions found in that term.': 'لا توجد أسئلة في تلك الفترة.', 'A score is not valid.': 'توجد درجة غير صحيحة.',
+  'Result': 'النتيجة', 'Class result': 'نتيجة الفصل', 'Question analysis': 'تحليل الأسئلة', 'Answered': 'أجاب', 'Bloom level': 'مستوى Bloom',
+  'Pick-lists for questions': 'قوائم الاختيار للأسئلة', 'Strands, substrands, skills and standards that teachers can choose from. Teachers can also type new ones; they are added here automatically. Subject: leave empty for all, or write Math / English / Science.': 'المحاور والمحاور الفرعية والمهارات والـ Standards التي يختار منها المدرسون. يمكنهم كتابة قيمة جديدة وتُضاف هنا تلقائياً. المادة: اتركها فارغة للكل أو اكتب Math / English / Science.',
+  'Value': 'القيمة', 'Description': 'الوصف', 'Paste many (one per line: type, subject, value, description — tab separated)': 'لصق عدة قيم (سطر لكل قيمة: النوع، المادة، القيمة، الوصف — مفصولة بـ Tab)', 'Add these': 'أضف هذه',
+  'Strand ': 'المحور', 'Substrand ': 'المحور الفرعي', 'Skill ': 'المهارة', 'Standard ': 'الـ Standard'
 }).filter(([k]) => !(k in AR))));
 </script>
 <script>
