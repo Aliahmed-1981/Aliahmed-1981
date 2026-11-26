@@ -8186,12 +8186,16 @@ body.app-gr #g41nav,body.app-gr #wb,body.app-gr #tabs,body.app-gr #cc,body.app-g
 .g61sv{position:sticky;bottom:10px;z-index:5;background:var(--sf);padding:10px 12px;border-radius:14px;box-shadow:0 6px 22px rgba(0,0,0,.18);width:fit-content}
 .g61 :focus-visible{outline:3px solid #8f86f0;outline-offset:2px}
 @media(max-width:640px){.g61 .b,.g61 nav.sub .pill,.g61 select,.g61 input[type=text],.g61 input[type=date]{min-height:44px}.g61 .g61m{min-height:40px}.g61top .g61user{width:100%}.g61 nav.sub{width:100%}.g61 nav.sub .pill{flex:1 1 auto;justify-content:center}}
+
+.g61fp{background:var(--hl);border-radius:14px;padding:10px 14px;margin:8px 0}.g61fg{margin:8px 0}.g61fg>b{display:block;font-size:12.5px;color:var(--mut);margin-bottom:4px}
+.g61ch{display:flex;flex-wrap:wrap;gap:6px}.g61c{border:1px solid var(--ln);background:var(--sf);color:var(--ink);font:inherit;border-radius:999px;padding:6px 14px;cursor:pointer;min-height:36px}.g61c.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
+@media(max-width:640px){.g61c{min-height:44px;padding:8px 16px}}
 </style>
 <script>
 /* ---------- Exams & Grades (server: Grades.gs). Assessments are added by the teacher for a class + subject; subjects, teachers and classes come from the timetable (Assignments). ---------- */
 const GR = { D: null, loading: false, sub: '', term: '', cls: '', subj: '', ass: null, al: false, cur: '', dtab: 'marks', grid: null, gl: false, edit: {}, bp: null, nf: null, ef: null,
   it: { key: '', R: null, busy: false }, res: { key: '', R: null, busy: false },
-  sf: { cls: '', st: 'Active', q: '' }, sel: new Set(), form: null, imp: { text: '', prev: null }, an: { grade: '', cls: '', subject: '', R: null }, rep: { cls: '', id: '', R: null },
+  sf: { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '', open: false, sort: 'cls' }, fix: null, fixing: false, sel: new Set(), form: null, imp: { text: '', prev: null }, an: { grade: '', cls: '', subject: '', R: null }, rep: { cls: '', id: '', R: null },
   su: { yr: null }, cat: { text: '' } };
 const G61_TYPES = ['MCQ', 'True / False', 'Fill in the blank', 'Matching', 'Short answer', 'Constructed response', 'Oral / Practical'];
 const G61_SECS = ['Section A', 'Section B', 'Section C', 'Section D', 'Section E'];
@@ -8475,23 +8479,48 @@ function g61Reports() {
   if (R.R) h += R.R.reports.length ? `<p class="msg">${t('Showing the first 3 only; Print gives every report, one page each.')}</p>` + R.R.reports.slice(0, 3).map(r => g61Sheet(r)).join('') : `<p class="msg">${t('Nothing to show.')}</p>`;
   return h + '</div>';
 }
+const g61SfN = () => { const f = GR.sf; return f.cls.length + f.grade.length + f.lang.length + f.rel.length + f.gender.length + (f.nophone ? 1 : 0) + (f.st.length == 1 && f.st[0] == 'Active' ? 0 : f.st.length && f.st.length < 3 ? 1 : 0) };
+function g61StuList() {
+  const D = GR.D, f = GR.sf, q = f.q.trim().toLowerCase(), has = (a, v) => !a.length || a.includes(v);
+  const L = D.students.filter(s => has(f.cls, s[3]) && has(f.grade, s[4]) && has(f.st, s[11] || 'Active') && has(f.lang, s[5] || '') && has(f.rel, s[6] || '') && has(f.gender, s[7] || '') && (!f.nophone || !String(s[8] || '').trim()) && (!q || (s[1] + ' ' + s[2] + ' ' + s[0] + ' ' + s[8] + ' ' + s[3]).toLowerCase().includes(q)));
+  const ar = (a, b) => String(a || '').localeCompare(String(b || ''), 'ar'), en = (a, b) => String(a || '').localeCompare(String(b || ''), 'en');
+  L.sort(f.sort == 'name' ? (a, b) => en(a[1], b[1]) : f.sort == 'ar' ? (a, b) => ar(a[2] || a[1], b[2] || b[1]) : f.sort == 'id' ? (a, b) => natural(a[0], b[0]) : (a, b) => natural(a[3], b[3]) || en(a[1], b[1]));
+  return L;
+}
+function g61Chips(k, label, vals, tr) {
+  const sel = GR.sf[k]; if (!vals.length) return '';
+  return `<div class="g61fg"><b>${t(label)}</b><div class="g61ch">${vals.map(v => `<button class="g61c${sel.includes(v) ? ' on' : ''}" data-g61c="${k}|${esc(v)}" aria-pressed="${sel.includes(v)}">${esc(tr ? t(v) : v)}</button>`).join('')}</div></div>`;
+}
+function g61FixCard() {
+  const F = GR.fix; if (!F) { if (!GR.fixing) g61LoadFix(); return '' }
+  let h = '';
+  if (F.plan && F.plan.length) h += `<div class="g61w"><b>${t('Some class names differ from the timetable')}</b> — ${F.plan.map(p => `<span dir="ltr">${esc(p.from)} → ${esc(p.to)}</span> (${p.stu}${p.ex ? ' + ' + p.ex + ' ' + t('assessments') : ''})`).join(' · ')}<div class="row"><button class="b pri" data-g61a="fixgo">${ic('check')} ${t('Match the names with the timetable')}</button></div></div>`;
+  if (F.notInTimetable && F.notInTimetable.length) h += `<p class="msg">${t('Classes with students but not in the timetable yet')}: ${F.notInTimetable.map(x => `<b dir="ltr">${esc(x[0])}</b> (${x[1]})`).join(' · ')}</p>`;
+  return h;
+}
+async function g61LoadFix() {
+  GR.fixing = true; try { GR.fix = await srv('api_grFixClasses', false) } catch (e) { GR.fix = { plan: [], notInTimetable: [] } } finally { GR.fixing = false }
+  render();
+}
 function g61Students() {
-  const D = GR.D, f = GR.sf, q = f.q.trim().toLowerCase();
-  const L = D.students.filter(s => (!f.cls || s[3] == f.cls) && (!f.st || (s[11] || 'Active') == f.st) && (!q || (s[1] + ' ' + s[2] + ' ' + s[0] + ' ' + s[8]).toLowerCase().includes(q))).sort((a, b) => natural(a[3], b[3]) || a[1].localeCompare(b[1]));
-  const F = GR.form;
-  let h = `<div class="card"><h3>${ic('users')} ${t('Students')} (${L.length})</h3><div class="row">
-<label>${t('Class')}<select data-g61q="cls">${g61Opt(D.classes.slice().sort(natural), f.cls, 'All classes')}</select></label>
-<label>${t('Status')}<select data-g61q="st"><option value=""${f.st == '' ? ' selected' : ''}>${t('All')}</option>${['Active', 'Left', 'Graduated'].map(x => `<option value="${x}"${f.st == x ? ' selected' : ''}>${t(x)}</option>`).join('')}</select></label>
-<label>${t('Search')}<input type="text" data-g61q="q" value="${esc(f.q)}" placeholder="${t('Name, ID or phone')}"></label>
+  const D = GR.D, f = GR.sf, L = g61StuList(), F = GR.form, all = D.students, uniq = k => [...new Set(all.map(s => s[k]).filter(Boolean))].sort(natural), n = g61SfN();
+  const shown = L.slice(0, 600);
+  let h = `<div class="card"><h3>${ic('users')} ${t('Students')} (${all.length})</h3>${g61FixCard()}
+<div class="row"><label style="flex:1 1 240px">${t('Search')}<input type="text" data-g61q="q" value="${esc(f.q)}" placeholder="${t('Name, ID or phone')}"></label>
+<button class="b${n ? ' pri' : ''}" data-g61a="fopen" aria-expanded="${f.open}">${ic('filter')} ${t('Filters')}${n ? ` (${n})` : ''} ${f.open ? '▴' : '▾'}</button>
+<label>${t('Sort by')}<select data-g61q="sort"><option value="cls"${f.sort == 'cls' ? ' selected' : ''}>${t('Class, then name')}</option><option value="name"${f.sort == 'name' ? ' selected' : ''}>${t('Name (A-Z)')}</option><option value="ar"${f.sort == 'ar' ? ' selected' : ''}>${t('Name (Arabic)')}</option><option value="id"${f.sort == 'id' ? ' selected' : ''}>ID</option></select></label>
 ${D.mgr ? `<button class="b pri" data-g61a="newstu">${ic('plus')} ${t('Add student')}</button><button class="b" data-g61a="impbox">${ic('down')} ${t('Import list')}</button>` : ''}</div>`;
+  if (f.open) h += `<div class="g61fp">${g61Chips('grade', 'Grade', uniq(4))}${g61Chips('cls', 'Class', uniq(3))}${g61Chips('st', 'Status', ['Active', 'Left', 'Graduated'], 1)}${g61Chips('lang', '2nd language', uniq(5))}${g61Chips('rel', 'Religion', uniq(6))}${g61Chips('gender', 'Gender', uniq(7))}
+<div class="g61fg"><label class="ck"><input type="checkbox" data-g61q="nophone"${f.nophone ? ' checked' : ''}> ${t('Without a parent phone')}</label></div><div class="row"><button class="b" data-g61a="fclear">${t('Clear filters')}</button></div></div>`;
+  h += `<p class="msg" role="status">${L.length ? `1–${shown.length} ${t('of')} ${L.length}` : ''}${L.length != all.length ? ` (${t('total')} ${all.length})` : ''}</p>`;
   if (D.mgr && F) h += g61Form(F);
   if (D.mgr && GR.imp.open) h += g61Imp();
   if (D.mgr && GR.sel.size) h += `<div class="row g61s"><b>${GR.sel.size} ${t('selected')}</b><label>${t('Move to class')}<input type="text" id="g61mv" list="g61cl" style="width:110px" dir="ltr"></label><datalist id="g61cl">${D.classes.map(c => `<option value="${esc(c)}">`).join('')}</datalist><button class="b" data-g61a="move">${t('Move')}</button><button class="b" data-g61a="remove">${t('Remove (left school)')}</button><button class="b" data-g61a="restore">${t('Restore')}</button><button class="b" data-g61a="del">${ic('trash')} ${t('Delete')}</button></div>`;
-  h += `<div class="tw"><table class="g61t"><tr>${D.mgr ? `<th><input type="checkbox" data-g61k="all"></th>` : ''}<th>ID</th><th>${t('Student')}</th><th>${t('Class')}</th><th>${t('2nd language')}</th><th>${t('Parent phone')}</th><th>${t('Status')}</th>${D.mgr ? '<th></th>' : ''}</tr>`;
-  L.slice(0, 600).forEach(s => {
+  h += `<div class="tw"><table class="g61t"><tr>${D.mgr ? `<th><input type="checkbox" data-g61k="all" aria-label="${t('Select all')}"></th>` : ''}<th>ID</th><th>${t('Student')}</th><th>${t('Class')}</th><th>${t('2nd language')}</th><th>${t('Parent phone')}</th><th>${t('Status')}</th>${D.mgr ? '<th></th>' : ''}</tr>`;
+  shown.forEach(s => {
     h += `<tr>${D.mgr ? `<td><input type="checkbox" data-g61k="sel" data-id="${esc(s[0])}"${GR.sel.has(s[0]) ? ' checked' : ''}></td>` : ''}<td dir="ltr">${esc(s[0])}</td><td>${esc(s[1])}${s[2] ? `<br><small class="msg" dir="rtl">${esc(s[2])}</small>` : ''}</td><td>${esc(s[3])}</td><td>${esc(s[5])}</td><td dir="ltr">${esc(s[8])}</td><td>${t(s[11] || 'Active')}</td>${D.mgr ? `<td><button class="b" data-g61a="edit" data-id="${esc(s[0])}">${t('Edit')}</button></td>` : ''}</tr>`;
   });
-  return h + `</table></div>${L.length ? '' : `<p class="msg">${t('Nothing to show.')}</p>`}</div>`;
+  return h + `</table></div>${L.length ? (L.length > shown.length ? `<p class="msg">${t('Showing the first 600; use the filters to narrow the list.')}</p>` : '') : `<p class="msg">${t('Nothing to show.')}</p>${n || f.q ? `<button class="b" data-g61a="fclear">${t('Clear filters')}</button>` : ''}`}</div>`;
 }
 const g61FF = [['name', 'Name (English)'], ['ar', 'Name (Arabic)'], ['cls', 'Class'], ['lang', '2nd language'], ['rel', 'Religion'], ['gender', 'Gender'], ['phone', 'Parent phone'], ['user', 'Skolera username'], ['fam', 'Family code'], ['note', 'Notes']];
 function g61Form(F) {
@@ -8503,7 +8532,7 @@ function g61Imp() {
   return `<div class="card" style="background:var(--hl)"><h3>${t('Import students')}</h3><p class="msg">${t('One student per line, columns separated by a tab or a comma: ID (optional), Name, Name AR, Class, Phone, 2nd language, Religion, Gender, Username, Family code. An existing ID updates that student.')}</p>
 <textarea data-g61i="text" placeholder="S1000, Adam Ali, آدم علي, G4-A, 0100...">${esc(GR.imp.text)}</textarea>
 <div class="row"><input type="file" accept=".csv,.txt,.tsv" data-g61i="file"><button class="b" data-g61a="impchk">${t('Check')}</button>${P && (P.add + P.update) ? `<button class="b pri" data-g61a="impgo">${t('Import')} (${P.add} + ${P.update})</button>` : ''}<button class="b" data-g61a="impx">${t('Close')}</button></div>
-${P ? `<div class="g61s"><span>${t('New')}: <b>${P.add}</b></span><span>${t('Updated')}: <b>${P.update}</b></span><span>${t('Skipped')}: <b>${P.bad.length}</b></span></div>${P.bad.length ? `<div class="g61w">${P.bad.slice(0, 12).map(b => esc(b[0] + ': ' + b[1])).join('<br>')}${P.bad.length > 12 ? '<br>…' : ''}</div>` : ''}` : ''}</div>`;
+${P && P.fixes && P.fixes.length ? `<p class="msg">${t('Class names matched with the timetable')}: ${P.fixes.map(x => `<span dir="ltr">${esc(x[0])}</span> (${x[1]})`).join(' · ')}</p>` : ''}${P ? `<div class="g61s"><span>${t('New')}: <b>${P.add}</b></span><span>${t('Updated')}: <b>${P.update}</b></span><span>${t('Skipped')}: <b>${P.bad.length}</b></span></div>${P.bad.length ? `<div class="g61w">${P.bad.slice(0, 12).map(b => esc(b[0] + ': ' + b[1])).join('<br>')}${P.bad.length > 12 ? '<br>…' : ''}</div>` : ''}` : ''}</div>`;
 }
 const g61Rows = txt => txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => l.includes('\t') ? l.split('\t') : l.split(',')).filter(a => !/^(id|student id)$/i.test((a[0] || '').trim()) && !/^name$/i.test((a[1] || '').trim()));
 /* ---------- class analysis ---------- */
@@ -8600,7 +8629,11 @@ document.addEventListener('click', g61Wrap(async e => {
   if (!g61On()) return; const s = e.target.closest('[data-g61s]');
   if (s) { if (!(await g61Ask())) return; GR.sub = s.dataset.g61s; GR.edit = {}; return render() }
   const dt = e.target.closest('[data-g61d]'); if (dt) { if (!(await g61Ask())) return; GR.edit = {}; GR.bp = null; GR.dtab = dt.dataset.g61d; return render() }
+  const fc = e.target.closest('[data-g61c]'); if (fc) { const k = fc.dataset.g61c.split('|')[0], v = fc.dataset.g61c.slice(k.length + 1), a0 = GR.sf[k], i0 = a0.indexOf(v); if (i0 >= 0) a0.splice(i0, 1); else a0.push(v); return render() }
   const b = e.target.closest('[data-g61a]'); if (!b) return; const a = b.dataset.g61a, D = GR.D, id = b.dataset.id, B = GR.bp;
+  if (a == 'fopen') { GR.sf.open = !GR.sf.open; return render() }
+  if (a == 'fclear') { GR.sf = Object.assign({}, GR.sf, { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '' }); return render() }
+  if (a == 'fixgo') { const F = GR.fix, st = F.students, ex = F.exams; if (!(await UX.ask(t('Match the class names with the timetable?'), esc(F.plan.map(p => p.from + ' → ' + p.to).join(', ')) + '<br>' + esc(t('Students and assessments keep all their marks; only the class name changes.')), { yes: t('Yes, match') }))) return; const r = await srv('api_grFixClasses', true); GR.fix = null; GR.D = await srv('api_grBoot'); GR.ass = null; toast(t('Done') + ': ' + r.students); return render() }
   if (a == 'reload') { GR.D = null; return render() }
   if (a == 'exit') { if (!(await g61Ask())) return; g61Reset(); TAB = 'tt'; try { history.replaceState(null, '', location.pathname + location.search) } catch (x) { } return render() }
   if (a == 'howx') { try { localStorage.setItem('g61how', '1') } catch (x) { } return render() }
@@ -8663,16 +8696,16 @@ document.addEventListener('click', g61Wrap(async e => {
   if (a == 'paperprint') { const x = GR.ass.list.find(z => z.key == GR.cur), ex = g61Ex(); return printHtml(`<div class="sheet g61r">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${esc(x.name)} · ${esc(GR.subj)} · ${esc(GR.cls)}</h2>${g61Paper(ex.qs)}</div>`) }
   if (a == 'demoprint') { const d = g61DemoData(); return printHtml(g61Sheet(d.R.reports[0], d.R), true) }
   if (a == 'gotoasg') { try { TAB = 'st'; SUB = 'teachers'; if (typeof G38 != 'undefined') G38.sub = 'asg' } catch (x) { } return render() }
-  if (a == 'newstu') { GR.form = { cls: GR.sf.cls || '' }; return render() }
+  if (a == 'newstu') { GR.form = { cls: GR.sf.cls[0] || '' }; return render() }
   if (a == 'edit') { const r = D.students.find(x => x[0] == id); GR.form = { id: r[0], name: r[1], ar: r[2], cls: r[3], lang: r[5], rel: r[6], gender: r[7], phone: r[8], user: r[9], fam: r[10], note: r[13] }; return render() }
   if (a == 'stucancel') { GR.form = null; return render() }
-  if (a == 'stusave') { const r = await srv('api_grSaveStudent', GR.form); D.students = r.students; GR.form = null; toast(t('Saved')); GR.D = await srv('api_grBoot'); return render() }
+  if (a == 'stusave') { const r = await srv('api_grSaveStudent', GR.form); D.students = r.students; GR.form = null; GR.fix = null; toast(t('Saved')); GR.D = await srv('api_grBoot'); return render() }
   if (a == 'impbox') { GR.imp.open = !GR.imp.open; return render() }
   if (a == 'impx') { GR.imp = { text: '', prev: null }; return render() }
   if (a == 'impchk' || a == 'impgo') {
     const rows = g61Rows(GR.imp.text); if (!rows.length) { toast(t('Nothing to import.'), 1); return }
     if (a == 'impchk') { GR.imp.prev = await srv('api_grImport', rows, false); return render() }
-    const r = await srv('api_grImport', rows, true); GR.imp = { text: '', prev: null }; GR.sel.clear(); toast(t('Imported') + ': ' + r.add + ' + ' + r.update); GR.D = await srv('api_grBoot'); return render();
+    const r = await srv('api_grImport', rows, true); GR.fix = null; GR.imp = { text: '', prev: null }; GR.sel.clear(); toast(t('Imported') + ': ' + r.add + ' + ' + r.update); GR.D = await srv('api_grBoot'); return render();
   }
   if (['move', 'remove', 'restore', 'del'].includes(a)) {
     const ids = [...GR.sel]; if (!ids.length) return; let arg = '';
@@ -8724,7 +8757,8 @@ document.addEventListener('change', g61Wrap(async e => {
   }
   if (d.g61k == 'sel') { T.checked ? GR.sel.add(d.id) : GR.sel.delete(d.id); return render() }
   if (d.g61k == 'all') { document.querySelectorAll('[data-g61k=sel]').forEach(x => { T.checked ? GR.sel.add(x.dataset.id) : GR.sel.delete(x.dataset.id) }); return render() }
-  if (d.g61q) { GR.sf[d.g61q] = T.value; return render() }
+  if (d.g61q == 'nophone') { GR.sf.nophone = T.checked; return render() }
+  if (d.g61q && d.g61q != 'q') { GR.sf[d.g61q] = T.value; return render() }
   if (d.g61rp) { GR.rep[d.g61rp] = T.value; if (d.g61rp == 'cls') GR.rep.id = ''; GR.rep.R = null; return render() }
   if (d.g61an !== undefined) { GR.an[d.g61an] = T.value; if (d.g61an == 'cls' && T.value) GR.an.grade = ''; GR.an.R = null; return render() }
   if (T.dataset.g61i == 'file' && T.files[0]) { const tx = await T.files[0].text(); GR.imp.text = tx; GR.imp.prev = null; return render() }
@@ -8819,6 +8853,7 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Exams & Grades': 'الاختبارات والدرجات', 'Open Exams & Grades and enter marks (own class + subject)': 'فتح الاختبارات والدرجات وإدخال درجات فصله ومادته', 'See all classes: analysis and parent reports': 'رؤية كل الفصول: التحليل وتقارير أولياء الأمور', 'Manage students, grading setup and year move': 'إدارة الطلاب وإعدادات التقدير ونقل السنة',
   'Timetable app': 'تطبيق الجداول', 'Copy a direct link to this app': 'انسخ رابطاً مباشراً لهذا التطبيق', 'Direct link': 'رابط مباشر', 'Link copied': 'تم نسخ الرابط', 'Sign out': 'تسجيل الخروج', 'How it works': 'طريقة العمل', 'Choose the class and the subject': 'اختر الفصل والمادة', 'Press New assessment': 'اضغط «اختبار جديد»', 'Open it and type the marks, then Save': 'افتحه واكتب الدرجات ثم احفظ', 'Close': 'إغلاق',
   'Shown to parents': 'ظاهر للأهل', 'Show to parents': 'إظهار للأهل', 'Hide from parents': 'إخفاء عن الأهل', 'Show it to parents (you can change this later)': 'أظهره للأهل (يمكن تغيير ذلك لاحقاً)', 'Show this assessment to parents?': 'إظهار هذا الاختبار للأهل؟', 'Parents of the students in this class will see these marks and the skills report. You can hide it again at any time.': 'سيرى أولياء أمور طلاب هذا الفصل هذه الدرجات وتقرير المهارات. يمكنك إخفاءه في أي وقت.', 'Yes, show': 'نعم، أظهر',
+  'Some class names differ from the timetable': 'بعض أسماء الفصول تختلف عن الجدول', 'assessments': 'اختبار', 'Match the names with the timetable': 'طابق الأسماء مع الجدول', 'Classes with students but not in the timetable yet': 'فصول فيها طلاب وليست في الجدول بعد', 'Filters': 'الفلاتر', 'Sort by': 'الترتيب', 'Class, then name': 'الفصل ثم الاسم', 'Name (A-Z)': 'الاسم (إنجليزي)', 'Name (Arabic)': 'الاسم (عربي)', 'Without a parent phone': 'بدون رقم موبايل ولي أمر', 'Clear filters': 'مسح الفلاتر', 'of': 'من', 'total': 'الإجمالي', 'Select all': 'تحديد الكل', 'Showing the first 600; use the filters to narrow the list.': 'يُعرض أول 600؛ استخدم الفلاتر لتضييق القائمة.', 'Match the class names with the timetable?': 'مطابقة أسماء الفصول مع الجدول؟', 'Students and assessments keep all their marks; only the class name changes.': 'الطلاب والاختبارات تحتفظ بكل درجاتها؛ يتغيّر اسم الفصل فقط.', 'Yes, match': 'نعم، طابق', 'Class names matched with the timetable': 'أسماء فصول تمت مطابقتها مع الجدول',
   'Assessments': 'الاختبارات', 'Class analysis': 'تحليل الفصول', 'Parent reports': 'تقارير أولياء الأمور', 'Students': 'الطلاب', 'Setup': 'الإعدادات', 'Demo': 'عرض تجريبي',
   'Marks': 'الدرجات', 'Results': 'النتائج', 'Questions': 'الأسئلة', 'Section': 'السكشن', 'Sections': 'السكاشن', 'No section': 'بدون سكشن', 'Target skill': 'المهارة المستهدفة', 'Question type': 'نوع السؤال', 'marks': 'درجة',
   'Term': 'الفترة', 'Class': 'الفصل', 'Subject': 'المادة', 'Teacher': 'المدرس', 'Out of': 'الدرجة العظمى', 'Save': 'حفظ', 'Lock': 'قفل', 'Unlock': 'فتح', 'Locked': 'مقفل',
