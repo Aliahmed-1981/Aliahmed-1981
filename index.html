@@ -1481,7 +1481,7 @@ $('#lang').onclick = () => { HL = HL == 'ar' ? 'en' : 'ar'; try { localStorage.s
 function init() {
   applyLang(); $('#v').innerHTML = `<p class="msg">${t('Loading...')}</p>`;
   let pr = ''; try { pr = localStorage.getItem('role') || '' } catch (x) { }
-  if (pr == 'parent') return (document.readyState == 'complete' ? setTimeout : (f => window.addEventListener('load', f)))(() => { if (window.g62Parent) g62Parent() }, 0);        // a parent never calls api_boot (the server refuses it): his own small portal (G62)
+  if (pr == 'parent' || pr == 'student') return (document.readyState == 'complete' ? setTimeout : (f => window.addEventListener('load', f)))(() => { if (window.g62Parent) g62Parent() }, 0);        // a parent never calls api_boot (the server refuses it): his own small portal (G62)
   srv('api_boot').then(b => { S = b; index(); render() }).catch(e => { if (/permission/i.test(String((e && e.message) || e)) && window.g62Parent) return g62Parent(e); $('#v').innerHTML = `<div class="empty">${esc(String((e && e.message) || e))}</div>` });
 }
 init();
@@ -1817,7 +1817,7 @@ function loadUsers() { srv('api_users').then(r => { US = r; render() }) }
 const linkOf = r => (US.base || '') + '?k=' + r[0];
 function rUsers() {
   if (!US) { loadUsers(); return `<p class="msg">${t('Loading...')}</p>` }
-  const roles = [['admin', t('Admin')], ['coordinator', t('Coordinator')], ['hod', t('Head of department')], ['teacher', t('Teacher ')], ['viewer', t('Viewer')], ['parent', t('Parent')]], yn = [['Yes', 'Yes'], ['No', 'No']];
+  const roles = [['admin', t('Admin')], ['coordinator', t('Coordinator')], ['hod', t('Head of department')], ['teacher', t('Teacher ')], ['viewer', t('Viewer')], ['parent', t('Parent')], ['student', t('Student')]], yn = [['Yes', 'Yes'], ['No', 'No']];
   const dl = '<option value="*">' + (HL == 'ar' ? 'كل الجداول' : 'Everything') + '</option>' + [...US.stages, ...US.classes].map(x => `<option value="${esc(x)}">`).join('') + US.teachers.map(r => `<option value="${esc(r[0])}">${esc(r[1])}</option>`).join('');
   const sel = (i, c, L, v) => `<select data-ue="${i}|${c}">${opts(L, v)}</select>`;
   const row = (r, i) => `<tr><td><input data-ue="${i}|1" value="${esc(r[1])}"></td><td><input data-ue="${i}|2" type="email" value="${esc(r[2])}"></td><td>${sel(i, 3, roles, r[3])}</td>
@@ -7685,7 +7685,7 @@ function jnDefaults(r) {
   const d = r.detail || {};
   if (r.role == 'teacher') { const tc = (S.tch || []).find(x => x[0] == d.teacherId || String(x[1]).toLowerCase() == String(r.name).toLowerCase()); return { role: 'teacher', scope: tc ? tc[0] : (d.teacherId || '') } }
   if (r.role == 'parent') return { role: 'parent', scope: '' };       // the children are chosen from the suggestions (same mobile / name): the scope is the student IDs
-  if (r.role == 'student') return { role: 'viewer', scope: d.studentClass || '' };
+  if (r.role == 'student') return { role: 'student', scope: '' };       // the student is chosen from the suggestions (same name / class): the scope is his own student ID
   return { role: 'viewer', scope: '' };
 }
 function jnCard() {
@@ -7695,8 +7695,8 @@ function jnCard() {
     const sc = `<datalist id="jn-sc"></datalist>`;
     return `<div class="g52r ${r.status == 'pending' ? 'p' : ''}" data-jn="${esc(r.id)}"><h4>${esc(r.name)} <span class="g52tag ${st[0]}">${t(st[1])}</span> <span class="g52tag">${t('Requested as')} ${t(jnRole[r.role] || r.role)}</span></h4>
 <div class="dt">${esc(r.email)}${r.phone ? ' · ' + esc(r.phone) : ''} · ${esc(r.time)}</div><div class="dt">${jnDetail(r)}</div>
-${r.status == 'pending' ? `<div class="ap"><label>${t('Role to give')}<select data-jn-role>${[['teacher', 'Teacher'], ['viewer', 'Viewer'], ['coordinator', 'Coordinator'], ['hod', 'Head of department'], ['parent', 'Parent']].map(([v, l]) => `<option value="${v}"${df.role == v ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
-<label>${t('Scope')}<input type="text" data-jn-scope list="jn-sc" value="${esc(df.scope)}" placeholder="${esc(t('Class / stage / teacher ID, or *'))}"></label>${r.role == 'parent' ? `<div class="sg" data-jn-sg="${esc(r.id)}"></div>` : ''}
+${r.status == 'pending' ? `<div class="ap"><label>${t('Role to give')}<select data-jn-role>${[['teacher', 'Teacher'], ['viewer', 'Viewer'], ['coordinator', 'Coordinator'], ['hod', 'Head of department'], ['parent', 'Parent'], ['student', 'Student']].map(([v, l]) => `<option value="${v}"${df.role == v ? ' selected' : ''}>${t(l)}</option>`).join('')}</select></label>
+<label>${t('Scope')}<input type="text" data-jn-scope list="jn-sc" value="${esc(df.scope)}" placeholder="${esc(t('Class / stage / teacher ID, or *'))}"></label>${r.role == 'parent' || r.role == 'student' ? `<div class="sg" data-jn-sg="${esc(r.id)}"></div>` : ''}
 <button class="b pri" data-jn-do="approve">${t('Approve')}</button><button class="b" data-jn-do="reject">${t('Reject')}</button></div>` : (r.note || r.by ? `<div class="dt">${esc(r.by || '')} ${esc(r.decided || '')} ${esc(r.note || '')}</div>` : '')}</div>`;
   }).join('');
   const opts = [...new Set([...(S.cls || []).map(x => x[0]), ...(S.cls || []).map(x => x[1]), ...(S.tch || []).map(x => x[0]), '*'])].filter(Boolean).map(x => `<option value="${esc(x)}">`).join('');
@@ -8190,12 +8190,17 @@ body.app-gr #g41nav,body.app-gr #wb,body.app-gr #tabs,body.app-gr #cc,body.app-g
 .g61fp{background:var(--hl);border-radius:14px;padding:10px 14px;margin:8px 0}.g61fg{margin:8px 0}.g61fg>b{display:block;font-size:12.5px;color:var(--mut);margin-bottom:4px}
 .g61ch{display:flex;flex-wrap:wrap;gap:6px}.g61c{border:1px solid var(--ln);background:var(--sf);color:var(--ink);font:inherit;border-radius:999px;padding:6px 14px;cursor:pointer;min-height:36px}.g61c.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
 @media(max-width:640px){.g61c{min-height:44px;padding:8px 16px}}
+.g61hh{position:relative;white-space:nowrap}.g61hf{border:0;background:transparent;color:var(--mut);font:inherit;cursor:pointer;border-radius:6px;padding:2px 6px;min-width:24px;min-height:24px}.g61hf:hover,.g61hf.on{background:var(--hl);color:var(--navy);font-weight:700}
+.g61hp{position:absolute;z-index:30;inset-inline-start:0;top:100%;min-width:230px;max-width:300px;background:var(--sf);border:1px solid var(--ln);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:10px;white-space:normal;font-weight:400;color:var(--ink)}
+.g61hp .row{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}.g61hp .b{min-height:34px;padding:4px 10px;font-size:12.5px}.g61hs{width:100%;box-sizing:border-box;margin:4px 0}
+.g61hl{max-height:240px;overflow:auto;margin-top:4px}.g61hl label{display:flex;gap:8px;align-items:center;padding:5px 2px;cursor:pointer}.g61hl small{margin-inline-start:auto;color:var(--mut)}
+@media(max-width:640px){.g61hp{position:fixed;inset-inline:0;top:auto;bottom:0;max-width:none;border-radius:18px 18px 0 0;padding:14px 16px 20px}.g61hl{max-height:45vh}.g61hl label{min-height:44px}.g61hf{min-width:36px;min-height:36px}}
 </style>
 <script>
 /* ---------- Exams & Grades (server: Grades.gs). Assessments are added by the teacher for a class + subject; subjects, teachers and classes come from the timetable (Assignments). ---------- */
 const GR = { D: null, loading: false, sub: '', term: '', cls: '', subj: '', ass: null, al: false, cur: '', dtab: 'marks', grid: null, gl: false, edit: {}, bp: null, nf: null, ef: null,
   it: { key: '', R: null, busy: false }, res: { key: '', R: null, busy: false },
-  sf: { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '', open: false, sort: 'cls' }, fix: null, fixing: false, sel: new Set(), form: null, imp: { text: '', prev: null }, an: { grade: '', cls: '', subject: '', R: null }, rep: { cls: '', id: '', R: null },
+  sf: { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '', open: false, sort: 'cls', sk: null, hm: '' }, fix: null, fixing: false, sel: new Set(), form: null, imp: { text: '', prev: null }, an: { grade: '', cls: '', subject: '', R: null }, rep: { cls: '', id: '', R: null },
   su: { yr: null }, cat: { text: '' } };
 const G61_TYPES = ['MCQ', 'True / False', 'Fill in the blank', 'Matching', 'Short answer', 'Constructed response', 'Oral / Practical'];
 const G61_SECS = ['Section A', 'Section B', 'Section C', 'Section D', 'Section E'];
@@ -8484,12 +8489,30 @@ function g61StuList() {
   const D = GR.D, f = GR.sf, q = f.q.trim().toLowerCase(), has = (a, v) => !a.length || a.includes(v);
   const L = D.students.filter(s => has(f.cls, s[3]) && has(f.grade, s[4]) && has(f.st, s[11] || 'Active') && has(f.lang, s[5] || '') && has(f.rel, s[6] || '') && has(f.gender, s[7] || '') && (!f.nophone || !String(s[8] || '').trim()) && (!q || (s[1] + ' ' + s[2] + ' ' + s[0] + ' ' + s[8] + ' ' + s[3]).toLowerCase().includes(q)));
   const ar = (a, b) => String(a || '').localeCompare(String(b || ''), 'ar'), en = (a, b) => String(a || '').localeCompare(String(b || ''), 'en');
+  const SKF = { id: s => s[0], name: s => s[1], cls: s => s[3], lang: s => s[5], phone: s => s[8], st: s => s[11] || 'Active' };
+  if (f.sk && SKF[f.sk.k]) { const g = SKF[f.sk.k], d = f.sk.d; L.sort((a, b) => d * (natural(String(g(a) || ''), String(g(b) || '')) || en(a[1], b[1]))); return L }
   L.sort(f.sort == 'name' ? (a, b) => en(a[1], b[1]) : f.sort == 'ar' ? (a, b) => ar(a[2] || a[1], b[2] || b[1]) : f.sort == 'id' ? (a, b) => natural(a[0], b[0]) : (a, b) => natural(a[3], b[3]) || en(a[1], b[1]));
   return L;
 }
 function g61Chips(k, label, vals, tr) {
   const sel = GR.sf[k]; if (!vals.length) return '';
   return `<div class="g61fg"><b>${t(label)}</b><div class="g61ch">${vals.map(v => `<button class="g61c${sel.includes(v) ? ' on' : ''}" data-g61c="${k}|${esc(v)}" aria-pressed="${sel.includes(v)}">${esc(tr ? t(v) : v)}</button>`).join('')}</div></div>`;
+}
+/* Excel-style filter on a column header (UI_STANDARD item 9). The ticks are the same filters as the Filters panel above, so the counter, Clear and the list agree. */
+const G61_HCOL = { cls: ['Class', 3, 'cls'], lang: ['2nd language', 5, 'lang'], st: ['Status', 11, 'st'] };
+function g61Hmenu(k) {
+  const f = GR.sf, all = GR.D.students, col = G61_HCOL[k], vals = {};
+  if (!col) { const on0 = f.sk && f.sk.k == k ? f.sk.d : 0; return `<div class="g61hp" role="dialog"><div class="row"><button class="b${on0 == 1 ? ' pri' : ''}" data-g61a="hsort" data-k="${k}" data-d="1">${t('Sort A → Z')}</button><button class="b${on0 == -1 ? ' pri' : ''}" data-g61a="hsort" data-k="${k}" data-d="-1">${t('Sort Z → A')}</button></div></div>` }
+  all.forEach(s => { const v = k == 'st' ? (s[11] || 'Active') : String(s[col[1]] || ''); vals[v] = (vals[v] || 0) + 1 });
+  const keys = Object.keys(vals).sort(k == 'cls' ? natural : (a, b) => a.localeCompare(b)), sel = f[col[2]], on = f.sk && f.sk.k == k ? f.sk.d : 0;
+  return `<div class="g61hp" role="dialog" aria-label="${esc(t(col[0]))}"><div class="row"><button class="b${on == 1 ? ' pri' : ''}" data-g61a="hsort" data-k="${k}" data-d="1">${t('Sort A → Z')}</button><button class="b${on == -1 ? ' pri' : ''}" data-g61a="hsort" data-k="${k}" data-d="-1">${t('Sort Z → A')}</button></div>
+${keys.length > 8 ? `<input type="text" class="g61hs" data-g61hq="1" placeholder="${esc(t('Search'))}" aria-label="${esc(t('Search'))}">` : ''}
+<div class="row"><button class="b" data-g61a="hall" data-k="${k}">${t('Select all')}</button><button class="b" data-g61a="hnone" data-k="${k}">${t('Clear filters')}</button></div>
+<div class="g61hl">${keys.map(v => `<label class="ck"><input type="checkbox" data-g61hc="${k}|${esc(v)}"${sel.includes(v) ? ' checked' : ''}> <span>${esc(k == 'st' ? t(v) : v || '–')}</span> <small>${vals[v]}</small></label>`).join('')}</div></div>`;
+}
+function g61Th(k, label, key) {
+  const f = GR.sf, col = G61_HCOL[k], act = col ? (k == 'st' ? !(f.st.length == 1 && f.st[0] == 'Active') && f.st.length > 0 && f.st.length < 3 : f[col[2]].length > 0) : false, srt = f.sk && f.sk.k == k;
+  return `<th class="g61hh">${label} <button class="g61hf${act || srt ? ' on' : ''}" data-g61h="${k}" aria-label="${esc(t('Filter'))}: ${esc(label)}" aria-expanded="${f.hm == k}">${act ? '●' : srt ? (f.sk.d == 1 ? '▲' : '▼') : '▾'}</button>${f.hm == k ? g61Hmenu(k) : ''}</th>`;
 }
 function g61FixCard() {
   const F = GR.fix; if (!F) { if (!GR.fixing) g61LoadFix(); return '' }
@@ -8516,7 +8539,7 @@ ${D.mgr ? `<button class="b pri" data-g61a="newstu">${ic('plus')} ${t('Add stude
   if (D.mgr && F) h += g61Form(F);
   if (D.mgr && GR.imp.open) h += g61Imp();
   if (D.mgr && GR.sel.size) h += `<div class="row g61s"><b>${GR.sel.size} ${t('selected')}</b><label>${t('Move to class')}<input type="text" id="g61mv" list="g61cl" style="width:110px" dir="ltr"></label><datalist id="g61cl">${D.classes.map(c => `<option value="${esc(c)}">`).join('')}</datalist><button class="b" data-g61a="move">${t('Move')}</button><button class="b" data-g61a="remove">${t('Remove (left school)')}</button><button class="b" data-g61a="restore">${t('Restore')}</button><button class="b" data-g61a="del">${ic('trash')} ${t('Delete')}</button></div>`;
-  h += `<div class="tw"><table class="g61t"><tr>${D.mgr ? `<th><input type="checkbox" data-g61k="all" aria-label="${t('Select all')}"></th>` : ''}<th>ID</th><th>${t('Student')}</th><th>${t('Class')}</th><th>${t('2nd language')}</th><th>${t('Parent phone')}</th><th>${t('Status')}</th>${D.mgr ? '<th></th>' : ''}</tr>`;
+  h += `<div class="tw"><table class="g61t"><tr>${D.mgr ? `<th><input type="checkbox" data-g61k="all" aria-label="${t('Select all')}"></th>` : ''}${g61Th('id', 'ID')}${g61Th('name', t('Student'))}${g61Th('cls', t('Class'))}${g61Th('lang', t('2nd language'))}${g61Th('phone', t('Parent phone'))}${g61Th('st', t('Status'))}${D.mgr ? '<th></th>' : ''}</tr>`;
   shown.forEach(s => {
     h += `<tr>${D.mgr ? `<td><input type="checkbox" data-g61k="sel" data-id="${esc(s[0])}"${GR.sel.has(s[0]) ? ' checked' : ''}></td>` : ''}<td dir="ltr">${esc(s[0])}</td><td>${esc(s[1])}${s[2] ? `<br><small class="msg" dir="rtl">${esc(s[2])}</small>` : ''}</td><td>${esc(s[3])}</td><td>${esc(s[5])}</td><td dir="ltr">${esc(s[8])}</td><td>${t(s[11] || 'Active')}</td>${D.mgr ? `<td><button class="b" data-g61a="edit" data-id="${esc(s[0])}">${t('Edit')}</button></td>` : ''}</tr>`;
   });
@@ -8629,10 +8652,14 @@ document.addEventListener('click', g61Wrap(async e => {
   if (!g61On()) return; const s = e.target.closest('[data-g61s]');
   if (s) { if (!(await g61Ask())) return; GR.sub = s.dataset.g61s; GR.edit = {}; return render() }
   const dt = e.target.closest('[data-g61d]'); if (dt) { if (!(await g61Ask())) return; GR.edit = {}; GR.bp = null; GR.dtab = dt.dataset.g61d; return render() }
+  const hb = e.target.closest('[data-g61h]'); if (hb) { GR.sf.hm = GR.sf.hm == hb.dataset.g61h ? '' : hb.dataset.g61h; return render() }
+  if (GR.sf.hm && !e.target.closest('.g61hp') && !e.target.closest('[data-g61a=hsort],[data-g61a=hall],[data-g61a=hnone]')) { GR.sf.hm = ''; render() }
   const fc = e.target.closest('[data-g61c]'); if (fc) { const k = fc.dataset.g61c.split('|')[0], v = fc.dataset.g61c.slice(k.length + 1), a0 = GR.sf[k], i0 = a0.indexOf(v); if (i0 >= 0) a0.splice(i0, 1); else a0.push(v); return render() }
   const b = e.target.closest('[data-g61a]'); if (!b) return; const a = b.dataset.g61a, D = GR.D, id = b.dataset.id, B = GR.bp;
+  if (a == 'hsort') { const k = b.dataset.k, d = +b.dataset.d; GR.sf.sk = GR.sf.sk && GR.sf.sk.k == k && GR.sf.sk.d == d ? null : { k, d }; GR.sf.hm = ''; return render() }
+  if (a == 'hall' || a == 'hnone') { const c = G61_HCOL[b.dataset.k]; if (c) { const keys = [...new Set(GR.D.students.map(s => b.dataset.k == 'st' ? (s[11] || 'Active') : String(s[c[1]] || '')))]; GR.sf[c[2]] = a == 'hall' ? keys : (b.dataset.k == 'st' ? ['Active'] : []) } return render() }
   if (a == 'fopen') { GR.sf.open = !GR.sf.open; return render() }
-  if (a == 'fclear') { GR.sf = Object.assign({}, GR.sf, { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '' }); return render() }
+  if (a == 'fclear') { GR.sf = Object.assign({}, GR.sf, { sk: null, hm: '', cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '' }); return render() }
   if (a == 'fixgo') { const F = GR.fix, st = F.students, ex = F.exams; if (!(await UX.ask(t('Match the class names with the timetable?'), esc(F.plan.map(p => p.from + ' → ' + p.to).join(', ')) + '<br>' + esc(t('Students and assessments keep all their marks; only the class name changes.')), { yes: t('Yes, match') }))) return; const r = await srv('api_grFixClasses', true); GR.fix = null; GR.D = await srv('api_grBoot'); GR.ass = null; toast(t('Done') + ': ' + r.students); return render() }
   if (a == 'reload') { GR.D = null; return render() }
   if (a == 'exit') { if (!(await g61Ask())) return; g61Reset(); TAB = 'tt'; try { history.replaceState(null, '', location.pathname + location.search) } catch (x) { } return render() }
@@ -8757,6 +8784,7 @@ document.addEventListener('change', g61Wrap(async e => {
   }
   if (d.g61k == 'sel') { T.checked ? GR.sel.add(d.id) : GR.sel.delete(d.id); return render() }
   if (d.g61k == 'all') { document.querySelectorAll('[data-g61k=sel]').forEach(x => { T.checked ? GR.sel.add(x.dataset.id) : GR.sel.delete(x.dataset.id) }); return render() }
+  if (d.g61hc !== undefined) { const [k, ...r] = d.g61hc.split('|'), v = r.join('|'), c = G61_HCOL[k], a0 = GR.sf[c[2]], i0 = a0.indexOf(v); if (T.checked && i0 < 0) a0.push(v); else if (!T.checked && i0 >= 0) a0.splice(i0, 1); return render() }
   if (d.g61q == 'nophone') { GR.sf.nophone = T.checked; return render() }
   if (d.g61q && d.g61q != 'q') { GR.sf[d.g61q] = T.value; return render() }
   if (d.g61rp) { GR.rep[d.g61rp] = T.value; if (d.g61rp == 'cls') GR.rep.id = ''; GR.rep.R = null; return render() }
@@ -8772,6 +8800,7 @@ const g61Refresh = (id) => {   // recompute the live numbers of a student's row
 };
 document.addEventListener('input', e => {
   if (!g61On()) return; const T = e.target, d = T.dataset || {};
+  if (d.g61hq !== undefined) { const q = T.value.trim().toLowerCase(); T.closest('.g61hp').querySelectorAll('.g61hl label').forEach(l => { l.style.display = !q || l.innerText.toLowerCase().includes(q) ? '' : 'none' }); return }
   if (d.g61m !== undefined) {
     const G = GR.grid, r = G.rows.find(x => x.id == d.g61m), cur = GR.edit[r.id] || { mark: r.mark, st: r.st }; cur.mark = T.value.replace(',', '.'); cur.st = ''; GR.edit[r.id] = cur;
     const x = Number(cur.mark); T.classList.toggle('bad', cur.mark !== '' && (isNaN(x) || x < 0 || x > G.exam.max)); g61Refresh(r.id)
@@ -8801,6 +8830,7 @@ document.addEventListener('paste', e => {
   render(); toast(t('Pasted - check the numbers, then Save.'));
 });
 document.addEventListener('keydown', e => {
+  if (g61On() && e.key == 'Escape' && GR.sf.hm) { GR.sf.hm = ''; return render() }
   if (!g61On() || e.key != 'Enter' || !e.target.dataset) return; const d = e.target.dataset;
   if (d.g61m !== undefined) { e.preventDefault(); const all = [...document.querySelectorAll('[data-g61m]:not(:disabled)')], i = all.indexOf(e.target); if (all[i + 1]) { all[i + 1].focus(); all[i + 1].select() } return }
   if (d.g61s2 === undefined) return; e.preventDefault();
@@ -8853,7 +8883,7 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Exams & Grades': 'الاختبارات والدرجات', 'Open Exams & Grades and enter marks (own class + subject)': 'فتح الاختبارات والدرجات وإدخال درجات فصله ومادته', 'See all classes: analysis and parent reports': 'رؤية كل الفصول: التحليل وتقارير أولياء الأمور', 'Manage students, grading setup and year move': 'إدارة الطلاب وإعدادات التقدير ونقل السنة',
   'Timetable app': 'تطبيق الجداول', 'Copy a direct link to this app': 'انسخ رابطاً مباشراً لهذا التطبيق', 'Direct link': 'رابط مباشر', 'Link copied': 'تم نسخ الرابط', 'Sign out': 'تسجيل الخروج', 'How it works': 'طريقة العمل', 'Choose the class and the subject': 'اختر الفصل والمادة', 'Press New assessment': 'اضغط «اختبار جديد»', 'Open it and type the marks, then Save': 'افتحه واكتب الدرجات ثم احفظ', 'Close': 'إغلاق',
   'Shown to parents': 'ظاهر للأهل', 'Show to parents': 'إظهار للأهل', 'Hide from parents': 'إخفاء عن الأهل', 'Show it to parents (you can change this later)': 'أظهره للأهل (يمكن تغيير ذلك لاحقاً)', 'Show this assessment to parents?': 'إظهار هذا الاختبار للأهل؟', 'Parents of the students in this class will see these marks and the skills report. You can hide it again at any time.': 'سيرى أولياء أمور طلاب هذا الفصل هذه الدرجات وتقرير المهارات. يمكنك إخفاءه في أي وقت.', 'Yes, show': 'نعم، أظهر',
-  'Some class names differ from the timetable': 'بعض أسماء الفصول تختلف عن الجدول', 'assessments': 'اختبار', 'Match the names with the timetable': 'طابق الأسماء مع الجدول', 'Classes with students but not in the timetable yet': 'فصول فيها طلاب وليست في الجدول بعد', 'Filters': 'الفلاتر', 'Sort by': 'الترتيب', 'Class, then name': 'الفصل ثم الاسم', 'Name (A-Z)': 'الاسم (إنجليزي)', 'Name (Arabic)': 'الاسم (عربي)', 'Without a parent phone': 'بدون رقم موبايل ولي أمر', 'Clear filters': 'مسح الفلاتر', 'of': 'من', 'total': 'الإجمالي', 'Select all': 'تحديد الكل', 'Showing the first 600; use the filters to narrow the list.': 'يُعرض أول 600؛ استخدم الفلاتر لتضييق القائمة.', 'Match the class names with the timetable?': 'مطابقة أسماء الفصول مع الجدول؟', 'Students and assessments keep all their marks; only the class name changes.': 'الطلاب والاختبارات تحتفظ بكل درجاتها؛ يتغيّر اسم الفصل فقط.', 'Yes, match': 'نعم، طابق', 'Class names matched with the timetable': 'أسماء فصول تمت مطابقتها مع الجدول',
+  'Sort A → Z': 'ترتيب أ ← ي', 'Sort Z → A': 'ترتيب ي ← أ', 'Filter': 'فلتر', 'Some class names differ from the timetable': 'بعض أسماء الفصول تختلف عن الجدول', 'assessments': 'اختبار', 'Match the names with the timetable': 'طابق الأسماء مع الجدول', 'Classes with students but not in the timetable yet': 'فصول فيها طلاب وليست في الجدول بعد', 'Filters': 'الفلاتر', 'Sort by': 'الترتيب', 'Class, then name': 'الفصل ثم الاسم', 'Name (A-Z)': 'الاسم (إنجليزي)', 'Name (Arabic)': 'الاسم (عربي)', 'Without a parent phone': 'بدون رقم موبايل ولي أمر', 'Clear filters': 'مسح الفلاتر', 'of': 'من', 'total': 'الإجمالي', 'Select all': 'تحديد الكل', 'Showing the first 600; use the filters to narrow the list.': 'يُعرض أول 600؛ استخدم الفلاتر لتضييق القائمة.', 'Match the class names with the timetable?': 'مطابقة أسماء الفصول مع الجدول؟', 'Students and assessments keep all their marks; only the class name changes.': 'الطلاب والاختبارات تحتفظ بكل درجاتها؛ يتغيّر اسم الفصل فقط.', 'Yes, match': 'نعم، طابق', 'Class names matched with the timetable': 'أسماء فصول تمت مطابقتها مع الجدول',
   'Assessments': 'الاختبارات', 'Class analysis': 'تحليل الفصول', 'Parent reports': 'تقارير أولياء الأمور', 'Students': 'الطلاب', 'Setup': 'الإعدادات', 'Demo': 'عرض تجريبي',
   'Marks': 'الدرجات', 'Results': 'النتائج', 'Questions': 'الأسئلة', 'Section': 'السكشن', 'Sections': 'السكاشن', 'No section': 'بدون سكشن', 'Target skill': 'المهارة المستهدفة', 'Question type': 'نوع السؤال', 'marks': 'درجة',
   'Term': 'الفترة', 'Class': 'الفصل', 'Subject': 'المادة', 'Teacher': 'المدرس', 'Out of': 'الدرجة العظمى', 'Save': 'حفظ', 'Lock': 'قفل', 'Unlock': 'فتح', 'Locked': 'مقفل',
@@ -8937,12 +8967,17 @@ body.app-par #g41nav,body.app-par #wb,body.app-par #tabs,body.app-par #cc,body.a
 .g62 .lgd{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut);margin:10px 2px}.g62 .lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:4px}
 @media(max-width:640px){.g62 .sk{grid-template-columns:1fr auto}.g62 .sk .g61bar{grid-column:1/-1;order:3}}
 .g52 .sg{margin:6px 0;padding:8px 10px;border-radius:10px;background:var(--hl);font-size:13px}.g52 .sg label{display:flex;gap:6px;align-items:center;margin:4px 0}
+
+.g62tt .ttg{table-layout:fixed;min-width:640px}@media(max-width:640px){.g62tt .ttg{min-width:0}.g62tt .ttg th:first-child{width:84px}}.g62tt .ttg th{background:var(--hl);vertical-align:top}.g62tt .ttg th small{display:block;font-weight:400;font-size:11px}
+.g62tt .ttg td{vertical-align:top;min-height:54px;padding:4px}.g62tt .ttc{background:var(--sf);border-radius:8px;padding:4px 6px;margin:2px 0;box-shadow:var(--sh)}.g62tt .ttc b{display:block;font-size:13px}.g62tt .ttc small{display:block;color:var(--mut);font-size:11.5px}
+.g62tt .ttg tr.brk td{background:var(--hl);text-align:center;color:var(--mut)}
+.g61r .c{margin:2px 0}.g61r .c small{color:#455a64}
 </style>
 <script>
 /* ---------- G62: the parent portal. A parent sees ONE thing: his own children's published results. Server: Parent.gs (hard whitelist in api_call) ---------- */
-const PAR = { on: false, B: null, kid: '', term: '', R: null, busy: false, open: {}, err: '' };
+const PAR = { on: false, B: null, kid: '', term: '', R: null, busy: false, open: {}, err: '', view: 'res', day: null, T: null, tb: false, terr: '' };
 Object.assign(AR, Object.fromEntries(Object.entries({
-  'Welcome': 'أهلاً', 'Your child': 'ابنك / ابنتك', 'Term': 'الفترة', 'Overall': 'الإجمالي', 'Class average': 'متوسط الفصل', 'Subject': 'المادة', 'Mark': 'الدرجة', 'Assessment': 'الاختبار', 'Type': 'النوع', 'Date': 'التاريخ',
+  'My timetable': 'جدولي', 'Results': 'النتائج', 'Excel': 'Excel', 'No timetable has been entered for this class yet.': 'لم يُدخل جدول لهذا الفصل بعد.', 'Break': 'استراحة', 'Period': 'الحصة', 'Your results': 'نتائجك', 'Timetable of': 'جدول', 'Print the timetable': 'اطبع الجدول', 'Welcome': 'أهلاً', 'Your child': 'ابنك / ابنتك', 'Term': 'الفترة', 'Overall': 'الإجمالي', 'Class average': 'متوسط الفصل', 'Subject': 'المادة', 'Mark': 'الدرجة', 'Assessment': 'الاختبار', 'Type': 'النوع', 'Date': 'التاريخ',
   'Target skill': 'المهارة المستهدفة', 'Standard': 'الـ Standard', 'Result': 'النتيجة', 'Sections': 'السكاشن', 'Change password': 'تغيير كلمة السر', 'Sign out': 'تسجيل الخروج',
   'Nothing is published yet': 'لا توجد نتائج منشورة بعد', 'When the teachers publish the results of this term, they appear here.': 'عندما ينشر المدرسون نتائج هذه الفترة ستظهر هنا.',
   'Tap a subject to see the details': 'اضغط على المادة لترى التفاصيل', 'Print / save as PDF': 'طباعة / حفظ PDF', 'Hide': 'إخفاء', 'Details': 'التفاصيل', 'Not counted in the term result': 'غير محسوب في نتيجة الفترة',
@@ -8965,14 +9000,44 @@ function g62Draw() {
   const v = document.getElementById('v'), B = PAR.B; if (!v || !B) return;
   try { document.getElementById('ttl').textContent = t('Exams & Grades'); document.getElementById('sub').textContent = [B.school, B.year].filter(Boolean).join(' · '); document.title = t('Exams & Grades'); const l = document.getElementById('lgn'); if (l && typeof LOGO != 'undefined') l.src = LOGO.n } catch (e) { }
   const ar = g62Ar(), kid = B.kids.find(x => x.id == PAR.kid);
-  let h = `<div class="g62"><div class="top"><div><b>${t('Welcome')} ${esc(B.name)}</b><small>${esc(t('Tap a subject to see the details'))}</small></div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="b" data-g62a="lang">${ar ? 'English' : 'العربية'}</button><button class="b" data-g62a="pw">${t('Change password')}</button><button class="b" data-g62a="out">${t('Sign out')}</button></div></div>`;
+  let h = `<div class="g62"><div class="top"><div><b>${t('Welcome')} ${esc(B.name)}</b><small>${esc(PAR.view == 'tt' ? '' : t('Tap a subject to see the details'))}</small></div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="b" data-g62a="lang">${ar ? 'English' : 'العربية'}</button><button class="b" data-g62a="pw">${t('Change password')}</button><button class="b" data-g62a="out">${t('Sign out')}</button></div></div>`;
   if (!B.kids.length) return v.innerHTML = h + `<div class="empty2"><b>${t('No children are linked to this account. Please contact the school.')}</b></div></div>`;
   if (B.kids.length > 1) h += `<div class="chips" role="tablist">${B.kids.map(k => `<button class="chip${k.id == PAR.kid ? ' on' : ''}" data-g62k="${esc(k.id)}">${esc(ar && k.ar ? k.ar : k.name)}</button>`).join('')}</div>`;
+  h += `<div class="chips" role="tablist"><button class="chip${PAR.view == 'res' ? ' on' : ''}" data-g62v="res">${ic('book')} ${t('Results')}</button><button class="chip${PAR.view == 'tt' ? ' on' : ''}" data-g62v="tt">${ic('cal')} ${t('My timetable')}</button></div>`;
+  if (PAR.view == 'tt') { if (!PAR.T && !PAR.tb && !PAR.terr) g62LoadT(); h += PAR.terr ? `<div class="empty2"><b>${t('Could not load. Check your internet and try again.')}</b><button class="b pri" data-g62a="retryT">${t('Try again')}</button></div>` : PAR.T ? g62Tt(PAR.T) : `<div class="empty2">${t('Loading...')}</div>`; return v.innerHTML = h + '</div>' }
   h += `<div class="chips">${B.terms.map(x => `<button class="chip${x == PAR.term ? ' on' : ''}" data-g62t="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
   if (PAR.busy && !PAR.R) h += `<div class="empty2">${t('Loading...')}</div>`;
   else if (PAR.err) h += `<div class="empty2"><b>${t('Could not load. Check your internet and try again.')}</b><button class="b pri" data-g62a="retry">${t('Try again')}</button></div>`;
   else if (PAR.R) h += g62Report(PAR.R);
   v.innerHTML = h + '</div>';
+}
+async function g62LoadT() {
+  const k = PAR.kid; if (!k || PAR.tb) return; PAR.tb = true; PAR.terr = '';
+  try { const T = await srv('api_parTimetable', k); if (k == PAR.kid) PAR.T = T } catch (e) { PAR.terr = 'x'; PAR.T = null } finally { PAR.tb = false }
+  g62Draw();
+}
+/* the weekly grid of the child's class: rows = periods, columns = school days */
+function g62Grid(T) {
+  const days = T.days.slice().sort((a, b) => a - b), per = [...new Set(T.slots.map(s => s.p))].sort((a, b) => a - b);
+  const slot = (d, p) => T.slots.find(s => s.p == p && s.d == d) || T.slots.find(s => s.p == p) || {};
+  const rows = per.map(p => { const s0 = slot(days[0], p); return { p, label: s0.label || String(p), time: [s0.start, s0.end].filter(Boolean).join('–'), brk: !!s0.brk, cells: days.map(d => T.lessons.filter(l => l.d == d && l.p == p)) } });
+  return { days, rows };
+}
+function g62Tt(T) {
+  const g = g62Grid(T), ar = g62Ar(), kid = PAR.B.kids.find(x => x.id == PAR.kid) || {};
+  if (!T.lessons.length) return `<div class="empty2"><b>${t('No timetable has been entered for this class yet.')}</b></div>`;
+  const narrow = window.innerWidth < 640, today = new Date().getDay(), day = g.days.includes(PAR.day) ? PAR.day : (g.days.includes(today) ? today : g.days[0]), shown = narrow ? [day] : g.days;
+  const col = s => (T.subj[s] && T.subj[s].color) || '', ic2 = s => (T.subj[s] && T.subj[s].icon) || '';
+  const cell = L => L.map(l => `<div class="ttc" style="${col(l.s) ? `border-inline-start:4px solid ${esc(col(l.s))}` : ''}"><b>${esc(ic2(l.s))} ${esc(l.s)}</b>${l.g && l.g != l.s ? `<small>${esc(l.g)}</small>` : ''}${l.t.length ? `<small>${esc(l.t.join(', '))}</small>` : ''}${l.r ? `<small>${esc(l.r)}</small>` : ''}</div>`).join('');
+  return `<div class="g62tt"><div class="top"><div><b>${t('Timetable of')} ${esc(T.cls)}</b><small>${esc(ar && kid.ar ? kid.ar : kid.name || '')} · ${esc(T.year)}</small></div><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="b" data-g62a="ttprint">${ic('print')} ${t('Print the timetable')}</button><button class="b" data-g62a="ttxl">${ic('down')} Excel</button></div></div>
+${narrow ? `<div class="chips">${g.days.map(d => `<button class="chip${d == day ? ' on' : ''}" data-g62d="${d}">${esc(dayName(d))}</button>`).join('')}</div>` : ''}
+<div class="tw"><table class="ttg"><tr><th>${t('Period')}</th>${shown.map(d => `<th>${esc(dayName(d))}</th>`).join('')}</tr>${g.rows.map(r => r.brk ? `<tr class="brk"><th>${esc(r.label)}${r.time ? `<small>${esc(r.time)}</small>` : ''}</th><td colspan="${shown.length}">${t('Break')}</td></tr>` : `<tr><th>${esc(r.label)}${r.time ? `<small dir="ltr">${esc(r.time)}</small>` : ''}</th>${shown.map(d => `<td>${cell(r.cells[g.days.indexOf(d)])}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
+}
+function g62TtSheet(T) {
+  const g = g62Grid(T), kid = PAR.B.kids.find(x => x.id == PAR.kid) || {}, ar = g62Ar();
+  const cell = L => L.map(l => `<div class="c"><b>${esc(l.s)}</b>${l.g && l.g != l.s ? ` <i>${esc(l.g)}</i>` : ''}${l.t.length ? `<br><small>${esc(l.t.join(', '))}</small>` : ''}${l.r ? `<br><small>${esc(l.r)}</small>` : ''}</div>`).join('');
+  return `<div class="sheet g61r">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${t('Timetable of')} ${esc(T.cls)}</h2><div class="bi"><span><b>${esc(ar && kid.ar ? kid.ar : kid.name || '')}</b></span><span>${esc(T.year)}</span></div>
+<table><tr><th>${t('Period')}</th>${g.days.map(d => `<th>${esc(dayName(d))}</th>`).join('')}</tr>${g.rows.map(r => r.brk ? `<tr><th>${esc(r.label)}</th><td colspan="${g.days.length}" style="text-align:center;background:#f3f6f8">${t('Break')}</td></tr>` : `<tr><th>${esc(r.label)}<br><small dir="ltr">${esc(r.time)}</small></th>${r.cells.map(c => `<td>${cell(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
 }
 function g62Report(R) {
   const r = R.reports[0], cf = R.cfg.lv, ar = g62Ar();
@@ -8997,9 +9062,14 @@ function g62Report(R) {
   return h;
 }
 document.addEventListener('click', async e => {
-  if (!PAR.on) return; const T = e.target.closest && e.target.closest('[data-g62k],[data-g62t],[data-g62s],[data-g62a]'); if (!T) return;
+  if (!PAR.on) return; const T = e.target.closest && e.target.closest('[data-g62d],[data-g62v],[data-g62k],[data-g62t],[data-g62s],[data-g62a]'); if (!T) return;
   const d = T.dataset;
-  if (d.g62k) { PAR.kid = d.g62k; PAR.R = null; PAR.open = {}; g62Draw(); return g62Load() }
+  if (d.g62d !== undefined) { PAR.day = +d.g62d; return g62Draw() }
+  if (d.g62v) { PAR.view = d.g62v; return g62Draw() }
+  if (d.g62k) { PAR.kid = d.g62k; PAR.R = null; PAR.T = null; PAR.terr = ''; PAR.open = {}; g62Draw(); return PAR.view == 'tt' ? g62LoadT() : g62Load() }
+  if (d.g62a == 'retryT') { PAR.terr = ''; return g62Draw() }
+  if (d.g62a == 'ttprint') { const old = S; S = { set: { school: PAR.B.school, division: '', brand: {} } }; try { printHtml(g62TtSheet(PAR.T), false) } finally { S = old } return }
+  if (d.g62a == 'ttxl') { const g = g62Grid(PAR.T), rows = [[t('Period')].concat(g.days.map(x => dayName(x)))].concat(g.rows.map(r => [r.label + (r.time ? ' ' + r.time : '')].concat(r.brk ? g.days.map(() => t('Break')) : r.cells.map(c => c.map(l => l.s + (l.t.length ? ' (' + l.t.join(', ') + ')' : '')).join(' / '))))); return XL.save('Timetable ' + PAR.T.cls, [{ name: PAR.T.cls, rows, bold: [0], widths: [16].concat(g.days.map(() => 26)) }]) }
   if (d.g62t) { PAR.term = d.g62t; PAR.R = null; PAR.open = {}; g62Draw(); return g62Load() }
   if (d.g62s !== undefined) { const s = PAR.R.reports[0].subjects[+d.g62s]; PAR.open[s.subject] = !PAR.open[s.subject]; return g62Draw() }
   if (d.g62a == 'lang') return document.getElementById('lang').click();
@@ -9013,6 +9083,8 @@ const _rPar = render;
 render = function () { if (PAR.on) return g62Draw(); return _rPar.apply(this, arguments) };
 if (typeof g51KB != 'undefined') g51KB.push({ id: 'par-link', p: ['us', 'gr'], kw: 'ولي امر اهل parent ربط ابن طالب موبايل موافقه بوابه تسجيل', q: ['إزاي أربط ولي أمر بابنه؟', 'How do I link a parent to his child?'], go: { tab: 'us' }, goL: ['افتح المستخدمين', 'Open Users'],
   a: ['ولي الأمر يسجّل من رابط التسجيل (ولي أمر). في «المستخدمون ← طلبات الانضمام» يقترح البرنامج الأبناء بنفس رقم الموبايل أو الاسم؛ علّم الصحيح واضغط موافقة. بعدها يرى ولي الأمر نتائج أبنائه فقط، وبشرط أن يضغط المدرس «إظهار للأهل» على الاختبار.', 'The parent registers from the join link (Parent). In Users › Join requests the app suggests children with the same mobile number or name; tick the right ones and Approve. The parent then sees only his own children, and only assessments the teacher marked Show to parents.'] });
+if (typeof g51KB != 'undefined') g51KB.push({ id: 'par-tt', p: ['us', 'gr'], kw: 'جدول الطالب جدولي ولي امر طباعه student timetable حساب طالب', q: ['إزاي الطالب أو ولي الأمر يشوف الجدول؟', 'How do a student or a parent see the timetable?'], go: { tab: 'us' }, goL: ['افتح المستخدمون والروابط', 'Open Users & links'],
+  a: ['الطالب وولي الأمر يدخلان بحسابهما فتظهر بوابة صغيرة فيها «النتائج» و«جدولي» (جدول الفصل مع طباعة وExcel). الطالب يرى نفسه فقط وولي الأمر أبناءه فقط. أنشئ حساب الطالب من «طلبات الانضمام» (دور طالب) أو من المستخدمين.', 'Students and parents sign in to a small portal with Results and My timetable (print and Excel). A student sees himself only; a parent his own children only.'] });
 /* the administrator's join card: a parent request shows the students that match his mobile number / name */
 const JNS = { sg: {}, busy: {} };
 async function jnSugg() {
@@ -9049,7 +9121,7 @@ render = function () { const r = _rSg.apply(this, arguments); try { if (!PAR.on)
 <script>
 /* ---------- G63: Users & links = the one place for people. Sections: Staff · Students · Parents · Join requests · Templates & import ---------- */
 Object.assign(AR, Object.fromEntries(Object.entries({
-  'Staff': 'الموظفون', 'Students': 'الطلاب', 'Parents': 'أولياء الأمور', 'Join requests': 'طلبات الانضمام', 'Templates & import': 'القوالب والاستيراد', 'Parent': 'ولي أمر',
+  'Staff': 'الموظفون', 'Students': 'الطلاب', 'Parents': 'أولياء الأمور', 'Parents & students': 'أولياء الأمور والطلاب', 'Test accounts': 'حسابات الاختبار', 'Create or refresh the test accounts': 'إنشاء / تحديث حسابات الاختبار', 'Remove the test accounts': 'حذف حسابات الاختبار', 'Username': 'اسم المستخدم', 'Password': 'كلمة السر', 'Role': 'الدور', 'Copy all': 'نسخ الكل', 'Download Excel': 'تحميل Excel', 'Copied': 'تم النسخ', 'Administrative staff': 'إداري', 'Test student (optional): the student ID the parent and student accounts will see. Leave empty to use a ready test student.': 'طالب الاختبار (اختياري): كود الطالب الذي يراه حسابا ولي الأمر والطالب. اتركه فارغاً لاستخدام طالب تجريبي جاهز.', 'The passwords are shown only now. Copy them or download the file; creating the accounts again gives new passwords.': 'كلمات السر تظهر الآن فقط. انسخها أو حمّل الملف؛ إنشاء الحسابات مرة أخرى يعطي كلمات جديدة.', 'How to test': 'طريقة التجربة', 'Open the app in a private window (or another browser), sign in with one of these accounts, try it, then sign out and try the next role. Your own admin account stays signed in here.': 'افتح البرنامج في نافذة خاصة (أو متصفح آخر)، سجّل الدخول بأحد هذه الحسابات وجرّبه، ثم اخرج وجرّب الدور التالي. حسابك كأدمن يبقى مفتوحاً هنا.', 'Remove the test accounts and the test student?': 'حذف حسابات الاختبار وطالب الاختبار؟', 'Test accounts and the test student (with its marks) are deleted. Real data is not touched.': 'تُحذف حسابات الاختبار وطالب الاختبار (مع درجاته). البيانات الحقيقية لا تتأثر.', 'Done': 'تم', 'Student': 'الطالب', 'Coordinator': 'منسّق', 'Head of department': 'رئيس قسم', 'Teacher': 'المدرس', 'Admin': 'أدمن', 'Parents and students': 'أولياء الأمور والطلاب', 'No parent or student accounts yet. They register with the join link and you approve the request (Join requests).': 'لا توجد حسابات أولياء أمور أو طلاب بعد. يسجّلون برابط الانضمام وتوافق على الطلب (طلبات الانضمام).', 'Join requests': 'طلبات الانضمام', 'Templates & import': 'القوالب والاستيراد', 'Parent': 'ولي أمر',
   'Children': 'الأبناء', 'No parent accounts yet. A parent registers with the join link and you approve the request (Join requests).': 'لا توجد حسابات أولياء أمور بعد. ولي الأمر يسجّل برابط الانضمام وأنت توافق على الطلب (طلبات الانضمام).',
   'Open join requests': 'فتح طلبات الانضمام', 'Download the template': 'تحميل القالب', 'Fill the template in Excel, then copy the rows (without the header line) and paste them in the import box of the same section.': 'املأ القالب في Excel ثم انسخ الصفوف (بدون سطر العناوين) والصقها في مربع الاستيراد في نفس القسم.',
   'Students template': 'قالب الطلاب', 'Exam paper template': 'قالب ورقة الامتحان', 'Parents template': 'قالب أولياء الأمور', 'Where to paste it': 'أين تلصقه',
@@ -9059,22 +9131,35 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Students on file': 'طلاب مسجلون', 'A student ID must not repeat. An existing ID updates that student.': 'كود الطالب لا يتكرر. الكود الموجود يحدّث بيانات الطالب.',
   'Loading...': 'جارٍ التحميل...', 'Could not load the grades.': 'تعذّر التحميل.', 'Refresh': 'تحديث', 'Name': 'الاسم', 'Email': 'البريد', 'Active': 'مُقيّد', 'Staff list': 'قائمة الموظفين'
 }).filter(([k]) => !(k in AR))));
-const g63Subs = () => [['staff', 'Staff', 'users'], ['students', 'Students', 'book'], ['parents', 'Parents', 'users'], ['join', 'Join requests', 'link'], ['tpl', 'Templates & import', 'down']];
+const g63Subs = () => [['staff', 'Staff', 'users'], ['students', 'Students', 'book'], ['parents', 'Parents & students', 'users'], ['join', 'Join requests', 'link'], ['tpl', 'Templates & import', 'down'], ['test', 'Test accounts', 'gear']];
 function g63Nav() {
   const pend = (typeof JN != 'undefined' && JN.list || []).filter(x => x.status == 'pending').length;
   return `<div class="g63"><nav class="sub">${g63Subs().map(([k, l, i]) => `<button class="pill${HUB.sub == k ? ' on' : ''}" data-g63="${k}">${ic(i)} ${t(l)}${k == 'join' && pend ? ` <i>${pend}</i>` : ''}</button>`).join('')}</nav></div>`;
 }
 function g63Parents() {
-  const rows = (US && US.rows || []).filter(r => String(r[3]).toLowerCase() == 'parent'), st = {};
+  const rows = (US && US.rows || []).filter(r => /^(parent|student)$/i.test(String(r[3]))), st = {};
   ((GR.D && GR.D.students) || []).forEach(s => st[s[0]] = s);
   if (!GR.D && !GR.loading) g61Load(true);
-  let h = `<div class="card"><h3>${ic('users')} ${t('Parents')} (${rows.length})</h3>`;
-  if (!rows.length) return h + `<p class="msg">${t('No parent accounts yet. A parent registers with the join link and you approve the request (Join requests).')}</p><button class="b pri" data-g63="join">${t('Open join requests')}</button></div>`;
-  h += `<div class="tw"><table class="g61t"><tr><th>${t('Name')}</th><th>${t('Email')}</th><th>${t('Children')}</th><th>${t('Active')}</th></tr>${rows.map(r => `<tr><td>${esc(r[1])}</td><td dir="ltr">${esc(r[2])}</td><td>${String(r[4] || '').split(/[,;\s]+/).filter(Boolean).map(id => st[id] ? `${esc(st[id][1])} <small class="msg">(${esc(st[id][3])})</small>` : `<span dir="ltr">${esc(id)}</span>`).join('<br>')}</td><td>${/^n/i.test(r[6]) ? '–' : '✓'}</td></tr>`).join('')}</table></div></div>`;
+  let h = `<div class="card"><h3>${ic('users')} ${t('Parents & students')} (${rows.length})</h3>`;
+  if (!rows.length) return h + `<p class="msg">${t('No parent or student accounts yet. They register with the join link and you approve the request (Join requests).')}</p><button class="b pri" data-g63="join">${t('Open join requests')}</button></div>`;
+  h += `<div class="tw"><table class="g61t"><tr><th>${t('Name')}</th><th>${t('Role')}</th><th>${t('Email')}</th><th>${t('Children')}</th><th>${t('Active')}</th></tr>${rows.map(r => `<tr><td>${esc(r[1])}</td><td>${t(/^student/i.test(r[3]) ? 'Student' : 'Parent')}</td><td dir="ltr">${esc(r[2])}</td><td>${String(r[4] || '').split(/[,;\s]+/).filter(Boolean).map(id => st[id] ? `${esc(st[id][1])} <small class="msg">(${esc(st[id][3])})</small>` : `<span dir="ltr">${esc(id)}</span>`).join('<br>')}</td><td>${/^n/i.test(r[6]) ? '–' : '✓'}</td></tr>`).join('')}</table></div></div>`;
   return h;
 }
 const G63_STU = [['ID', 'Name', 'Name AR', 'Class', 'Phone', '2nd language', 'Religion', 'Gender', 'Username', 'Family code'], ['S1000', 'Adam Ali Hassan', 'آدم علي حسن', 'G4-A', '01000000000', 'German', 'Muslim', 'M', 'adam.ali', 'FA-001']];
 const G63_PAPER = [['Section', 'Strand', 'Substrand', 'Target skill', 'Standard', 'Mark', 'Bloom', 'Question type'], ['Section A', 'Reading: Literature', 'Comprehension', 'Find the main idea', 'RL.3.2', '2', 'Understand', 'MCQ'], ['Section B', 'Language', 'Grammar', 'Nouns, verbs and adjectives', 'L.3.1', '4', 'Apply', 'Fill in the blank']];
+/* ---------- test accounts: one account per role to sign in and look for problems (admin only; Server: TestAccts.gs) ---------- */
+const TST = { R: null, busy: false, stu: '', err: '' };
+const TST_ROLE = { admin: 'Admin', coordinator: 'Coordinator', hod: 'Head of department', teacher: 'Teacher', viewer: 'Administrative staff', parent: 'Parent', student: 'Student' };
+function g63Test() {
+  const R = TST.R;
+  let h = `<div class="card"><h3>${ic('gear')} ${t('Test accounts')}</h3><p class="msg">${t('How to test')}: ${t('Open the app in a private window (or another browser), sign in with one of these accounts, try it, then sign out and try the next role. Your own admin account stays signed in here.')}</p>
+<div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end"><label style="flex:1 1 260px;display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)">${t('Test student (optional): the student ID the parent and student accounts will see. Leave empty to use a ready test student.')}<input type="text" data-g63s="stu" value="${esc(TST.stu)}" dir="ltr" placeholder="S1000"></label>
+<button class="b pri" data-g63x="make"${TST.busy ? ' disabled' : ''}>${ic('check')} ${t('Create or refresh the test accounts')}</button><button class="b" data-g63x="rm"${TST.busy ? ' disabled' : ''}>${ic('trash')} ${t('Remove the test accounts')}</button></div>${TST.err ? `<p class="msg" style="color:var(--bad)">${esc(TST.err)}</p>` : ''}</div>`;
+  if (R) h += `<div class="card"><p class="g61w">${t('The passwords are shown only now. Copy them or download the file; creating the accounts again gives new passwords.')}</p><div class="tw"><table class="g61t"><tr><th>${t('Role')}</th><th>${t('Username')}</th><th>${t('Password')}</th></tr>${R.accounts.map(a => `<tr><td>${esc(t(TST_ROLE[a.role] || a.role))}</td><td dir="ltr"><b>${esc(a.username)}</b></td><td dir="ltr"><code>${esc(a.pw)}</code></td></tr>`).join('')}</table></div>
+<div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="b" data-g63x="copy">${t('Copy all')}</button><button class="b" data-g63x="xl">${ic('down')} ${t('Download Excel')}</button></div></div>`;
+  return `<div class="g63">${h}</div>`;
+}
+function g63TestRows() { return [[t('Role'), t('Username'), t('Password')]].concat(TST.R.accounts.map(a => [t(TST_ROLE[a.role] || a.role), a.username, a.pw])) }
 function g63Tpl() {
   const card = (k, title, cols, where) => `<div class="card"><h4>${ic('down')} ${t(title)}</h4><p class="msg">${t(cols)}</p><ul><li>${t('Where to paste it')}: ${t(where)}</li></ul><button class="b pri" data-g63t="${k}">${ic('down')} ${t('Download the template')}</button></div>`;
   return `<div class="g63"><div class="card"><h3>${ic('down')} ${t('Templates & import')}</h3><p class="msg">${t('Fill the template in Excel, then copy the rows (without the header line) and paste them in the import box of the same section.')}</p></div><div class="tpl">
@@ -9087,6 +9172,8 @@ function g63Save(k) {
 }
 if (typeof g51KB != 'undefined') g51KB.push({ id: 'hub-students', p: ['us'], kw: 'طلاب استيراد قالب اكسل ملف الطلاب import students template', q: ['إزاي أرفع ملف الطلاب؟', 'How do I import the students file?'],
   a: ['«المستخدمون والروابط ← الطلاب ← استيراد قائمة»: الصق الصفوف من Excel أو ارفع الملف، اضغط «فحص» وراجع الأعداد ثم «استيراد». تجد قالباً جاهزاً في «القوالب والاستيراد».', 'Users & links › Students › Import list: paste the rows from Excel or upload the file, press Check, review the counts, then Import. A ready template is in Templates & import.'] });
+if (typeof g51KB != 'undefined') g51KB.push({ id: 'hub-test', p: ['us'], kw: 'حساب تجريبي اختبار test account دور تجربه مدرس طالب ولي امر كوردينيتور', q: ['إزاي أجرّب كل دور بحساب تجريبي؟', 'How do I try each role with a test account?'], go: { tab: 'us' }, goL: ['افتح المستخدمون والروابط', 'Open Users & links'],
+  a: ['«المستخدمون والروابط ← حسابات الاختبار ← إنشاء»: يعطيك 7 حسابات (أدمن، منسّق، رئيس قسم، مدرس، إداري، ولي أمر، طالب) وكلمات سرها تظهر مرة واحدة. افتح البرنامج في نافذة خاصة وسجّل بكل حساب. بعد التجربة اضغط «حذف حسابات الاختبار».', 'Users & links › Test accounts › Create: you get 7 accounts (admin, coordinator, HOD, teacher, staff, parent, student); passwords are shown once. Sign in from a private window, then Remove the test accounts.'] });
 const _r63 = render;
 render = function () {
   const r = _r63.apply(this, arguments);
@@ -9098,13 +9185,14 @@ render = function () {
     let body = '';
     if (sub == 'staff') {
       v.querySelectorAll('.g52c').forEach(x => x.remove());
-      v.querySelectorAll('.usr table.ed tr').forEach(tr => { const i = tr.querySelector('[data-ue]'); if (!i) return; const row = US.rows[+i.dataset.ue.split('|')[0]]; if (row && String(row[3]).toLowerCase() == 'parent') tr.style.display = 'none' });
+      v.querySelectorAll('.usr table.ed tr').forEach(tr => { const i = tr.querySelector('[data-ue]'); if (!i) return; const row = US.rows[+i.dataset.ue.split('|')[0]]; if (row && /^(parent|student)$/i.test(String(row[3]))) tr.style.display = 'none' });
       v.insertAdjacentHTML('afterbegin', g63Nav()); return r;
     }
     if (sub == 'students') {
       if (!GR.D && !GR.loading) g61Load(true);
       body = !GR.D ? `<p class="msg">${t('Loading...')}</p>` : GR.D.err ? `<div class="card"><p class="msg">${t('Could not load the grades.')}</p><button class="b" data-g61a="reload">${t('Refresh')}</button></div>` : `<div class="g61">${g61Students()}</div>`;
     } else if (sub == 'parents') body = g63Parents();
+    else if (sub == 'test') body = g63Test();
     else if (sub == 'join') body = jc || `<p class="msg">${t('Loading...')}</p>`;
     else body = g63Tpl();
     v.innerHTML = g63Nav() + body;
@@ -9112,7 +9200,19 @@ render = function () {
   } catch (x) { console.error(x) }
   return r;
 };
-document.addEventListener('click', e => {
+document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.g63s == 'stu') TST.stu = e.target.value.trim() });
+document.addEventListener('click', async e => {
+  const x = e.target.closest && e.target.closest('[data-g63x]');
+  if (x && TAB == 'us') {
+    const a = x.dataset.g63x;
+    try {
+      if (a == 'make') { TST.busy = true; TST.err = ''; render(); TST.R = await srv('api_testAccts', { studentId: TST.stu }); TST.busy = false; if (GR) GR.D = null; return render() }
+      if (a == 'rm') { if (!(await UX.ask(t('Remove the test accounts and the test student?'), esc(t('Test accounts and the test student (with its marks) are deleted. Real data is not touched.')), { danger: true, yes: t('Delete') }))) return; TST.busy = true; render(); const r = await srv('api_testRemove'); TST.busy = false; TST.R = null; if (GR) GR.D = null; toast(t('Done') + ': ' + r.removed); return render() }
+      if (a == 'copy') { const txt = g63TestRows().map(r => r.join('\t')).join('\n'); try { await navigator.clipboard.writeText(txt); toast(t('Copied')) } catch (z) { prompt(t('Copy all'), txt) } return }
+      if (a == 'xl') return XL.save('Test accounts', [{ name: 'Test accounts', rows: g63TestRows(), bold: [0], widths: [24, 22, 22] }]);
+    } catch (err) { TST.busy = false; TST.err = String((err && err.message) || err); render() }
+    return;
+  }
   const b = e.target.closest && e.target.closest('[data-g63],[data-g63t]'); if (!b || TAB != 'us') return;
   if (b.dataset.g63t) return g63Save(b.dataset.g63t);
   HUB.sub = b.dataset.g63; GR.form = null; GR.imp = { text: '', prev: null }; GR.sel.clear(); render();
