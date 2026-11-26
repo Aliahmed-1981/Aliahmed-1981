@@ -1817,7 +1817,7 @@ function loadUsers() { srv('api_users').then(r => { US = r; render() }) }
 const linkOf = r => (US.base || '') + '?k=' + r[0];
 function rUsers() {
   if (!US) { loadUsers(); return `<p class="msg">${t('Loading...')}</p>` }
-  const roles = [['admin', t('Admin')], ['coordinator', t('Coordinator')], ['hod', t('Head of department')], ['teacher', t('Teacher ')], ['viewer', t('Viewer')]], yn = [['Yes', 'Yes'], ['No', 'No']];
+  const roles = [['admin', t('Admin')], ['coordinator', t('Coordinator')], ['hod', t('Head of department')], ['teacher', t('Teacher ')], ['viewer', t('Viewer')], ['parent', t('Parent')]], yn = [['Yes', 'Yes'], ['No', 'No']];
   const dl = '<option value="*">' + (HL == 'ar' ? 'كل الجداول' : 'Everything') + '</option>' + [...US.stages, ...US.classes].map(x => `<option value="${esc(x)}">`).join('') + US.teachers.map(r => `<option value="${esc(r[0])}">${esc(r[1])}</option>`).join('');
   const sel = (i, c, L, v) => `<select data-ue="${i}|${c}">${opts(L, v)}</select>`;
   const row = (r, i) => `<tr><td><input data-ue="${i}|1" value="${esc(r[1])}"></td><td><input data-ue="${i}|2" type="email" value="${esc(r[2])}"></td><td>${sel(i, 3, roles, r[3])}</td>
@@ -8196,6 +8196,8 @@ const GR = { D: null, loading: false, sub: '', term: '', cls: '', subj: '', ass:
 const G61_TYPES = ['MCQ', 'True / False', 'Fill in the blank', 'Matching', 'Short answer', 'Constructed response', 'Oral / Practical'];
 const G61_SECS = ['Section A', 'Section B', 'Section C', 'Section D', 'Section E'];
 const G61_BLOOM_AR = { Remember: 'تذكّر', Understand: 'فهم', Apply: 'تطبيق', Analyze: 'تحليل', Evaluate: 'تقييم', Create: 'ابتكار' };
+const HUB = { sub: 'staff' };   // G63: the Users & links hub (the Students section reuses this module's page)
+const g61On = () => TAB == 'gr' || (TAB == 'us' && HUB.sub == 'students');
 const g61Can = () => !!S && (S.role == 'admin' || (S.perms && (S.perms.gr || S.perms.gr_view || S.perms.gr_manage)));
 const g61Subs = () => { const D = GR.D, o = [['ass', 'Assessments', 'book'], ['analysis', 'Class analysis', 'qa']]; if (D.all) o.push(['reports', 'Parent reports', 'print'], ['students', 'Students', 'users']); if (D.mgr) o.push(['setup', 'Setup', 'gear']); o.push(['demo', 'Demo', 'qa']); return o };
 const g61Lv = (i, ar) => esc((GR.D.cfg.lv[i] || ['', ''])[ar ? 1 : 0]);
@@ -8595,7 +8597,7 @@ const g61Wrap = fn => async function () { try { await fn.apply(this, arguments) 
 const g61Q = id => { const e = document.getElementById(id); return e ? e.value : '' };
 const g61Reset = () => { GR.cur = ''; GR.grid = null; GR.edit = {}; GR.bp = null; GR.nf = null; GR.ef = null; GR.res = { key: '', R: null, busy: false }; GR.dtab = 'marks' };
 document.addEventListener('click', g61Wrap(async e => {
-  if (TAB != 'gr') return; const s = e.target.closest('[data-g61s]');
+  if (!g61On()) return; const s = e.target.closest('[data-g61s]');
   if (s) { if (!(await g61Ask())) return; GR.sub = s.dataset.g61s; GR.edit = {}; return render() }
   const dt = e.target.closest('[data-g61d]'); if (dt) { if (!(await g61Ask())) return; GR.edit = {}; GR.bp = null; GR.dtab = dt.dataset.g61d; return render() }
   const b = e.target.closest('[data-g61a]'); if (!b) return; const a = b.dataset.g61a, D = GR.D, id = b.dataset.id, B = GR.bp;
@@ -8706,7 +8708,7 @@ document.addEventListener('click', g61Wrap(async e => {
   }
 }));
 document.addEventListener('change', g61Wrap(async e => {
-  if (TAB != 'gr') return; const T = e.target, d = T.dataset || {};
+  if (!g61On()) return; const T = e.target, d = T.dataset || {};
   if (d.g61f) {
     if (!(await g61Ask())) return render();
     if (d.g61f == 'cls') { GR.cls = T.value; GR.subj = ''; GR.ass = null; g61Reset() } else if (d.g61f == 'subj') { GR.subj = T.value; GR.ass = null; g61Reset() } else if (d.g61f == 'aterm') { GR.term = T.value } else { GR.term = T.value; GR.rep.R = null }
@@ -8735,7 +8737,7 @@ const g61Refresh = (id) => {   // recompute the live numbers of a student's row
   const sb = document.querySelector('[data-g61a=save],[data-g61a=qsave]'); if (sb) sb.disabled = false;
 };
 document.addEventListener('input', e => {
-  if (TAB != 'gr') return; const T = e.target, d = T.dataset || {};
+  if (!g61On()) return; const T = e.target, d = T.dataset || {};
   if (d.g61m !== undefined) {
     const G = GR.grid, r = G.rows.find(x => x.id == d.g61m), cur = GR.edit[r.id] || { mark: r.mark, st: r.st }; cur.mark = T.value.replace(',', '.'); cur.st = ''; GR.edit[r.id] = cur;
     const x = Number(cur.mark); T.classList.toggle('bad', cur.mark !== '' && (isNaN(x) || x < 0 || x > G.exam.max)); g61Refresh(r.id)
@@ -8753,7 +8755,7 @@ document.addEventListener('input', e => {
 });
 /* paste from Excel into the mark boxes: a column (totals) or a block (question scores) starting at the box you paste into */
 document.addEventListener('paste', e => {
-  if (TAB != 'gr') return; const T = e.target, d = T.dataset || {}; if (d.g61m === undefined && d.g61s2 === undefined) return;
+  if (!g61On()) return; const T = e.target, d = T.dataset || {}; if (d.g61m === undefined && d.g61s2 === undefined) return;
   const txt = (e.clipboardData || window.clipboardData).getData('text'); if (!/[\t\n]/.test(txt.replace(/[\r\n]+$/, ''))) return; e.preventDefault();
   const rows = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t')), G = GR.grid, ids = G.rows.map(r => r.id);
   if (d.g61m !== undefined) {
@@ -8765,7 +8767,7 @@ document.addEventListener('paste', e => {
   render(); toast(t('Pasted - check the numbers, then Save.'));
 });
 document.addEventListener('keydown', e => {
-  if (TAB != 'gr' || e.key != 'Enter' || !e.target.dataset) return; const d = e.target.dataset;
+  if (!g61On() || e.key != 'Enter' || !e.target.dataset) return; const d = e.target.dataset;
   if (d.g61m !== undefined) { e.preventDefault(); const all = [...document.querySelectorAll('[data-g61m]:not(:disabled)')], i = all.indexOf(e.target); if (all[i + 1]) { all[i + 1].focus(); all[i + 1].select() } return }
   if (d.g61s2 === undefined) return; e.preventDefault();
   const q = d.q, col = [...document.querySelectorAll(`[data-g61s2][data-q="${q}"]:not(:disabled)`)], i = col.indexOf(e.target);
@@ -8999,7 +9001,88 @@ const _rSg = render;
 render = function () { const r = _rSg.apply(this, arguments); try { if (!PAR.on) jnSugg() } catch (e) { } return r };
 </script>
 
-
+<style id="g63css">
+.g63 nav.sub{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;padding:6px;background:var(--sf);border-radius:16px;box-shadow:var(--sh);width:fit-content;max-width:100%}
+.g63 nav.sub .pill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:12px;padding:9px 14px;font:inherit;cursor:pointer;background:transparent;color:var(--ink);min-height:40px}
+.g63 nav.sub .pill:hover{background:var(--hl)}.g63 nav.sub .pill.on{background:var(--navy);color:#fff;font-weight:700}
+.g63 nav.sub .pill i{font-style:normal;background:#d1291f;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;font-weight:700}
+.g63 .tpl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.g63 .tpl .card{margin:0;display:flex;flex-direction:column;gap:8px}.g63 .tpl h4{margin:0}.g63 .tpl .b{align-self:flex-start;min-height:44px}
+.g63 .tpl ul{margin:0;padding-inline-start:18px;color:var(--mut);font-size:13px}
+@media(max-width:640px){.g63 nav.sub{width:100%}.g63 nav.sub .pill{flex:1 1 auto;justify-content:center}}
+</style>
+<script>
+/* ---------- G63: Users & links = the one place for people. Sections: Staff · Students · Parents · Join requests · Templates & import ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Staff': 'الموظفون', 'Students': 'الطلاب', 'Parents': 'أولياء الأمور', 'Join requests': 'طلبات الانضمام', 'Templates & import': 'القوالب والاستيراد', 'Parent': 'ولي أمر',
+  'Children': 'الأبناء', 'No parent accounts yet. A parent registers with the join link and you approve the request (Join requests).': 'لا توجد حسابات أولياء أمور بعد. ولي الأمر يسجّل برابط الانضمام وأنت توافق على الطلب (طلبات الانضمام).',
+  'Open join requests': 'فتح طلبات الانضمام', 'Download the template': 'تحميل القالب', 'Fill the template in Excel, then copy the rows (without the header line) and paste them in the import box of the same section.': 'املأ القالب في Excel ثم انسخ الصفوف (بدون سطر العناوين) والصقها في مربع الاستيراد في نفس القسم.',
+  'Students template': 'قالب الطلاب', 'Exam paper template': 'قالب ورقة الامتحان', 'Parents template': 'قالب أولياء الأمور', 'Where to paste it': 'أين تلصقه',
+  'Students › Import list': 'الطلاب ← استيراد قائمة', 'Assessment › Questions › Set up the questions › Paste the paper from Excel': 'الاختبار ← الأسئلة ← جهّز الأسئلة ← لصق الورقة من Excel',
+  'Columns: ID (optional), Name, Name AR, Class, Phone, 2nd language, Religion, Gender, Username, Family code.': 'الأعمدة: الكود (اختياري)، الاسم، الاسم العربي، الفصل، الهاتف، اللغة الثانية، الديانة، النوع، اسم المستخدم، كود العائلة.',
+  'Columns: Section, Strand, Substrand, Target skill, Standard, Mark, Bloom, Question type.': 'الأعمدة: السكشن، المحور، المحور الفرعي، المهارة المستهدفة، الـ Standard، الدرجة، Bloom، نوع السؤال.',
+  'Students on file': 'طلاب مسجلون', 'A student ID must not repeat. An existing ID updates that student.': 'كود الطالب لا يتكرر. الكود الموجود يحدّث بيانات الطالب.',
+  'Loading...': 'جارٍ التحميل...', 'Could not load the grades.': 'تعذّر التحميل.', 'Refresh': 'تحديث', 'Name': 'الاسم', 'Email': 'البريد', 'Active': 'مُقيّد', 'Staff list': 'قائمة الموظفين'
+}).filter(([k]) => !(k in AR))));
+const g63Subs = () => [['staff', 'Staff', 'users'], ['students', 'Students', 'book'], ['parents', 'Parents', 'users'], ['join', 'Join requests', 'link'], ['tpl', 'Templates & import', 'down']];
+function g63Nav() {
+  const pend = (typeof JN != 'undefined' && JN.list || []).filter(x => x.status == 'pending').length;
+  return `<div class="g63"><nav class="sub">${g63Subs().map(([k, l, i]) => `<button class="pill${HUB.sub == k ? ' on' : ''}" data-g63="${k}">${ic(i)} ${t(l)}${k == 'join' && pend ? ` <i>${pend}</i>` : ''}</button>`).join('')}</nav></div>`;
+}
+function g63Parents() {
+  const rows = (US && US.rows || []).filter(r => String(r[3]).toLowerCase() == 'parent'), st = {};
+  ((GR.D && GR.D.students) || []).forEach(s => st[s[0]] = s);
+  if (!GR.D && !GR.loading) g61Load(true);
+  let h = `<div class="card"><h3>${ic('users')} ${t('Parents')} (${rows.length})</h3>`;
+  if (!rows.length) return h + `<p class="msg">${t('No parent accounts yet. A parent registers with the join link and you approve the request (Join requests).')}</p><button class="b pri" data-g63="join">${t('Open join requests')}</button></div>`;
+  h += `<div class="tw"><table class="g61t"><tr><th>${t('Name')}</th><th>${t('Email')}</th><th>${t('Children')}</th><th>${t('Active')}</th></tr>${rows.map(r => `<tr><td>${esc(r[1])}</td><td dir="ltr">${esc(r[2])}</td><td>${String(r[4] || '').split(/[,;\s]+/).filter(Boolean).map(id => st[id] ? `${esc(st[id][1])} <small class="msg">(${esc(st[id][3])})</small>` : `<span dir="ltr">${esc(id)}</span>`).join('<br>')}</td><td>${/^n/i.test(r[6]) ? '–' : '✓'}</td></tr>`).join('')}</table></div></div>`;
+  return h;
+}
+const G63_STU = [['ID', 'Name', 'Name AR', 'Class', 'Phone', '2nd language', 'Religion', 'Gender', 'Username', 'Family code'], ['S1000', 'Adam Ali Hassan', 'آدم علي حسن', 'G4-A', '01000000000', 'German', 'Muslim', 'M', 'adam.ali', 'FA-001']];
+const G63_PAPER = [['Section', 'Strand', 'Substrand', 'Target skill', 'Standard', 'Mark', 'Bloom', 'Question type'], ['Section A', 'Reading: Literature', 'Comprehension', 'Find the main idea', 'RL.3.2', '2', 'Understand', 'MCQ'], ['Section B', 'Language', 'Grammar', 'Nouns, verbs and adjectives', 'L.3.1', '4', 'Apply', 'Fill in the blank']];
+function g63Tpl() {
+  const card = (k, title, cols, where) => `<div class="card"><h4>${ic('down')} ${t(title)}</h4><p class="msg">${t(cols)}</p><ul><li>${t('Where to paste it')}: ${t(where)}</li></ul><button class="b pri" data-g63t="${k}">${ic('down')} ${t('Download the template')}</button></div>`;
+  return `<div class="g63"><div class="card"><h3>${ic('down')} ${t('Templates & import')}</h3><p class="msg">${t('Fill the template in Excel, then copy the rows (without the header line) and paste them in the import box of the same section.')}</p></div><div class="tpl">
+${card('stu', 'Students template', 'Columns: ID (optional), Name, Name AR, Class, Phone, 2nd language, Religion, Gender, Username, Family code.', 'Students › Import list')}
+${card('paper', 'Exam paper template', 'Columns: Section, Strand, Substrand, Target skill, Standard, Mark, Bloom, Question type.', 'Assessment › Questions › Set up the questions › Paste the paper from Excel')}</div></div>`;
+}
+function g63Save(k) {
+  const ins = k == 'stu' ? [[t('Students template')], [t('Columns: ID (optional), Name, Name AR, Class, Phone, 2nd language, Religion, Gender, Username, Family code.')], [t('A student ID must not repeat. An existing ID updates that student.')], [t('Fill the template in Excel, then copy the rows (without the header line) and paste them in the import box of the same section.')]] : [[t('Exam paper template')], [t('Columns: Section, Strand, Substrand, Target skill, Standard, Mark, Bloom, Question type.')], ['Bloom: Remember, Understand, Apply, Analyze, Evaluate, Create'], ['Question type: MCQ, True / False, Fill in the blank, Matching, Short answer, Constructed response, Oral / Practical']];
+  XL.save(k == 'stu' ? 'Students template' : 'Exam paper template', [{ name: k == 'stu' ? 'Students' : 'Paper', rows: k == 'stu' ? G63_STU : G63_PAPER, bold: [0], widths: [14, 28, 28, 12, 14, 14, 12, 10, 14, 12] }, { name: 'Instructions', rows: ins, bold: [0], widths: [120] }]);
+}
+if (typeof g51KB != 'undefined') g51KB.push({ id: 'hub-students', p: ['us'], kw: 'طلاب استيراد قالب اكسل ملف الطلاب import students template', q: ['إزاي أرفع ملف الطلاب؟', 'How do I import the students file?'],
+  a: ['«المستخدمون والروابط ← الطلاب ← استيراد قائمة»: الصق الصفوف من Excel أو ارفع الملف، اضغط «فحص» وراجع الأعداد ثم «استيراد». تجد قالباً جاهزاً في «القوالب والاستيراد».', 'Users & links › Students › Import list: paste the rows from Excel or upload the file, press Check, review the counts, then Import. A ready template is in Templates & import.'] });
+const _r63 = render;
+render = function () {
+  const r = _r63.apply(this, arguments);
+  try {
+    if (typeof PAR != 'undefined' && PAR.on) return r;
+    if (TAB != 'us' || !S || S.role != 'admin') return r;
+    const v = document.getElementById('v'); if (!v) return r;
+    const sub = HUB.sub, jc = (v.querySelector('.g52c') || {}).outerHTML || '';
+    let body = '';
+    if (sub == 'staff') {
+      v.querySelectorAll('.g52c').forEach(x => x.remove());
+      v.querySelectorAll('.usr table.ed tr').forEach(tr => { const i = tr.querySelector('[data-ue]'); if (!i) return; const row = US.rows[+i.dataset.ue.split('|')[0]]; if (row && String(row[3]).toLowerCase() == 'parent') tr.style.display = 'none' });
+      v.insertAdjacentHTML('afterbegin', g63Nav()); return r;
+    }
+    if (sub == 'students') {
+      if (!GR.D && !GR.loading) g61Load(true);
+      body = !GR.D ? `<p class="msg">${t('Loading...')}</p>` : GR.D.err ? `<div class="card"><p class="msg">${t('Could not load the grades.')}</p><button class="b" data-g61a="reload">${t('Refresh')}</button></div>` : `<div class="g61">${g61Students()}</div>`;
+    } else if (sub == 'parents') body = g63Parents();
+    else if (sub == 'join') body = jc || `<p class="msg">${t('Loading...')}</p>`;
+    else body = g63Tpl();
+    v.innerHTML = g63Nav() + body;
+    if (sub == 'join' && typeof jnSugg == 'function') jnSugg();
+  } catch (x) { console.error(x) }
+  return r;
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-g63],[data-g63t]'); if (!b || TAB != 'us') return;
+  if (b.dataset.g63t) return g63Save(b.dataset.g63t);
+  HUB.sub = b.dataset.g63; GR.form = null; GR.imp = { text: '', prev: null }; GR.sel.clear(); render();
+});
+</script>
 
 <script>
 if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }) });
