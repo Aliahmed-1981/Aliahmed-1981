@@ -8120,6 +8120,14 @@ Object.assign(AR, Object.fromEntries(Object.entries({
 .g61m{width:86px;text-align:center;font-weight:700;direction:ltr}
 .g61m.bad{border-color:var(--bad);background:var(--bads)}
 .g61m:disabled{opacity:.55}
+.g61sp{display:inline-flex;align-items:center;gap:3px;position:relative}.g61ar{display:flex;flex-direction:column;gap:2px}.g61ar button{border:1px solid var(--ln);background:var(--bg);color:var(--ink);font-size:9px;line-height:14px;padding:0 6px;border-radius:5px;cursor:pointer}.g61ar button:disabled{opacity:.4}
+.g61qc .g61ar{display:none;position:absolute;inset-inline-end:-2px;top:-16px;z-index:3;flex-direction:row}.g61qc:focus-within .g61ar{display:flex}
+.g61xg input{width:100%;min-width:84px;font:inherit;padding:5px 8px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink);box-sizing:border-box}.g61xg td{padding:1px}.g61xw{max-height:360px;overflow:auto}
+.g61cegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:12px 0}.g61chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.g61chip{display:inline-flex;align-items:center;gap:6px;background:var(--hl);border:1px solid var(--ln);border-radius:999px;padding:3px 6px 3px 12px}.g61chip button{border:0;background:none;color:var(--ink);cursor:pointer;font-size:13px;min-width:24px;min-height:24px}
+.g61nm{color:var(--ink);font-weight:600;text-decoration:underline dotted;cursor:pointer}.g61bm{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}.g61bm .g61l{font-size:10px;padding:1px 6px}
+.g61mo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px}.g61mb{background:var(--sf,var(--bg));color:var(--ink);border-radius:16px;max-width:760px;width:100%;max-height:92vh;display:flex;flex-direction:column;padding:16px;box-sizing:border-box}.g61mc{overflow:auto;flex:1;margin:8px 0}
+.g61warn{background:var(--hl);border:1px solid var(--ln);border-radius:10px;padding:8px 12px}
+@media(max-width:640px){.g61ar button{min-height:20px;padding:0 10px}}
 .g61s{display:flex;flex-wrap:wrap;gap:8px 18px;padding:8px 12px;border-radius:12px;background:var(--hl);margin:8px 0;font-size:13.5px}
 .g61s b{font-variant-numeric:tabular-nums}
 .g61l{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;white-space:nowrap}
@@ -8200,15 +8208,15 @@ body.app-gr #g41nav,body.app-gr #wb,body.app-gr #tabs,body.app-gr #cc,body.app-g
 /* ---------- Exams & Grades (server: Grades.gs). Assessments are added by the teacher for a class + subject; subjects, teachers and classes come from the timetable (Assignments). ---------- */
 const GR = { D: null, loading: false, sub: '', term: '', cls: '', subj: '', ass: null, al: false, cur: '', dtab: 'marks', grid: null, gl: false, edit: {}, bp: null, nf: null, ef: null,
   it: { key: '', R: null, busy: false }, res: { key: '', R: null, busy: false },
-  sf: { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '', open: false, sort: 'cls', sk: null, hm: '' }, fix: null, fixing: false, sel: new Set(), form: null, imp: { text: '', prev: null }, an: { grade: '', cls: '', subject: '', R: null }, rep: { cls: '', id: '', R: null },
+  sf: { cls: [], grade: [], st: ['Active'], lang: [], rel: [], gender: [], nophone: false, q: '', open: false, sort: 'cls', sk: null, hm: '' }, fix: null, fixing: false, sel: new Set(), form: null, imp: { text: '', prev: null }, dg: null, sh: { cls: '', term: '', R: null, busy: false, sort: 'name', lvl: [] }, an: { grade: '', cls: '', subject: '', R: null }, rep: { cls: '', id: '', R: null },
   su: { yr: null }, cat: { text: '' } };
 const G61_TYPES = ['MCQ', 'True / False', 'Fill in the blank', 'Matching', 'Short answer', 'Constructed response', 'Oral / Practical'];
 const G61_SECS = ['Section A', 'Section B', 'Section C', 'Section D', 'Section E'];
 const G61_BLOOM_AR = { Remember: 'تذكّر', Understand: 'فهم', Apply: 'تطبيق', Analyze: 'تحليل', Evaluate: 'تقييم', Create: 'ابتكار' };
 const HUB = { sub: 'staff' };   // G63: the Users & links hub (the Students section reuses this module's page)
 const g61On = () => TAB == 'gr' || (TAB == 'us' && HUB.sub == 'students');
-const g61Can = () => !!S && (S.role == 'admin' || (S.perms && (S.perms.gr || S.perms.gr_view || S.perms.gr_manage)));
-const g61Subs = () => { const D = GR.D, o = [['ass', 'Assessments', 'book'], ['analysis', 'Class analysis', 'qa']]; if (D.all) o.push(['reports', 'Parent reports', 'print'], ['students', 'Students', 'users']); if (D.mgr) o.push(['setup', 'Setup', 'gear']); o.push(['demo', 'Demo', 'qa']); return o };
+const g61Can = () => !!S && (S.role == 'admin' || (S.perms && (S.perms.gr || S.perms.gr_view || S.perms.gr_manage || S.perms.gr_monitor || S.perms.gr_approve_pub)));
+const g61Subs = () => { const D = GR.D, o = [['ass', 'Assessments', 'book'], ['analysis', 'Class analysis', 'qa'], ['sheet', 'Result sheet', 'print']]; if (D.all) o.push(['reports', 'Parent reports', 'print'], ['students', 'Students', 'users']); if (D.mon || D.appr) o.push(['monitor', 'Follow-up', 'eye']); if (D.mgr) o.push(['setup', 'Setup', 'gear']); o.push(['demo', 'Demo', 'qa']); return o };
 const g61Lv = (i, ar) => esc((GR.D.cfg.lv[i] || ['', ''])[ar ? 1 : 0]);
 const g61Chip = (i, ar) => `<span class="g61l g61l${i}">${g61Lv(i, ar)}</span>`;
 const g61Lvl = p => { const b = GR.D.cfg.bands; return p < b[0] ? 0 : p < b[1] ? 1 : p < b[2] ? 2 : 3 };
@@ -8224,7 +8232,12 @@ const g61Dirty = () => Object.keys(GR.edit).length > 0;
 const g61Pre = s => String(s || '').toLowerCase().replace(/[^a-z]/g, '').slice(0, 3);
 const g61Cat = (kind, subj) => (GR.D.cat || []).filter(r => r[0] == kind && (!r[1] || g61Pre(r[1]) == g61Pre(subj))).map(r => [r[3], r[4]]);
 const g61Ex = () => { const G = GR.grid; return G && G.exam && G.exam.key == GR.cur ? G.exam : null };
-const g61Lock = () => { const e = g61Ex(); return !e || !GR.grid.canEnter || (e.locked && !GR.D.mgr) };
+const g61Future = e => !!(e && e.date && e.date > g61Today());
+const g61Lock = () => { const e = g61Ex(); return !e || !GR.grid.canEnter || !!e.locked || (g61Future(e) && !GR.D.mgr) };
+const g61Notice = e => (e.locked ? `<p class="msg g61warn">${ic('lock')} ${t('This assessment is locked. Nobody can change the marks until it is unlocked.')}</p>` : '') + (g61Future(e) ? `<p class="msg g61warn">${t('The exam date is %1. Marks can be entered from that day.').replace('%1', esc(e.date))}${GR.D.mgr ? ' ' + t('As an administrator you can still enter them.') : ''}</p>` : '');
+const g61Ok = (v, max) => v === '' || (/^\d{0,4}([.,]\d{0,2})?$/.test(v) && !(Number(v.replace(',', '.')) > max));
+const g61Step = max => max <= 3 ? 0.5 : 1;
+const g61Inp = (attrs, val, max, off) => `<span class="g61sp"><input type="text" class="g61m" ${attrs} data-max="${max}" data-prev="${esc(val)}" value="${esc(val)}" inputmode="decimal" autocomplete="off"${off ? ' disabled' : ''}><span class="g61ar"><button type="button" tabindex="-1" data-g61sp="1"${off ? ' disabled' : ''} aria-label="+">▲</button><button type="button" tabindex="-1" data-g61sp="-1"${off ? ' disabled' : ''} aria-label="-">▼</button></span></span>`;
 async function g61Load(keep) {
   if (GR.loading) return; GR.loading = true;
   try { GR.D = await srv('api_grBoot'); if (!GR.sub || !g61Subs().some(x => x[0] == GR.sub)) GR.sub = 'ass'; if (!GR.term || !GR.D.cfg.terms.includes(GR.term)) GR.term = GR.D.cfg.term; if (!keep) { GR.grid = null; GR.edit = {}; GR.ass = null } }
@@ -8247,7 +8260,7 @@ function rGrades() {
   const D = GR.D; if (!D) { g61Load(); return `<p class="msg">${t('Loading...')}</p>` }
   if (D.err) return `<div class="card"><p class="msg">${t('Could not load the grades.')}</p><button class="b" data-g61a="reload">${ic('refresh')} ${t('Refresh')}</button></div>`;
   const nav = `<nav class="sub">${g61Subs().map(([k, l, i]) => `<button class="pill${GR.sub == k ? ' on' : ''}" data-g61s="${k}">${ic(i)} ${t(l)}</button>`).join('')}</nav>`;
-  const body = { ass: g61Ass, analysis: g61Analysis, reports: g61Reports, students: g61Students, setup: g61Setup, demo: g61DemoPage }[GR.sub] || g61Ass;
+  const body = { ass: g61Ass, analysis: g61Analysis, sheet: g61Sheet2, reports: g61Reports, students: g61Students, setup: g61Setup, demo: g61DemoPage, monitor: () => (typeof g67Page == 'function' ? g67Page() : '') }[GR.sub] || g61Ass;
   return `<div class="g61">${g61Top()}${nav}${GR.sub == 'ass' && !GR.cur ? g61How() : ''}${body()}</div>`;
 }
 const g61User = () => { try { return (typeof PROF != 'undefined' && PROF.name) || '' } catch (e) { return '' } };
@@ -8286,7 +8299,7 @@ function g61Ass() {
   if (GR.nf) h += g61NewForm(A);
   if (!L.length) return h + `<p class="msg">${t('No assessments yet. Press New assessment to add a quiz, a test or an exam.')}</p></div>`;
   h += `<div class="tw"><table class="g61t"><tr><th>${t('Date')}</th><th>${t('Name')}</th><th>${t('Type')}</th><th>${t('Term')}</th><th class="n">${t('Out of')}</th><th class="n">${t('Entered')}</th><th class="n">${t('Average')}</th><th></th></tr>`;
-  L.forEach(x => { h += `<tr class="${x.n < x.total ? 'miss' : ''}"><td dir="ltr">${esc(x.date || '–')}</td><td><b>${esc(x.name)}</b>${x.mode == 'Q' ? ` <span class="g61l g61l2">${t('Questions')}</span>` : ''}${x.locked ? ` ${ic('lock')}` : ''}${x.pub ? ` <span class="g61l g61l3">${t('Shown to parents')}</span>` : ''}${x.legacy ? ` <small class="msg">(${t('whole grade')})</small>` : ''}</td><td>${esc(t(x.type))}</td><td>${esc(x.term)}</td><td class="n">${x.max}</td><td class="n">${x.n}/${x.total}</td><td class="n">${x.avg == null ? '–' : x.avg + '%'}</td><td><button class="b" data-g61a="open" data-k="${esc(x.key)}">${t('Open')}</button></td></tr>` });
+  L.forEach(x => { h += `<tr class="${x.n < x.total ? 'miss' : ''}"><td dir="ltr">${esc(x.date || '–')}</td><td><b>${esc(x.name)}</b>${x.mode == 'Q' ? ` <span class="g61l g61l2">${t('Questions')}</span>` : ''}${x.locked ? ` ${ic('lock')}` : ''}${x.pub ? ` <span class="g61l g61l3">${t('Shown to parents')}</span>` : ''}${x.pubReq ? ` <span class="g61l g61l1">${t('Waiting for approval to show to parents')}</span>` : ''}${x.legacy ? ` <small class="msg">(${t('whole grade')})</small>` : ''}</td><td>${esc(t(x.type))}</td><td>${esc(x.term)}</td><td class="n">${x.max}</td><td class="n">${x.n}/${x.total}</td><td class="n">${x.avg == null ? '–' : x.avg + '%'}</td><td><button class="b" data-g61a="open" data-k="${esc(x.key)}">${t('Open')}</button></td></tr>` });
   return h + '</table></div></div>';
 }
 function g61NewForm(A) {
@@ -8300,7 +8313,7 @@ function g61NewForm(A) {
 <label>${t('Date')}<input type="date" data-g61n="date" value="${esc(F.date)}"></label>
 <label>${t('Out of')}<input type="text" data-g61n="max" value="${esc(F.max)}" dir="ltr" inputmode="decimal"${F.copyFrom ? ' disabled' : ''}></label>
 ${qs.length ? `<label>${t('Copy the questions from')}<select data-g61n="copyFrom"><option value="">${t('No - start empty')}</option>${qs.map(x => `<option value="${esc(x.key)}"${x.key == F.copyFrom ? ' selected' : ''}>${esc(x.name)} (${esc(x.term)})</option>`).join('')}</select></label>` : ''}</div>
-<div class="row"><label class="ck"><input type="checkbox" data-g61n="pub"${F.pub ? ' checked' : ''}> ${t('Show it to parents (you can change this later)')}</label></div>
+${D.pubPol == 'forbidden' ? '' : `<div class="row"><label class="ck"><input type="checkbox" data-g61n="pub"${F.pub ? ' checked' : ''}> ${D.pubPol == 'approval' ? t('Ask the administrator to show it to parents') : t('Show it to parents (you can change this later)')}</label></div>`}
 ${sib.length ? `<div class="row"><span class="msg">${t('Also add it for these classes of the same grade')}:</span>${sib.map(x => `<label class="ck"><input type="checkbox" data-g61n="also" value="${esc(x)}"${F.also.includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div>` : ''}
 <div class="row"><button class="b pri" data-g61a="ncreate">${ic('check')} ${t('Create')}</button><button class="b" data-g61a="ncancel">${t('Cancel')}</button></div></div>`;
 }
@@ -8313,7 +8326,7 @@ function g61Detail() {
   let h = `<div class="card"><div class="row"><button class="b" data-g61a="back">${'←'} ${t('All assessments')}</button><span class="msg">${esc(GR.subj)} · ${esc(GR.cls)}</span></div>
 <h3>${esc(x.name)} <span class="g61l g61l2">${esc(t(x.type))}</span>${x.locked ? ` <span class="g61l g61l1">${ic('lock')} ${t('Locked')}</span>` : ''}</h3>
 <div class="g61s"><span>${t('Term')}: <b>${esc(x.term)}</b></span><span>${t('Date')}: <b dir="ltr">${esc(x.date || '–')}</b></span><span>${t('Out of')}: <b>${x.max}</b></span><span>${t('Entered')}: <b>${x.n}/${x.total}</b></span></div>`;
-  if (mine || D.mgr) h += `<div class="row"><button class="b" data-g61a="eedit">${t('Edit details')}</button><button class="b${x.pub ? '' : ' pri'}" data-g61a="epub">${ic('eye')} ${x.pub ? t('Hide from parents') : t('Show to parents')}</button>${D.mgr ? `<button class="b" data-g61a="elock">${ic('lock')} ${x.locked ? t('Unlock') : t('Lock')}</button>` : ''}<button class="b" data-g61a="edel">${ic('trash')} ${t('Delete')}</button></div>`;
+  if (mine || D.mgr) h += `<div class="row"><button class="b" data-g61a="eedit">${t('Edit details')}</button>${!x.pub && D.pubPol == 'forbidden' ? '' : x.pubReq ? `<button class="b" data-g61a="epub" disabled>${ic('eye')} ${t('Waiting for approval to show to parents')}</button>` : `<button class="b${x.pub ? '' : ' pri'}" data-g61a="epub">${ic('eye')} ${x.pub ? t('Hide from parents') : (D.pubPol == 'approval' ? t('Ask to show to parents') : t('Show to parents'))}</button>`}${D.mgr ? `<button class="b" data-g61a="elock">${ic('lock')} ${x.locked ? t('Unlock') : t('Lock')}</button>` : ''}<button class="b" data-g61a="edel">${ic('trash')} ${t('Delete')}</button></div>`;
   if (GR.ef) h += g61EditForm(x);
   h += `<nav class="sub">${tabs.map(([k, l]) => `<button class="pill${GR.dtab == k ? ' on' : ''}" data-g61d="${k}">${t(l)}</button>`).join('')}</nav>`;
   if (!e) return h + `<p class="msg">${t('Loading...')}</p></div>`;
@@ -8336,12 +8349,13 @@ function g61Pct(v, max) { if (v.st || v.mark === '' || v.mark == null) return nu
 function g61TotGrid(e) {
   const G = GR.grid, dis = g61Lock();
   let h = G.canEnter ? '' : `<p class="msg">${t('View only: this subject is not assigned to you.')}</p>`;
+  h += g61Notice(e);
   h += `<p class="msg">${t('Tip: you can copy a column of marks from Excel and paste it into the first mark box.')}</p><div class="g61s" id="g61st">${g61StatHtml()}</div>
 <div class="tw"><table class="g61t"><tr><th>#</th><th>${t('Student')}</th><th>${t('Mark')}</th><th>${t('Absent')}</th><th>${t('Not taking it')}</th><th class="n">%</th></tr>`;
   G.rows.forEach((r, i) => {
     const v = g61Val(r), p = g61Pct(v, e.max);
-    h += `<tr><td class="n">${i + 1}</td><td>${esc(r.name)}${r.ar ? `<br><small class="msg" dir="rtl">${esc(r.ar)}</small>` : ''}</td>
-<td><input type="text" class="g61m${p != null && p > 100 ? ' bad' : ''}" data-g61m="${esc(r.id)}" value="${esc(v.st ? '' : v.mark)}" inputmode="decimal" autocomplete="off"${dis || v.st ? ' disabled' : ''}></td>
+    h += `<tr><td class="n">${i + 1}</td><td>${g61NameCell(r)}${r.ar ? `<br><small class="msg" dir="rtl">${esc(r.ar)}</small>` : ''}</td>
+<td>${g61Inp(`data-g61m="${esc(r.id)}"`, v.st ? '' : (v.mark == null ? '' : v.mark), e.max, dis || v.st)}</td>
 <td><input type="checkbox" data-g61k="AB" data-id="${esc(r.id)}"${v.st == 'AB' ? ' checked' : ''}${dis ? ' disabled' : ''}></td><td><input type="checkbox" data-g61k="NA" data-id="${esc(r.id)}"${v.st == 'NA' ? ' checked' : ''}${dis ? ' disabled' : ''}></td><td class="n" data-g61p="${esc(r.id)}">${p == null ? '' : p + '%'}</td></tr>`;
   });
   h += `</table></div>${G.rows.length ? '' : `<p class="msg">${t('No students in this class.')}</p>`}`;
@@ -8366,14 +8380,14 @@ function g61QStat() {
   return `<span>${t('Complete')}: <b>${done}</b></span><span>${t('Incomplete')}: <b>${part}</b></span><span>${t('Not started')}: <b>${none}</b></span><span>${t('Absent')}: <b>${ab}</b></span><span>${t('Average')}: <b>${done ? Math.round(sum / done * 10) / 10 + '%' : '–'}</b></span>`;
 }
 function g61QGrid(e) {
-  const G = GR.grid, qs = e.qs || [], dis = g61Lock(); let h = G.canEnter ? '' : `<p class="msg">${t('View only: this subject is not assigned to you.')}</p>`;
+  const G = GR.grid, qs = e.qs || [], dis = g61Lock(); let h = (G.canEnter ? '' : `<p class="msg">${t('View only: this subject is not assigned to you.')}</p>`) + g61Notice(e);
   const groups = []; qs.forEach(q => { const l = groups[groups.length - 1]; if (l && l.s == (q.section || '')) l.n++; else groups.push({ s: q.section || '', n: 1 }) });
   h += `<p class="msg">${t('Tip: you can copy a block of scores from Excel (students down, questions across) and paste it into the first box.')}</p><div class="g61s" id="g61qs">${g61QStat()}</div>
 <div class="tw"><table class="g61t"><tr><th rowspan="2">#</th><th rowspan="2">${t('Student')}</th>${groups.map(g => `<th class="g61sh" colspan="${g.n}">${esc(g.s || '–')}</th>`).join('')}<th rowspan="2" class="n">${t('Total')}</th><th rowspan="2" class="n">%</th><th rowspan="2">${t('Absent')}</th><th rowspan="2">${t('Not taking it')}</th></tr>
 <tr>${qs.map(q => `<th class="n g61h" title="${esc([q.sub, q.skill, q.std, q.bloom].filter(Boolean).join(' · '))}">Q${q.no}<small>/ ${q.max}</small></th>`).join('')}</tr>`;
   G.rows.forEach((r, i) => {
     const v = g61QVal(r), tot = g61QTot(v, qs), off = dis || v.st;
-    h += `<tr><td class="n">${i + 1}</td><td>${esc(r.name)}${r.ar ? `<br><small class="msg" dir="rtl">${esc(r.ar)}</small>` : ''}</td>${qs.map(q => `<td class="n"><input type="text" class="g61m g61q" data-g61s2="${esc(r.id)}" data-q="${q.no}" data-max="${q.max}" value="${esc(v.st ? '' : (v.sc[q.no] == null ? '' : v.sc[q.no]))}" inputmode="decimal" autocomplete="off"${off ? ' disabled' : ''}></td>`).join('')}
+    h += `<tr><td class="n">${i + 1}</td><td>${g61NameCell(r)}${r.ar ? `<br><small class="msg" dir="rtl">${esc(r.ar)}</small>` : ''}<span data-g61bm="${esc(r.id)}">${g61BloomMini(r)}</span></td>${qs.map(q => `<td class="n g61qc">${g61Inp(`data-g61s2="${esc(r.id)}" data-q="${q.no}"`, v.st ? '' : (v.sc[q.no] == null ? '' : v.sc[q.no]), q.max, off)}</td>`).join('')}
 <td class="n" data-g61t="${esc(r.id)}"><b>${tot.e == null ? '' : tot.e}</b></td><td class="n" data-g61p="${esc(r.id)}">${tot.p == null ? '' : tot.p + '%'}</td>
 <td><input type="checkbox" data-g61k="AB" data-id="${esc(r.id)}"${v.st == 'AB' ? ' checked' : ''}${dis ? ' disabled' : ''}></td><td><input type="checkbox" data-g61k="NA" data-id="${esc(r.id)}"${v.st == 'NA' ? ' checked' : ''}${dis ? ' disabled' : ''}></td></tr>`;
   });
@@ -8399,28 +8413,87 @@ function g61QsTab(e) {
   h = `<div class="row">${dis ? '' : `<button class="b" data-g61a="bpedit">${t('Edit questions')}</button>`}<button class="b" data-g61a="paperprint">${ic('print')} ${t('Print')}</button></div>`;
   return h + g61Paper(e.qs);
 }
+/* a drop-down fed from the Setup pick-lists, with "+ Add new" at the bottom; the new value is kept in the paper and offered in every row */
+const G61_KEY = { strand: 'strand', sub: 'substrand', skill: 'skill', std: 'standard', type: 'qtype' };
+function g61Sel(i, f, cur) {
+  const kind = G61_KEY[f], B = GR.bp, base = g61Cat(kind, GR.subj).map(x => x[0]); if (kind == 'qtype') G61_TYPES.forEach(x => { if (!base.includes(x)) base.push(x) });
+  const vals = [...new Set(base.concat(B.qs.map(q => q[f]).filter(Boolean)))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  return `<select data-g61b="${i}.${f}"><option value=""></option>${vals.map(x => `<option value="${esc(x)}"${x == cur ? ' selected' : ''}>${esc(x)}</option>`).join('')}<option value="__new__">+ ${t('Add new...')}</option></select>`;
+}
+async function g61AskText(title) {
+  if (window.Swal) { const r = await Swal.fire({ title, input: 'text', showCancelButton: true, confirmButtonText: t('Add'), cancelButtonText: t('Cancel'), confirmButtonColor: '#26806F', heightAuto: false, returnFocus: false, inputValidator: v => (String(v || '').trim() ? null : t('Type a value.')) }); return r.isConfirmed ? String(r.value).trim() : '' }
+  return String(prompt(title) || '').trim();
+}
+document.addEventListener('change', async e => {   // "+ Add new..." in the Setup subject list
+  const T = e.target; if (!g61On() || T.id != 'g61ns' || T.value != '__new__') return; e.stopImmediatePropagation();
+  const v = await g61AskText(t('New value') + ': ' + t('Subject')); if (v) { const o = document.createElement('option'); o.textContent = v; T.insertBefore(o, T.lastElementChild); T.value = v } else T.value = ''
+}, true);
+document.addEventListener('change', async e => {   // "+ Add new..." in a question drop-down
+  const T = e.target, d = T.dataset || {}; if (!g61On() || T.value != '__new__' || d.g61b === undefined) return;
+  e.stopImmediatePropagation(); const [i, f] = d.g61b.split('.'), q = GR.bp.qs[+i], v = await g61AskText(t('New value') + ': ' + t({ strand: 'Strand', sub: 'Substrand', skill: 'Target skill', std: 'Standard', type: 'Question type' }[f]));
+  q[f] = v || q[f] || ''; return render()
+}, true);
 function g61Bp() {
-  const B = GR.bp, subj = GR.subj, dl = (id, kind) => `<datalist id="${id}">${g61Cat(kind, subj).map(([v, x]) => `<option value="${esc(v)}">${esc(x)}</option>`).join('')}</datalist>`;
+  const B = GR.bp, subj = GR.subj;
   const secs = [...new Set(G61_SECS.concat(B.qs.map(q => q.section).filter(Boolean)))];
   const others = (GR.ass.list || []).filter(x => x.mode == 'Q' && x.key != GR.cur);
-  const typ = v => `<select data-g61b="TYPE"><option value=""></option>${(G61_TYPES.includes(v) || !v ? G61_TYPES : G61_TYPES.concat([v])).map(x => `<option${x == v ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>`;
-  return `<div class="card" style="background:var(--hl)"><h3>${t('Exam paper')}</h3><p class="msg">${t('The paper is made of sections. For each question: its section, the strand and substrand, the target skill, the standard it belongs to, its mark, the Bloom level and the question type. Choose from the list or type a new value; new values are remembered.')}</p>
-${dl('g61dl-strand', 'strand')}${dl('g61dl-sub', 'substrand')}${dl('g61dl-skill', 'skill')}${dl('g61dl-std', 'standard')}<datalist id="g61dl-sec">${secs.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+  return `<div class="card" style="background:var(--hl)"><h3>${t('Exam paper')}</h3><p class="msg">${t('The paper is made of sections. For each question: its section, the strand and substrand, the target skill, the standard it belongs to, its mark, the Bloom level and the question type. Choose from the lists; if a value is missing, choose "+ Add new..." at the bottom of the list. New values are remembered.')}</p>
+<datalist id="g61dl-sec">${secs.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
 <div class="tw"><table class="g61t g61bp"><tr><th>#</th><th>${t('Section')}</th><th>${t('Strand')}</th><th>${t('Substrand')}</th><th>${t('Target skill')}</th><th>${t('Standard')}</th><th>${t('Mark')}</th><th>Bloom</th><th>${t('Question type')}</th><th></th></tr>
 ${B.qs.map((q, i) => `<tr><td class="no">${i + 1}</td><td><input type="text" list="g61dl-sec" data-g61b="${i}.section" value="${esc(q.section)}" style="min-width:92px"></td>
-<td><input type="text" list="g61dl-strand" data-g61b="${i}.strand" value="${esc(q.strand)}"></td><td><input type="text" list="g61dl-sub" data-g61b="${i}.sub" value="${esc(q.sub)}"></td>
-<td><input type="text" list="g61dl-skill" data-g61b="${i}.skill" value="${esc(q.skill)}"></td><td><input type="text" list="g61dl-std" data-g61b="${i}.std" value="${esc(q.std)}" dir="ltr" style="min-width:84px"></td>
+<td style="min-width:130px">${g61Sel(i, 'strand', q.strand)}</td><td style="min-width:130px">${g61Sel(i, 'sub', q.sub)}</td>
+<td style="min-width:130px">${g61Sel(i, 'skill', q.skill)}</td><td style="min-width:110px">${g61Sel(i, 'std', q.std)}</td>
 <td style="width:62px"><input type="text" data-g61b="${i}.max" value="${esc(q.max)}" inputmode="decimal" dir="ltr"></td>
 <td style="min-width:105px"><select data-g61b="${i}.bloom"><option value=""></option>${(GR.D.bloom || []).map(x => `<option value="${x}"${x == q.bloom ? ' selected' : ''}>${x}</option>`).join('')}</select></td>
-<td style="min-width:120px">${typ(q.type).replace('TYPE', i + '.type')}</td>
+<td style="min-width:130px">${g61Sel(i, 'type', q.type)}</td>
 <td><button class="b" data-g61a="bprm" data-i="${i}" title="${t('Remove')}" aria-label="${t('Remove')}">${ic('trash')}</button></td></tr>`).join('')}</table></div>
 <div class="row"><button class="b" data-g61a="bpadd">${ic('plus')} ${t('Add question')}</button><button class="b" data-g61a="bpadd5">+5</button><button class="b" data-g61a="bpdup">${t('Copy last row')}</button>
 ${others.length ? `<label>${t('Copy the questions from')}<select data-g61cp="1"><option value=""></option>${others.map(x => `<option value="${esc(x.key)}">${esc(x.name)} (${esc(x.term)})</option>`).join('')}</select></label>` : ''}
 <span class="msg">${t('Total')}: <b id="g61tot">${B.qs.reduce((a, q) => a + (g61Num(q.max) || 0), 0)}</b></span></div>
-<details><summary>${t('Paste the paper from Excel')}</summary><p class="msg">${t('Columns, in this order: Section, Strand, Substrand, Target skill, Standard, Mark, Bloom, Question type. One question per line.')}</p><textarea data-g61i="bp" placeholder="Section A&#9;Reading&#9;Comprehension&#9;Main idea&#9;RL.3.2&#9;2&#9;Understand&#9;MCQ">${esc(B.paste || '')}</textarea><div class="row"><button class="b" data-g61a="bppaste">${t('Add these rows')}</button></div></details>
+<details open><summary>${t('Paste the paper from Excel')}</summary><p class="msg">${t('Columns, in this order: Section, Strand, Substrand, Target skill, Standard, Mark, Bloom, Question type. One question per line.')}</p>${g61Xg('bp')}<div class="row"><button class="b" data-g61a="bppaste">${t('Add these rows')}</button></div></details>
 <div class="row"><button class="b pri" data-g61a="bpsave">${ic('check')} ${t('Save questions')}</button><button class="b" data-g61a="bpx">${t('Cancel')}</button></div></div>`;
 }
 const g61NewQ = (qs, from) => { const n = qs.reduce((a, q) => Math.max(a, +q.no || 0), 0) + 1; return Object.assign({ no: n, max: '1', type: '', section: '', strand: '', sub: '', skill: '', std: '', bloom: '', dok: '' }, from ? { section: from.section, strand: from.strand, sub: from.sub, type: from.type, max: from.max } : {}, { no: n }) };
+/* ---------- one student, in detail (from the marks already on screen) ---------- */
+const G61_BL = ['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'], G61_BS = { Remember: 'R', Understand: 'U', Apply: 'Ap', Analyze: 'An', Evaluate: 'E', Create: 'C' };
+function g61Dim(qs, sc, f) {
+  const m = {}; qs.forEach(q => { const k = q[f]; if (!k) return; const v = sc[q.no]; if (v == null || v === '') return; const a = m[k] = m[k] || [0, 0]; a[0] += Number(v); a[1] += q.max });
+  const L = Object.entries(m).map(([k, a]) => ({ k, e: Math.round(a[0] * 100) / 100, m: a[1], pct: Math.round(a[0] / a[1] * 1000) / 10 }));
+  return f == 'bloom' ? L.sort((x, y) => G61_BL.indexOf(x.k) - G61_BL.indexOf(y.k)) : L;
+}
+const g61BloomMini = r => { const e = g61Ex(); if (!e || e.mode != 'Q') return ''; const v = g61QVal(r); if (v.st) return ''; const L = g61Dim(e.qs || [], v.sc, 'bloom'); return L.length ? `<span class="g61bm">${L.map(x => `<span class="g61l g61l${g61Lvl(x.pct)}" title="${esc(x.k)} ${x.pct}%">${G61_BS[x.k] || esc(x.k.slice(0, 2))} ${Math.round(x.pct)}</span>`).join('')}</span>` : '' };
+const g61NameCell = r => `<a role="button" tabindex="0" class="g61nm" data-g61a="stu" data-id="${esc(r.id)}" title="${t('Open the student report')}">${esc(r.name)}</a>`;
+function g61StuHtml(r) {
+  const G = GR.grid, e = G.exam, bar = p => p == null ? '' : `<div class="g61bar"><i class="g61c${g61Lvl(p)}" style="width:${Math.min(100, p)}%"></i></div>`;
+  const cls = {}; try { const R = GR.res.key == GR.cur + '|' + GR.cls ? GR.res.R : null; if (R && R.it) Object.entries(R.it.dims || {}).forEach(([d, L]) => { cls[d] = {}; L.forEach(x => cls[d][x.k] = x.pct) }) } catch (x) { }
+  let n = 0, sum = 0; G.rows.forEach(z => { const v = g61Val(z), p = e.mode == 'Q' ? g61QTot(g61QVal(z), e.qs || []).p : g61Pct(v, e.max); if (p != null && !(z.st)) { n++; sum += p } });
+  const avg = n ? Math.round(sum / n * 10) / 10 : null;
+  let h = `<div style="text-align:start"><p class="msg">${esc(r.ar || '')}</p>`;
+  if (r.st == 'AB') return h + `<p>${t('Absent')}</p></div>`;
+  if (e.mode != 'Q') {
+    const p = g61Pct({ mark: r.mark, st: r.st }, e.max);
+    return h + (p == null ? `<p class="msg">${t('No mark yet.')}</p>` : `<div class="g61s"><span>${t('Mark')}: <b>${esc(r.mark)} / ${e.max}</b></span><span>%: <b>${p}</b></span><span>${t('Level')}: ${g61Chip(g61Lvl(p))}</span>${avg != null ? `<span>${t('Class average')}: <b>${avg}%</b></span>` : ''}</div>${bar(p)}`) + `<p class="msg">${t('This assessment has one total mark per student. Enter it question by question to see skills, standards and Bloom levels here.')}</p></div>`;
+  }
+  const qs = e.qs || [], sc = g61QVal(r).sc, tot = g61QTot({ sc, st: '' }, qs);
+  h += `<div class="g61s"><span>${t('Total')}: <b>${tot.e == null ? '–' : tot.e} / ${qs.reduce((a, q) => a + q.max, 0)}</b></span><span>%: <b>${tot.p == null ? '–' : tot.p}</b></span>${tot.p != null ? `<span>${t('Level')}: ${g61Chip(g61Lvl(tot.p))}</span>` : ''}${avg != null ? `<span>${t('Class average')}: <b>${avg}%</b></span>` : ''}</div>`;
+  [['bloom', 'Bloom level'], ['section', 'Section'], ['skill', 'Target skill'], ['standard', 'Standard']].forEach(([d, l]) => { const L = g61Dim(qs.map(q => Object.assign({}, q, { standard: q.std })), sc, d); if (L.length) h += `<h4>${t(l)}</h4><table class="g61t"><tr><th>${t(l)}</th><th style="width:34%"></th><th class="n">${t('Student')} %</th>${cls[d] ? `<th class="n">${t('Class')} %</th>` : ''}</tr>${L.map(x => `<tr><td>${esc(x.k)}</td><td>${bar(x.pct)}</td><td class="n"><b>${x.pct}</b></td>${cls[d] ? `<td class="n">${g61Fmt(cls[d][x.k])}</td>` : ''}</tr>`).join('')}</table>` });
+  h += `<h4>${t('Questions')}</h4><div class="tw"><table class="g61t"><tr><th>#</th><th>${t('Target skill')}</th><th>Bloom</th><th class="n">${t('Mark')}</th></tr>${qs.map(q => { const v = sc[q.no]; return `<tr><td class="n">Q${q.no}</td><td>${esc(q.skill)}</td><td>${esc(q.bloom)}</td><td class="n"><b>${v == null || v === '' ? '–' : v}</b> / ${q.max}</td></tr>` }).join('')}</table></div></div>`;
+  return h;
+}
+async function g61StuOpen(id) {
+  if (!GR.grid || !g61Ex()) { await g61LoadGrid() } const r = (GR.grid.rows || []).find(x => x.id == id); if (!r) return;
+  const x = GR.ass && GR.ass.list ? GR.ass.list.find(z => z.key == GR.cur) : null, title = r.name + (x ? ' · ' + x.name : ''), html = g61StuHtml(r);
+  const old = document.getElementById('g61mo'); if (old) old.remove();
+  const o = document.createElement('div'); o.id = 'g61mo'; o.className = 'g61mo'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+  o.innerHTML = `<div class="g61mb"><h3>${esc(title)}</h3><div class="g61mc">${html}</div><div class="row"><button class="b" data-g61mo="full">${t('Full term report')}</button><button class="b" data-g61mo="print">${ic('print')} ${t('Print')}</button><button class="b pri" data-g61mo="close">${t('Close')}</button></div></div>`;
+  o.addEventListener('click', ev => { const k = ev.target.closest('[data-g61mo]'); if (ev.target === o || (k && k.dataset.g61mo == 'close')) o.remove(); else if (k && k.dataset.g61mo == 'full') g61StuFull(o, id, k); else if (k) printHtml(`<div class="sheet g61r">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${esc(title)}</h2>${o.querySelector('.g61mc').innerHTML}</div>`) });
+  document.body.appendChild(o); const c = o.querySelector('[data-g61mo=close]'); if (c) c.focus()
+}
+async function g61StuFull(o, id, btn) {
+  btn.disabled = true;
+  try { const R = await srv('api_grStuReport', id, GR.term); const r = R.reports[0]; o.querySelector('.g61mc').innerHTML = r && r.subjects.length ? g61Sheet(r, R) : `<p class="msg">${t('No marks yet for this term.')}</p>`; btn.remove() } catch (e) { btn.disabled = false }
+}
+document.addEventListener('keydown', e => { if (e.key == 'Escape') { const o = document.getElementById('g61mo'); if (o) o.remove() } });
 /* ---------- results of one assessment ---------- */
 function g61ResTab(e) {
   const k = GR.cur + '|' + GR.cls; if (GR.res.key != k && !GR.res.busy) g61LoadRes(k, e);
@@ -8429,7 +8502,7 @@ function g61ResTab(e) {
   const bar = p => p == null ? '' : `<div class="g61bar"><i class="g61c${g61Lvl(p)}" style="width:${Math.min(100, p)}%"></i></div>`;
   let h = `<div class="g61s"><span>${t('Entered')}: <b>${g.n}/${g.total}</b></span><span>${t('Absent')}: <b>${g.ab}</b></span><span>${t('Average')}: <b>${g61Fmt(g.avg)}%</b></span><span>${t('Pass rate')}: <b>${g.passPct == null ? '–' : g.passPct + '%'}</b></span><span>${t('Lowest')}: <b>${g61Fmt(g.min)}</b></span><span>${t('Highest')}: <b>${g61Fmt(g.top)}</b></span></div>
 <div style="max-width:420px">${g61Bars(g.lv)}</div>`;
-  if (R.an.students.length) h += `<h4>${t('Students')}</h4><div class="tw"><table class="g61t"><tr><th>${t('Student')}</th><th class="n">%</th><th>${t('Level')}</th></tr>${R.an.students.map(s => `<tr><td>${esc(s.name)}</td><td class="n"><b>${s.avg}</b></td><td>${g61Chip(s.lvl)}</td></tr>`).join('')}</table></div>`;
+  if (R.an.students.length) h += `<h4>${t('Students')}</h4><div class="tw"><table class="g61t"><tr><th>${t('Student')}</th><th class="n">%</th><th>${t('Level')}</th>${e.mode == 'Q' ? '<th>Bloom</th>' : ''}</tr>${R.an.students.map(s => { const z = ((GR.grid && GR.grid.rows) || []).find(y => y.name == s.name); return `<tr><td>${z ? g61NameCell(z) : esc(s.name)}</td><td class="n"><b>${s.avg}</b></td><td>${g61Chip(s.lvl)}</td>${e.mode == 'Q' ? `<td>${z ? g61BloomMini(z) : ''}</td>` : ''}</tr>` }).join('')}</table></div>`;
   if (R.it && R.it.items.length) {
     const dim = (d, l) => R.it.dims[d] && R.it.dims[d].length ? `<h4>${t(l)}</h4><table class="g61t"><tr><th>${t(l)}</th><th style="width:40%">${t('Class result')}</th><th class="n">%</th></tr>${R.it.dims[d].map(x => `<tr><td>${esc(x.k)}</td><td>${bar(x.pct)}</td><td class="n"><b>${g61Fmt(x.pct)}</b></td></tr>`).join('')}</table>` : '';
     h += `<h4>${t('Question analysis')}</h4><div class="tw"><table class="g61t"><tr><th>#</th><th>${t('Section')}</th><th>${t('Target skill')}</th><th>${t('Standard')}</th><th>Bloom</th><th>${t('Question type')}</th><th class="n">${t('Answered')}</th><th style="width:22%">${t('Class result')}</th><th class="n">%</th></tr>${R.it.items.map(q => `<tr><td class="n">Q${q.no}</td><td>${esc(q.section)}</td><td>${esc(q.skill)}</td><td dir="ltr">${esc(q.std)}</td><td>${esc(q.bloom)}</td><td>${esc(q.type)}</td><td class="n">${q.n}</td><td>${bar(q.pct)}</td><td class="n"><b>${g61Fmt(q.pct)}</b></td></tr>`).join('')}</table></div>${dim('section', 'Section')}${dim('skill', 'Target skill')}${dim('standard', 'Standard')}${dim('bloom', 'Bloom level')}${dim('substrand', 'Substrand')}${dim('type', 'Question type')}`;
@@ -8458,7 +8531,7 @@ function g61Note(d, ar) {
   return ar ? `نقطة القوة: ${best.k} (${best.pct}%). مهارة تحتاج تدريباً: ${weak.k} (${weak.pct}%).` : `Strength: ${best.k} (${best.pct}%). Practise: ${weak.k} (${weak.pct}%).`;
 }
 function g61Sheet(r, R) {
-  R = R || GR.rep.R; const head = typeof sxHead == 'function' ? sxHead() : '', cf = R.cfg.lv;
+  R = R || GR.rep.R; const head = typeof sxHead == 'function' ? sxHead() : '', cf = R.cfg.lv, hasAvg = r.subjects.some(s => s.avg != null);
   const sec = s => {
     const d = s.det, ss = d && d.skillStd || {};
     return `<div class="g61sec"><h3><span>${esc(s.subject)}</span>${s.pct != null ? `<span class="g61l g61l${s.lvl}">${s.mark} / ${s.max} · ${s.pct}%</span>` : `<span class="g61l g61l1">${s.st == 'AB' ? t('Absent') : t('Incomplete')}</span>`}</h3>
@@ -8469,11 +8542,11 @@ ${d && d.skill && d.skill.length ? `<table><tr><th>${t('Target skill')}</th><th>
 ${d && d.bloom && d.bloom.length ? `<div class="g61bl"><b>Bloom:</b> ${d.bloom.map(x => `<span>${esc(x.k)} / ${G61_BLOOM_AR[x.k] || ''} ${x.pct}%</span>`).join('')}</div>` : ''}
 ${d && g61Note(d, false) ? `<div class="g61nt" dir="ltr">${esc(g61Note(d, false))}</div><div class="g61nt" dir="rtl">${esc(g61Note(d, true))}</div>` : ''}</div>`;
   };
-  const lg = `<div class="g61lg">${cf.map((p, i) => `<span><i class="g61c${i}"></i>${esc(p[0])} · ${esc(p[1])}</span>`).join('')}<span>▏${t('Class average')}</span></div>`;
+  const lg = `<div class="g61lg">${cf.map((p, i) => `<span><i class="g61c${i}"></i>${esc(p[0])} · ${esc(p[1])}</span>`).join('')}${hasAvg ? `<span>▏${t('Class average')}</span>` : ''}</div>`;
   return `<div class="sheet g61r">${head}<h2>${t('Progress report')} / تقرير مستوى الطالب</h2><div class="bi"><span><b>${esc(r.name)}</b><br>${esc(r.ar || '')}</span><span>${t('Class')}: <b>${esc(r.cls)}</b><br>${esc(R.year)} · ${esc(R.term)}</span></div>
-<table><tr><th>${t('Subject')}</th><th>${t('Mark')}</th><th>%</th><th>${t('Level')}</th><th>${t('Class average')}</th></tr>${r.subjects.map(s => `<tr><td>${esc(s.subject)}</td><td>${s.mark != null ? s.mark + ' / ' + s.max : (s.st == 'AB' ? t('Absent') : '–')}</td><td>${g61Fmt(s.pct)}</td><td>${s.lvl != null ? `<span class="g61l g61l${s.lvl}">${esc(cf[s.lvl][0])} · ${esc(cf[s.lvl][1])}</span>` : ''}</td><td>${g61Fmt(s.avg)}</td></tr>`).join('')}
-${r.avg != null ? `<tr><th>${t('Overall')}</th><th></th><th>${r.avg}</th><th colspan="2"><span class="g61l g61l${r.lvl}">${esc(cf[r.lvl][0])} · ${esc(cf[r.lvl][1])}</span></th></tr>` : ''}</table>
-${r.subjects.map(sec).join('')}${lg}<div class="cm" dir="ltr">${esc(g61Comment(r, false, R))}</div><div class="cm" dir="rtl">${esc(g61Comment(r, true, R))}</div></div>`;
+<table><tr><th>${t('Subject')}</th><th>${t('Mark')}</th><th>%</th><th>${t('Level')}</th>${hasAvg ? `<th>${t('Class average')}</th>` : ''}</tr>${r.subjects.map(s => s.exempt ? `<tr><td>${esc(s.subject)}</td><td colspan="${hasAvg ? 4 : 3}">${t('Exempt')}${s.reason ? ' — ' + esc(t(s.reason)) : ''}</td></tr>` : `<tr><td>${esc(s.subject)}</td><td>${s.mark != null ? s.mark + ' / ' + s.max : (s.st == 'AB' ? t('Absent') : '–')}</td><td>${g61Fmt(s.pct)}</td><td>${s.lvl != null ? `<span class="g61l g61l${s.lvl}">${esc(cf[s.lvl][0])} · ${esc(cf[s.lvl][1])}</span>` : ''}</td>${hasAvg ? `<td>${g61Fmt(s.avg)}</td>` : ''}</tr>`).join('')}
+${r.avg != null ? `<tr><th>${t('Overall')}</th><th></th><th>${r.avg}</th><th colspan="${hasAvg ? 2 : 1}"><span class="g61l g61l${r.lvl}">${esc(cf[r.lvl][0])} · ${esc(cf[r.lvl][1])}</span></th></tr>` : ''}</table>
+${r.subjects.filter(x => !x.exempt).map(sec).join('')}${lg}<div class="cm" dir="ltr">${esc(g61Comment(r, false, R))}</div><div class="cm" dir="rtl">${esc(g61Comment(r, true, R))}</div></div>`;
 }
 function g61Reports() {
   const D = GR.D, R = GR.rep, cl = D.classes.slice().sort(natural), st = D.students.filter(s => (s[11] || 'Active') == 'Active' && (!R.cls || s[3] == R.cls)).sort((a, b) => a[1].localeCompare(b[1]));
@@ -8550,10 +8623,42 @@ function g61Form(F) {
   return `<div class="card" style="background:var(--hl)"><h3>${F.id ? t('Edit student') + ' ' + esc(F.id) : t('Add student')}</h3><div class="g61f">${g61FF.map(([k, l]) => `<label>${t(l)}${k == 'cls' ? `<input type="text" list="g61cl2" data-g61ff="${k}" value="${esc(F[k] || '')}" dir="ltr"><datalist id="g61cl2">${GR.D.classes.map(c => `<option value="${esc(c)}">`).join('')}</datalist>` : `<input type="text" data-g61ff="${k}" value="${esc(F[k] || '')}"${k == 'ar' ? ' dir="rtl"' : ''}>`}</label>`).join('')}</div>
 <div class="row"><button class="b pri" data-g61a="stusave">${ic('check')} ${t('Save')}</button><button class="b" data-g61a="stucancel">${t('Cancel')}</button></div></div>`;
 }
+/* a real spreadsheet-like grid: click a cell and paste from Excel, type, arrow keys; feeds the same text the importers read */
+const G61X = {
+  imp: { cols: ['ID', 'Name', 'Name AR', 'Class', 'Phone', '2nd language', 'Religion', 'Gender', 'Username', 'Family code'], get: () => GR.imp.text || '', set: v => { GR.imp.text = v; GR.imp.prev = null }, comma: 1 },
+  bp: { cols: ['Section', 'Strand', 'Substrand', 'Target skill', 'Standard', 'Mark', 'Bloom', 'Question type'], get: () => (GR.bp && GR.bp.paste) || '', set: v => { GR.bp.paste = v } },
+  cat: { cols: ['Type', 'Subject', 'Value', 'Description'], get: () => GR.cat.text || '', set: v => { GR.cat.text = v } }
+};
+GR.gxn = GR.gxn || {};
+const g61XRows = id => { const X = G61X[id]; return X.get().split(/\r?\n/).map(l => l.includes('\t') || !X.comma ? l.split('\t') : l.split(',')) };
+const g61XSave = (id, rs) => { const X = G61X[id], n = X.cols.length; while (rs.length && rs[rs.length - 1].every(x => !String(x || '').trim())) rs.pop(); X.set(rs.map(r => { const a = r.slice(0, n); while (a.length < n) a.push(''); return a.map(x => String(x == null ? '' : x).replace(/[\t\r\n]+/g, ' ')).join('\t') }).join('\n')) };
+function g61Xg(id) {
+  const X = G61X[id], rs = g61XRows(id); while (rs.length && rs[rs.length - 1].every(x => !String(x || '').trim())) rs.pop();
+  const n = Math.max(rs.length + 3, GR.gxn[id] || 8);
+  let h = `<div class="tw g61xw"><table class="g61t g61xg"><tr><th>#</th>${X.cols.map(c => `<th>${t(c)}</th>`).join('')}</tr>`;
+  for (let r = 0; r < n; r++) { h += `<tr><td class="no">${r + 1}</td>${X.cols.map((c, k) => `<td><input type="text" data-g61x="${id}" data-r="${r}" data-c="${k}" value="${esc((rs[r] || [])[k] || '')}" autocomplete="off"></td>`).join('')}</tr>` }
+  return h + `</table></div><div class="row"><button class="b" data-g61a="xadd" data-x="${id}">${ic('plus')} ${t('Add 5 rows')}</button><button class="b" data-g61a="xclr" data-x="${id}">${ic('trash')} ${t('Clear the grid')}</button><span class="msg">${t('Click a cell, then paste from Excel (Ctrl+V). Enter or the arrow keys move between cells.')}</span></div>`;
+}
+document.addEventListener('input', e => {
+  const T = e.target, d = T.dataset || {}; if (d.g61x === undefined || !g61On()) return; e.stopImmediatePropagation();
+  const rs = g61XRows(d.g61x); while (rs.length <= +d.r) rs.push([]); while (rs[+d.r].length <= +d.c) rs[+d.r].push(''); rs[+d.r][+d.c] = T.value; g61XSave(d.g61x, rs)
+}, true);
+document.addEventListener('paste', e => {
+  const T = e.target, d = T.dataset || {}; if (d.g61x === undefined || !g61On()) return;
+  const txt = (e.clipboardData || window.clipboardData).getData('text'); if (!/[\t\n]/.test(txt.replace(/[\r\n]+$/, ''))) return; e.preventDefault(); e.stopImmediatePropagation();
+  const id = d.g61x, src = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t')), rs = g61XRows(id), r0 = +d.r, c0 = +d.c, nc = G61X[id].cols.length;
+  src.forEach((row, i) => { while (rs.length <= r0 + i) rs.push([]); const t0 = rs[r0 + i]; while (t0.length < nc) t0.push(''); row.forEach((v, k) => { if (c0 + k < nc) t0[c0 + k] = v.trim() }) });
+  g61XSave(id, rs); GR.gxn[id] = Math.max(GR.gxn[id] || 8, r0 + src.length + 2); render(); toast(t('Pasted') + ': ' + src.length);
+  const f = document.querySelector(`[data-g61x="${id}"][data-r="${r0}"][data-c="${c0}"]`); if (f) f.focus()
+}, true);
+document.addEventListener('keydown', e => {
+  const T = e.target, d = T.dataset || {}; if (d.g61x === undefined || !g61On()) return; const k = e.key; if (k != 'Enter' && k != 'ArrowDown' && k != 'ArrowUp') return;
+  e.preventDefault(); const r = +d.r + (k == 'ArrowUp' ? -1 : 1), f = document.querySelector(`[data-g61x="${d.g61x}"][data-r="${r}"][data-c="${d.c}"]`); if (f) { f.focus(); f.select() }
+});
 function g61Imp() {
   const P = GR.imp.prev;
   return `<div class="card" style="background:var(--hl)"><h3>${t('Import students')}</h3><p class="msg">${t('One student per line, columns separated by a tab or a comma: ID (optional), Name, Name AR, Class, Phone, 2nd language, Religion, Gender, Username, Family code. An existing ID updates that student.')}</p>
-<textarea data-g61i="text" placeholder="S1000, Adam Ali, آدم علي, G4-A, 0100...">${esc(GR.imp.text)}</textarea>
+${g61Xg('imp')}
 <div class="row"><input type="file" accept=".csv,.txt,.tsv" data-g61i="file"><button class="b" data-g61a="impchk">${t('Check')}</button>${P && (P.add + P.update) ? `<button class="b pri" data-g61a="impgo">${t('Import')} (${P.add} + ${P.update})</button>` : ''}<button class="b" data-g61a="impx">${t('Close')}</button></div>
 ${P && P.fixes && P.fixes.length ? `<p class="msg">${t('Class names matched with the timetable')}: ${P.fixes.map(x => `<span dir="ltr">${esc(x[0])}</span> (${x[1]})`).join(' · ')}</p>` : ''}${P ? `<div class="g61s"><span>${t('New')}: <b>${P.add}</b></span><span>${t('Updated')}: <b>${P.update}</b></span><span>${t('Skipped')}: <b>${P.bad.length}</b></span></div>${P.bad.length ? `<div class="g61w">${P.bad.slice(0, 12).map(b => esc(b[0] + ': ' + b[1])).join('<br>')}${P.bad.length > 12 ? '<br>…' : ''}</div>` : ''}` : ''}</div>`;
 }
@@ -8561,15 +8666,52 @@ const g61Rows = txt => txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map
 /* ---------- class analysis ---------- */
 function g61Analysis() {
   const D = GR.D, A = GR.an, grades = g61Grades(), cl = g61Cls(), subs = D.all ? D.subjects.slice().sort() : [...new Set(D.assign.map(r => r[1]))].sort();
+  if (A.term && A.term != GR.term) A.key = '';
   if (!A.R || A.term != GR.term) { g61RunAn(); }
   let h = `<div class="card"><h3>${ic('qa')} ${t('Class analysis')}</h3><div class="row">${g61TermSel('aterm', GR.term)}
 ${D.all ? `<label>${t('Grade')}<select data-g61an="grade">${g61Opt(grades, A.grade, 'All grades')}</select></label>` : ''}
 <label>${t('Class')}<select data-g61an="cls">${g61Opt(cl, A.cls, 'All classes')}</select></label>
 <label>${t('Subject')}<select data-g61an="subject">${g61Opt(subs, A.subject, 'All subjects')}</select></label>
+${A.cls && A.subject ? g61AnKey(A) : ''}
 ${A.R && A.R.rows.length ? `<button class="b" data-g61a="anprint">${ic('print')} ${t('Print')}</button>` : ''}</div>`;
   if (!A.R) return h + `<p class="msg">${t('Loading...')}</p></div>`;
   if (!A.R.rows.length) return h + `<p class="msg">${t('No marks yet for this term.')}</p></div>`;
   return h + `<div class="tw">${g61AnTable(A.R.rows)}</div>${A.R.students.length ? `<h4>${t('Students')}</h4><div class="tw">${g61AnStu(A.R)}</div>` : ''}</div>`;
+}
+
+/* ---------- result sheet (شيت الرصد): one class, one term, students down, subjects across ---------- */
+async function g61RunSh() {
+  const H = GR.sh; if (H.busy || !H.cls) return; H.busy = true; const term = GR.term, cls = H.cls;
+  try { H.R = await srv('api_grAnalysis', term, { cls }); H.R.term = term; H.R.cls = cls } catch (e) { H.R = { rows: [], students: [], term, cls } } finally { H.busy = false }
+  render();
+}
+function g61ShData() {
+  const H = GR.sh, R = H.R, P = GR.D.cfg.pass; if (!R) return null;
+  const subs = [...new Set(R.students.flatMap(s => Object.keys(s.subs)))].sort();
+  let L = R.students.map(s => Object.assign({}, s)).sort((a, b) => b.avg - a.avg);
+  let rk = 0, prev = null, i = 0; L.forEach(s => { i++; if (s.avg !== prev) { rk = i; prev = s.avg } s.rank = rk });
+  if (H.lvl.length) L = L.filter(s => H.lvl.includes(String(s.lvl)));
+  const en = (a, b) => String(a || '').localeCompare(String(b || ''), 'en');
+  if (H.sort == 'name') L.sort((a, b) => en(a.name, b.name)); else if (H.sort == 'avg') L.sort((a, b) => b.avg - a.avg); else if (H.sort == 'low') L.sort((a, b) => a.avg - b.avg);
+  const cavg = subs.map(x => { const v = R.students.map(s => s.subs[x]).filter(z => z != null); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10 : null });
+  return { subs, L, cavg, P };
+}
+function g61ShTable(d, forPrint) {
+  const { subs, L, cavg, P } = d;
+  return `<table class="g61t"><tr><th>#</th><th>${t('Student')}</th>${subs.map(x => `<th class="n">${esc(x)}</th>`).join('')}<th class="n">${t('Average')}</th><th>${t('Level')}</th><th class="n">${t('Rank')}</th></tr>
+${L.map((s, i) => `<tr><td class="n">${i + 1}</td><td>${esc(s.name)}</td>${subs.map(x => { const v = s.subs[x]; return `<td class="n"${v != null && v < P ? ' style="color:#d1291f;font-weight:700"' : ''}>${v == null ? '–' : v}</td>` }).join('')}<td class="n"><b>${s.avg}</b></td><td>${g61Chip(s.lvl)}</td><td class="n">${s.rank}</td></tr>`).join('')}
+<tr><th></th><th>${t('Class average')}</th>${cavg.map(v => `<th class="n">${v == null ? '–' : v}</th>`).join('')}<th colspan="3"></th></tr></table>`;
+}
+function g61Sheet2() {
+  const D = GR.D, H = GR.sh, cl = g61Cls();
+  if (!H.cls || !cl.includes(H.cls)) { H.cls = cl[0] || ''; H.R = null }
+  if (H.cls && (!H.R || H.R.term != GR.term || H.R.cls != H.cls)) g61RunSh();
+  let h = `<div class="card"><h3>${ic('print')} ${t('Result sheet')}</h3><div class="row">${g61TermSel('aterm', GR.term)}<label>${t('Class')}<select data-g61sh="cls">${g61Opt(cl, H.cls)}</select></label>
+<label>${t('Sort by')}<select data-g61sh="sort"><option value="name"${H.sort == 'name' ? ' selected' : ''}>${t('Name (A-Z)')}</option><option value="avg"${H.sort == 'avg' ? ' selected' : ''}>${t('Highest average')}</option><option value="low"${H.sort == 'low' ? ' selected' : ''}>${t('Lowest average')}</option></select></label></div>
+<div class="g61fg"><b>${t('Level')}</b><div class="g61ch">${D.cfg.lv.map((p, i) => `<button class="g61c${H.lvl.includes(String(i)) ? ' on' : ''}" data-g61shl="${i}" aria-pressed="${H.lvl.includes(String(i))}">${esc(p[0])}</button>`).join('')}${H.lvl.length ? `<button class="b" data-g61a="shclear">${t('Clear filters')}</button>` : ''}</div></div>`;
+  if (!H.R) return h + `<p class="msg">${t('Loading...')}</p></div>`;
+  const d = g61ShData(); if (!d.subs.length) return h + `<p class="msg">${t('No marks yet for this term.')}</p></div>`;
+  return h + `<div class="row"><button class="b" data-g61a="shprint">${ic('print')} ${t('Print')}</button><button class="b" data-g61a="shxl">${ic('down')} Excel</button><span class="msg">${d.L.length} ${t('students')}</span></div><div class="tw">${g61ShTable(d)}</div></div>`;
 }
 function g61AnTable(rows) {
   const bar = g => { const n = g.lv.reduce((a, b) => a + b, 0) || 1; return `<div class="g61bar2" title="${g.lv.join(' / ')}">${g.lv.map(x => `<i style="width:${x / n * 100}%"></i>`).join('')}</div>` };
@@ -8579,34 +8721,62 @@ function g61AnStu(R) {
   const subs = [...new Set(R.students.flatMap(s => Object.keys(s.subs)))].sort();
   return `<table class="g61t"><tr><th>${t('Class')}</th><th>${t('Student')}</th>${subs.map(s => `<th class="n">${esc(s)}</th>`).join('')}<th class="n">${t('Average')}</th><th>${t('Level')}</th></tr>${R.students.map(s => `<tr><td>${esc(s.cls)}</td><td>${esc(s.name)}</td>${subs.map(x => `<td class="n">${s.subs[x] == null ? '' : s.subs[x]}</td>`).join('')}<td class="n"><b>${s.avg}</b></td><td>${g61Chip(s.lvl)}</td></tr>`).join('')}</table>`;
 }
+function g61AnKey(A) {
+  const k = A.cls + '|' + A.subject; if ((!A.lst || A.lst.k != k) && !A.lb) { A.lb = true; srv('api_grAssessments', A.cls, A.subject).then(r => { A.lst = { k, list: r.list || [] } }).catch(() => { A.lst = { k, list: [] } }).finally(() => { A.lb = false; render() }) }
+  const L = A.lst && A.lst.k == k ? A.lst.list.filter(x => x.term == GR.term) : [];
+  return `<label>${t('Assessment')}<select data-g61an="key"><option value="">${t('All counted assessments (term result)')}</option>${L.map(x => `<option value="${esc(x.key)}"${x.key == A.key ? ' selected' : ''}>${esc(x.name)} · ${esc(t(x.type))}${x.date ? ' · ' + esc(x.date) : ''}</option>`).join('')}</select></label>`;
+}
 async function g61RunAn() {
   const A = GR.an; if (A.busy) return; A.busy = true; const term = GR.term;
-  try { A.R = await srv('api_grAnalysis', term, { grade: A.grade, cls: A.cls, subject: A.subject }); A.term = term } catch (e) { A.R = { rows: [], students: [] }; A.term = term } finally { A.busy = false }
+  try { A.R = await srv('api_grAnalysis', term, { grade: A.grade, cls: A.cls, subject: A.subject, key: A.key || '' }); A.term = term } catch (e) { A.R = { rows: [], students: [] }; A.term = term } finally { A.busy = false }
   render();
 }
 /* ---------- setup (administrator / grades manager) ---------- */
+/* grading rules as lists: terms and assessment types are chips you add and remove, level limits are three number boxes */
+const g61CE = () => GR.ce || (GR.ce = { terms: GR.D.cfg.terms.slice(), types: GR.D.cfg.types.slice() });
+const G61_CEL = { terms: 'Terms', types: 'Assessment types' };
+const g61ChipEd = k => `<div class="g61ce" data-cek="${k}"><b>${t(G61_CEL[k])}</b><div class="g61chips">${g61CE()[k].map((x, i) => `<span class="g61chip">${esc(k == 'types' ? t(x) : x)}<button type="button" data-g61a="cedel" data-k="${k}" data-i="${i}" aria-label="${t('Remove')}" title="${t('Remove')}">✕</button></span>`).join('') || '<span class="msg">–</span>'}</div><div class="row"><input type="text" id="g61ce-${k}" data-g61ce="${k}" placeholder="${k == 'terms' ? 'T4' : t('New type')}"><button class="b" type="button" data-g61a="ceadd" data-k="${k}">${ic('plus')} ${t('Add')}</button></div></div>`;
+const g61SkipRow = () => `<span class="msg">${t('Not counted in the term result (listed on the report only)')}:</span>${g61CE().types.map(x => `<label class="ck"><input type="checkbox" data-g61sk="${esc(x)}"${(GR.D.cfg.skip || []).includes(x) ? ' checked' : ''}> ${esc(t(x))}</label>`).join('')}`;
+function g61CeRefresh(k) {
+  const keep = new Set([...document.querySelectorAll('[data-g61sk]')].filter(x => x.checked).map(x => x.dataset.g61sk)), w = document.querySelector(`[data-cek="${k}"]`); if (w) w.outerHTML = g61ChipEd(k);
+  const sk = document.getElementById('g61skip'); if (sk) { sk.innerHTML = g61SkipRow(); sk.querySelectorAll('[data-g61sk]').forEach(x => { x.checked = keep.has(x.dataset.g61sk) || (!keep.size && (GR.D.cfg.skip || []).includes(x.dataset.g61sk)) }) }
+  const i = document.getElementById('g61ce-' + k); if (i) i.focus()
+}
+function g61CeAdd(k) {
+  const i = document.getElementById('g61ce-' + k), v = (i.value || '').trim(); if (!v) return; const L = g61CE()[k];
+  if (L.some(x => x.toLowerCase() == v.toLowerCase())) { toast(t('This value is already in the list.'), 1); return } L.push(v); g61CeRefresh(k)
+}
+document.addEventListener('keydown', e => { const d = e.target.dataset || {}; if (g61On() && d.g61ce && e.key == 'Enter') { e.preventDefault(); g61CeAdd(d.g61ce) } });
+
+/* electives (subjects only some students take) and a check of the teacher accounts */
+
+function g61DiagCard() {
+  const G = GR.dg;
+  let h = `<div class="card"><h3>${t('Teacher accounts check')}</h3><p class="msg">${t('If a teacher sees "No classes or subjects are assigned to you yet", press Check. It shows, for every teacher, hod and coordinator account, whether its Scope matches a Teacher ID and how many assignments it finds.')}</p><div class="row"><button class="b" data-g61a="dgrun">${t('Check')}</button></div>`;
+  if (G) h += `<div class="g61s"><span>${t('Accounts')}: <b>${G.users.length}</b></span><span>${t('Needs attention')}: <b>${G.bad}</b></span></div><div class="tw"><table class="g61t"><tr><th>${t('Name')}</th><th>${t('Role')}</th><th>Scope</th><th class="n">${t('Assignments')}</th><th>${t('Result')}</th></tr>${G.users.map(u => `<tr class="${u.issues.length ? 'miss' : ''}"><td>${esc(u.name)}</td><td>${esc(u.role)}</td><td dir="ltr">${esc(u.scope)}</td><td class="n">${u.assignments}</td><td>${u.issues.length ? u.issues.map(x => esc(t(x))).join('<br>') : (u.warn ? esc(t(u.warn)) : '✓')}${u.hint ? `<br><small class="msg">${esc(t(u.hint))}</small>` : ''}</td></tr>`).join('')}</table></div>`;
+  return h + '</div>';
+}
 function g61Setup() {
   const D = GR.D, c = D.cfg, su = GR.su;
   let h = `<div class="card"><h3>${ic('link')} ${t('Subjects, teachers and classes')}</h3><p class="msg">${t('They come from the timetable (Settings › Teachers › Assignments). Nothing is entered twice: change an assignment there and it applies here.')}</p><div class="row"><button class="b" data-g61a="gotoasg">${t('Open Assignments')}</button></div></div>
 <div class="card"><h3>${ic('gear')} ${t('Grading rules')}</h3><div class="g61f">
 <label>${t('Pass mark')} (%)<input type="text" id="g61pass" value="${c.pass}" dir="ltr" inputmode="decimal"></label>
 <label>${t('Default maximum mark')}<input type="text" id="g61dmax" value="${c.defMax}" dir="ltr" inputmode="decimal"></label>
-<label>${t('Level limits')} (${t('Approaching / Meets / Exceeds')})<input type="text" id="g61bands" value="${c.bands.join(', ')}" dir="ltr"></label>
-<label>${t('Terms')}<input type="text" id="g61terms" value="${esc(c.terms.join(', '))}" dir="ltr"></label>
-<label>${t('Assessment types')}<input type="text" id="g61types" value="${esc(c.types.join(', '))}"></label></div>
-<div class="row"><span class="msg">${t('Not counted in the term result (listed on the report only)')}:</span>${c.types.map(x => `<label class="ck"><input type="checkbox" data-g61sk="${esc(x)}"${(c.skip || []).includes(x) ? ' checked' : ''}> ${esc(t(x))}</label>`).join('')}</div>
+${[0, 1, 2].map(i => `<label>${esc(t(c.lv[i + 1][0]))} ${t('from (%)')}<input type="text" id="g61bd${i}" value="${c.bands[i]}" dir="ltr" inputmode="decimal"></label>`).join('')}</div>
+<div class="g61cegrid">${g61ChipEd('terms')}${g61ChipEd('types')}</div>
+<div class="row" id="g61skip">${g61SkipRow()}</div>
 <p class="msg">${t('The term result of a subject = total marks of the counted assessments ÷ their total maximum.')}</p>
 <div class="g61f">${c.lv.map((p, i) => `<label>${t('Level')} ${i + 1} (EN)<input type="text" data-g61lv="${i}0" value="${esc(p[0])}"></label><label>${t('Level')} ${i + 1} (AR)<input type="text" data-g61lv="${i}1" value="${esc(p[1])}" dir="rtl"></label>`).join('')}</div>
 <div class="row"><button class="b pri" data-g61a="cfg">${ic('check')} ${t('Save')}</button></div></div>`;
   const rows = (D.cat || []).slice().sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || a[3].localeCompare(b[3]));
   h += `<div class="card"><h3>${t('Pick-lists for questions')}</h3><p class="msg">${t('Strands, substrands, skills and standards that teachers can choose from. Teachers can also type new ones; they are added here automatically. Subject: leave empty for all, or write Math / English / Science.')}</p>
-<div class="row"><label>${t('Type')}<select id="g61nk">${['strand', 'substrand', 'skill', 'standard'].map(k => `<option value="${k}">${t(k[0].toUpperCase() + k.slice(1))}</option>`).join('')}</select></label>
-<label>${t('Subject')}<input type="text" id="g61ns" style="width:110px"></label><label>${t('Value')}<input type="text" id="g61nv" style="width:220px"></label><label>${t('Description')}<input type="text" id="g61nd" style="width:240px"></label><button class="b" data-g61a="catadd">${ic('plus')} ${t('Add')}</button></div>
-<details><summary>${t('Paste many (one per line: type, subject, value, description — tab separated)')}</summary><textarea data-g61i="cat" placeholder="standard&#9;Math&#9;1.OA.C.6&#9;Add and subtract within 20">${esc(GR.cat.text)}</textarea><div class="row"><button class="b" data-g61a="catpaste">${t('Add these')}</button></div></details>
+<div class="row"><label>${t('Type')}<select id="g61nk">${['strand', 'substrand', 'skill', 'standard', 'qtype'].map(k => `<option value="${k}">${k == 'qtype' ? t('Question type') : t(k[0].toUpperCase() + k.slice(1))}</option>`).join('')}</select></label>
+<label>${t('Subject')}<select id="g61ns"><option value="">${t('All subjects')}</option>${(D.subjects || []).slice().sort().map(x => `<option>${esc(x)}</option>`).join('')}<option value="__new__">+ ${t('Add new...')}</option></select></label><label>${t('Value')}<input type="text" id="g61nv" list="g61nvl" style="width:220px" autocomplete="off"><datalist id="g61nvl">${[...new Set(rows.map(r => r[3]))].map(x => `<option value="${esc(x)}">`).join('')}</datalist></label><label>${t('Description')}<input type="text" id="g61nd" style="width:240px"></label><button class="b" data-g61a="catadd">${ic('plus')} ${t('Add')}</button></div>
+<details><summary>${t('Paste many (one per line: type, subject, value, description — tab separated)')}</summary>${g61Xg('cat')}<div class="row"><button class="b" data-g61a="catpaste">${t('Add these')}</button></div></details>
 <div class="tw" style="max-height:340px;overflow:auto"><table class="g61t"><tr><th>${t('Type')}</th><th>${t('Subject')}</th><th>${t('Value')}</th><th>${t('Description')}</th><th></th></tr>${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td><button class="b" data-g61a="catrm" data-k="${esc(r[0] + '|' + r[1] + '|' + r[3])}" aria-label="${t('Remove')}" title="${t('Remove')}">${ic('trash')}</button></td></tr>`).join('')}</table></div></div>`;
   h += `<div class="card"><h3>${ic('refresh')} ${t('New academic year')}</h3><p class="msg">${t('After you start the new year in the timetable (Settings), move the students up one grade here. Student records, old marks and history are all kept; only the class changes. Grade 12 become Graduated. Do it once per year.')}</p>
 <div class="row"><button class="b" data-g61a="yprev">${t('Preview')}</button></div>${su.yr ? `<div class="g61s"><span>${t('Year')}: <b>${esc(su.yr.year)}</b></span><span>${t('Active students')}: <b>${su.yr.total}</b></span></div>${su.yr.done ? `<div class="g61w">${t('The move was already done for this year.')}</div>` : ''}<table class="g61t">${su.yr.plan.map(p => `<tr><td dir="ltr">${esc(p[0])}</td><td class="n">${p[1]}</td></tr>`).join('')}</table>${su.yr.unknown.length ? `<div class="g61w">${t('Not recognised (stay as they are)')}: ${esc(su.yr.unknown.slice(0, 8).join(', '))}</div>` : ''}${su.yr.done ? '' : `<div class="row"><button class="b pri" data-g61a="ygo">${t('Move students up')}</button></div>`}` : ''}</div>`;
-  return h;
+  return h + `<div class="card"><h3>${t('Compulsory, elective and exempt subjects')}</h3><p class="msg">${t('These are set in one place: Timetable app › Settings › Subjects.')}</p><div class="row"><button class="b" data-g61a="gotosub">${t('Open Subjects')}</button></div></div>` + g61DiagCard();
 }
 /* ---------- demo: a sample student, built in the browser with made-up data; nothing is saved ---------- */
 function g61DemoData() {
@@ -8654,6 +8824,7 @@ document.addEventListener('click', g61Wrap(async e => {
   const dt = e.target.closest('[data-g61d]'); if (dt) { if (!(await g61Ask())) return; GR.edit = {}; GR.bp = null; GR.dtab = dt.dataset.g61d; return render() }
   const hb = e.target.closest('[data-g61h]'); if (hb) { GR.sf.hm = GR.sf.hm == hb.dataset.g61h ? '' : hb.dataset.g61h; return render() }
   if (GR.sf.hm && !e.target.closest('.g61hp') && !e.target.closest('[data-g61a=hsort],[data-g61a=hall],[data-g61a=hnone]')) { GR.sf.hm = ''; render() }
+  const sl = e.target.closest('[data-g61shl]'); if (sl) { const a0 = GR.sh.lvl, v = sl.dataset.g61shl, i0 = a0.indexOf(v); if (i0 >= 0) a0.splice(i0, 1); else a0.push(v); return render() }
   const fc = e.target.closest('[data-g61c]'); if (fc) { const k = fc.dataset.g61c.split('|')[0], v = fc.dataset.g61c.slice(k.length + 1), a0 = GR.sf[k], i0 = a0.indexOf(v); if (i0 >= 0) a0.splice(i0, 1); else a0.push(v); return render() }
   const b = e.target.closest('[data-g61a]'); if (!b) return; const a = b.dataset.g61a, D = GR.D, id = b.dataset.id, B = GR.bp;
   if (a == 'hsort') { const k = b.dataset.k, d = +b.dataset.d; GR.sf.sk = GR.sf.sk && GR.sf.sk.k == k && GR.sf.sk.d == d ? null : { k, d }; GR.sf.hm = ''; return render() }
@@ -8671,14 +8842,14 @@ document.addEventListener('click', g61Wrap(async e => {
   if (a == 'ncreate') {
     const F = GR.nf; if (!F.name.trim()) { toast(t('Give the assessment a name.'), 1); return }
     const r = await srv('api_grNewAssessment', GR.cls, GR.subj, { name: F.name, type: F.type, term: F.term, date: F.date, max: F.max, copyFrom: F.copyFrom, also: F.also, pub: !!F.pub });
-    GR.nf = null; GR.ass = Object.assign({}, GR.ass, { list: r.list }); GR.cur = r.key; GR.grid = null; GR.dtab = F.copyFrom ? 'qs' : 'marks'; toast(t('Saved') + (r.count > 1 ? ' (' + r.count + ')' : '')); return render()
+    GR.nf = null; GR.ass = Object.assign({}, GR.ass, { list: r.list }); GR.cur = r.key; GR.grid = null; GR.dtab = F.copyFrom ? 'qs' : 'marks'; toast((r.pubAsked ? t('Saved. Showing it to parents waits for approval.') : t('Saved')) + (r.count > 1 ? ' (' + r.count + ')' : '')); return render()
   }
   if (a == 'open') { GR.cur = b.dataset.k; GR.grid = null; GR.edit = {}; GR.dtab = 'marks'; GR.res = { key: '', R: null, busy: false }; return render() }
   if (a == 'back') { if (!(await g61Ask())) return; g61Reset(); g61LoadAss(true); return render() }
   if (a == 'eedit') { const x = GR.ass.list.find(z => z.key == GR.cur); GR.ef = { name: x.name, type: x.type, term: x.term, date: x.date, max: String(x.max) }; return render() }
   if (a == 'ecancel') { GR.ef = null; return render() }
   if (a == 'esave') { const F = GR.ef, x = GR.ass.list.find(z => z.key == GR.cur), o = { name: F.name, type: F.type, term: F.term, date: F.date }; if (x.mode != 'Q') o.max = F.max; const r = await srv('api_grEditAssessment', GR.cur, GR.cls, o); GR.ass.list = r.list; GR.ef = null; GR.grid = null; toast(t('Saved')); return render() }
-  if (a == 'epub') { const x = GR.ass.list.find(z => z.key == GR.cur), on = !x.pub; if (on && !(await UX.ask(t('Show this assessment to parents?'), esc(t('Parents of the students in this class will see these marks and the skills report. You can hide it again at any time.')), { yes: t('Yes, show') }))) return; const r = await srv('api_grEditAssessment', GR.cur, GR.cls, { pub: on }); GR.ass.list = r.list; toast(t('Saved')); return render() }
+  if (a == 'epub') { const x = GR.ass.list.find(z => z.key == GR.cur), on = !x.pub; if (on && D.pubPol != 'approval' && !(await UX.ask(t('Show this assessment to parents?'), esc(t('Parents of the students in this class will see these marks and the skills report. You can hide it again at any time.')), { yes: t('Yes, show') }))) return; const r = await srv('api_grEditAssessment', GR.cur, GR.cls, { pub: on }); GR.ass.list = r.list; toast(r.pubAsked ? t('Sent to the administrator for approval.') : t('Saved')); return render() }
   if (a == 'elock') { const x = GR.ass.list.find(z => z.key == GR.cur), r = await srv('api_grEditAssessment', GR.cur, GR.cls, { locked: !x.locked }); GR.ass.list = r.list; GR.grid = null; return render() }
   if (a == 'edel') {
     const x = GR.ass.list.find(z => z.key == GR.cur), has = x.n > 0 || x.ab > 0;
@@ -8704,6 +8875,11 @@ document.addEventListener('click', g61Wrap(async e => {
   if (a == 'bpadd5') { for (let i = 0; i < 5; i++) B.qs.push(g61NewQ(B.qs, B.qs[B.qs.length - 1])); return render() }
   if (a == 'bpdup') { const l = B.qs[B.qs.length - 1]; B.qs.push(Object.assign(g61NewQ(B.qs, l), { skill: l.skill, std: l.std, bloom: l.bloom })); return render() }
   if (a == 'bprm') { B.qs.splice(+b.dataset.i, 1); return render() }
+  if (a == 'stu') { e.preventDefault && e.preventDefault(); return g61StuOpen(b.dataset.id) }
+  if (a == 'ceadd') { g61CeAdd(b.dataset.k); return }
+  if (a == 'cedel') { g61CE()[b.dataset.k].splice(+b.dataset.i, 1); g61CeRefresh(b.dataset.k); return }
+  if (a == 'xadd') { GR.gxn[b.dataset.x] = Math.max(GR.gxn[b.dataset.x] || 8, g61XRows(b.dataset.x).length + 3) + 5; return render() }
+  if (a == 'xclr') { G61X[b.dataset.x].set(''); GR.gxn[b.dataset.x] = 8; return render() }
   if (a == 'bppaste') {
     const rows = (B.paste || '').split(/\r?\n/).map(l => l.split('\t')).filter(c => c.some(x => x.trim()));
     if (!rows.length) { toast(t('Nothing to import.'), 1); return }
@@ -8718,10 +8894,11 @@ document.addEventListener('click', g61Wrap(async e => {
     if (!B.qs.length) { toast(t('Add at least one question.'), 1); return }
     const bad = B.qs.findIndex(q => { const m = g61Num(q.max); return m == null || m <= 0 }); if (bad >= 0) { toast(t('Question') + ' ' + (bad + 1) + ': ' + t('the maximum must be a number above 0.'), 1); return }
     B.qs.forEach((q, i) => q.no = i + 1);
-    await srv('api_grSaveBlueprint', GR.cur, GR.cls, B.qs); GR.bp = null; GR.res = { key: '', R: null, busy: false }; toast(t('Saved')); GR.D = await srv('api_grBoot'); GR.grid = null; GR.edit = {}; await g61LoadAss(true); return
+    const bpr = await srv('api_grSaveBlueprint', GR.cur, GR.cls, B.qs); GR.bp = null; GR.res = { key: '', R: null, busy: false }; toast(t('Saved') + (bpr && bpr.pending ? ' — ' + t('New list values wait for the administrator to approve them.') : '')); GR.D = await srv('api_grBoot'); GR.grid = null; GR.edit = {}; await g61LoadAss(true); return
   }
   if (a == 'paperprint') { const x = GR.ass.list.find(z => z.key == GR.cur), ex = g61Ex(); return printHtml(`<div class="sheet g61r">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${esc(x.name)} · ${esc(GR.subj)} · ${esc(GR.cls)}</h2>${g61Paper(ex.qs)}</div>`) }
   if (a == 'demoprint') { const d = g61DemoData(); return printHtml(g61Sheet(d.R.reports[0], d.R), true) }
+  if (a == 'gotosub') { try { TAB = 'st'; SUB = 'subjects' } catch (x) { } return render() }
   if (a == 'gotoasg') { try { TAB = 'st'; SUB = 'teachers'; if (typeof G38 != 'undefined') G38.sub = 'asg' } catch (x) { } return render() }
   if (a == 'newstu') { GR.form = { cls: GR.sf.cls[0] || '' }; return render() }
   if (a == 'edit') { const r = D.students.find(x => x[0] == id); GR.form = { id: r[0], name: r[1], ar: r[2], cls: r[3], lang: r[5], rel: r[6], gender: r[7], phone: r[8], user: r[9], fam: r[10], note: r[13] }; return render() }
@@ -8742,12 +8919,16 @@ document.addEventListener('click', g61Wrap(async e => {
   }
   if (a == 'rep') { const R = GR.rep; R.R = await srv('api_grReport', GR.term, R.id ? [R.id] : [], R.id ? '' : R.cls); R.term = GR.term; return render() }
   if (a == 'repprint') { const R = GR.rep.R; return printHtml(R.reports.map(r => g61Sheet(r, R)).join(''), true) }
+  if (a == 'dgrun') { GR.dg = await srv('api_grDiag'); return render() }
+  if (a == 'shclear') { GR.sh.lvl = []; return render() }
+  if (a == 'shprint') { const d = g61ShData(), H = GR.sh; return printHtml(`<div class="sheet">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${esc(t('Result sheet'))} · ${esc(H.cls)} · ${esc(GR.term)} · ${esc(GR.D.year)}</h2>${g61ShTable(d, true)}</div>`) }
+  if (a == 'shxl') { const d = g61ShData(), H = GR.sh, rows = [['#', t('Student')].concat(d.subs, [t('Average'), t('Level'), t('Rank')])].concat(d.L.map((s, i) => [i + 1, s.name].concat(d.subs.map(x => s.subs[x] == null ? '' : s.subs[x]), [s.avg, GR.D.cfg.lv[s.lvl][0], s.rank])), [['', t('Class average')].concat(d.cavg.map(v => v == null ? '' : v))]); return XL.save('Result sheet ' + H.cls + ' ' + GR.term, [{ name: H.cls, rows, bold: [0], widths: [5, 30].concat(d.subs.map(() => 12), [10, 14, 8]) }]) }
   if (a == 'anprint') { const A = GR.an, t0 = t('Class analysis') + ' · ' + GR.term + ' · ' + GR.D.year; return printHtml(`<div class="sheet">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${esc(t0)}</h2>${g61AnTable(A.R.rows)}</div>`) }
   if (a == 'cfg') {
     const lv = GR.D.cfg.lv.map((p, i) => [document.querySelector(`[data-g61lv="${i}0"]`).value, document.querySelector(`[data-g61lv="${i}1"]`).value]);
     const skip = [...document.querySelectorAll('[data-g61sk]')].filter(x => x.checked).map(x => x.dataset.g61sk);
-    const r = await srv('api_grSaveCfg', { pass: g61Q('g61pass'), defMax: g61Q('g61dmax'), bands: g61Q('g61bands').split(/[,\s]+/).filter(Boolean), terms: g61Q('g61terms').split(',').map(x => x.trim()).filter(Boolean), types: g61Q('g61types').split(',').map(x => x.trim()).filter(Boolean), skip, term: GR.term, lv });
-    GR.D.cfg = r.cfg; GR.an.R = null; toast(t('Saved')); return render()
+    const r = await srv('api_grSaveCfg', { pass: g61Q('g61pass'), defMax: g61Q('g61dmax'), bands: [0, 1, 2].map(i => g61Q('g61bd' + i)), terms: g61CE().terms, types: g61CE().types, skip, term: GR.term, lv });
+    GR.D.cfg = r.cfg; GR.ce = null; GR.an.R = null; toast(t('Saved')); return render()
   }
   if (a == 'catadd') {
     const v = (document.getElementById('g61nv').value || '').trim(); if (!v) return;
@@ -8756,7 +8937,7 @@ document.addEventListener('click', g61Wrap(async e => {
   }
   if (a == 'catrm') { const cat = GR.D.cat.filter(r => (r[0] + '|' + r[1] + '|' + r[3]) != b.dataset.k); const r = await srv('api_grCatSave', cat); GR.D.cat = r.cat; return render() }
   if (a == 'catpaste') {
-    const add = GR.cat.text.split(/\r?\n/).map(l => l.split('\t')).filter(c => c.length >= 3).map(c => [c[0].trim().toLowerCase(), (c[1] || '').trim(), '', (c[2] || '').trim(), (c[3] || '').trim()]);
+    const add = GR.cat.text.split(/\r?\n/).map(l => l.split('\t')).filter(c => c.length >= 3 && (c[0] || '').trim() && (c[2] || '').trim()).map(c => [c[0].trim().toLowerCase(), (c[1] || '').trim(), '', (c[2] || '').trim(), (c[3] || '').trim()]);
     if (!add.length) { toast(t('Nothing to import.'), 1); return }
     const have = new Set(GR.D.cat.map(r => r[0] + '|' + r[1].toLowerCase() + '|' + r[3].toLowerCase())), fresh = add.filter(r => !have.has(r[0] + '|' + r[1].toLowerCase() + '|' + r[3].toLowerCase()));
     const r = await srv('api_grCatSave', GR.D.cat.concat(fresh)); GR.D.cat = r.cat; GR.cat.text = ''; toast(t('Imported') + ': ' + fresh.length); return render()
@@ -8772,7 +8953,7 @@ document.addEventListener('change', g61Wrap(async e => {
   if (d.g61f) {
     if (!(await g61Ask())) return render();
     if (d.g61f == 'cls') { GR.cls = T.value; GR.subj = ''; GR.ass = null; g61Reset() } else if (d.g61f == 'subj') { GR.subj = T.value; GR.ass = null; g61Reset() } else if (d.g61f == 'aterm') { GR.term = T.value } else { GR.term = T.value; GR.rep.R = null }
-    GR.edit = {}; GR.an.R = null; return render();
+    GR.edit = {}; GR.an.R = null; GR.sh.R = null; return render();
   }
   if (d.g61n !== undefined) { const F = GR.nf; if (d.g61n == 'pub') { F.pub = T.checked; return } if (d.g61n == 'also') { F.also = F.also.filter(x => x != T.value); if (T.checked) F.also.push(T.value); return } F[d.g61n] = T.value; if (d.g61n == 'copyFrom') render(); return }
   if (d.g61e !== undefined) { GR.ef[d.g61e] = T.value; return }
@@ -8788,19 +8969,35 @@ document.addEventListener('change', g61Wrap(async e => {
   if (d.g61q == 'nophone') { GR.sf.nophone = T.checked; return render() }
   if (d.g61q && d.g61q != 'q') { GR.sf[d.g61q] = T.value; return render() }
   if (d.g61rp) { GR.rep[d.g61rp] = T.value; if (d.g61rp == 'cls') GR.rep.id = ''; GR.rep.R = null; return render() }
-  if (d.g61an !== undefined) { GR.an[d.g61an] = T.value; if (d.g61an == 'cls' && T.value) GR.an.grade = ''; GR.an.R = null; return render() }
+  if (d.g61sh !== undefined) { GR.sh[d.g61sh] = T.value; if (d.g61sh == 'cls') GR.sh.R = null; return render() }
+  if (d.g61an !== undefined) { GR.an[d.g61an] = T.value; if (d.g61an == 'cls' && T.value) GR.an.grade = ''; if (d.g61an != 'key') GR.an.key = ''; GR.an.R = null; return render() }
   if (T.dataset.g61i == 'file' && T.files[0]) { const tx = await T.files[0].text(); GR.imp.text = tx; GR.imp.prev = null; return render() }
 }));
-let g61Tm = 0;
+let g61Tm = 0, g61Wt = 0;
+const g61Warn = m => { const n = Date.now(); if (n - g61Wt > 1500) { g61Wt = n; toast(m, 1) } };
+document.addEventListener('click', e => {   // arrows beside a mark box
+  const b = e.target.closest && e.target.closest('[data-g61sp]'); if (!b || !g61On()) return; e.preventDefault();
+  const I = b.closest('.g61sp').querySelector('input'); if (I && !I.disabled) g61Bump(I, +b.dataset.g61sp)
+});
+function g61Bump(I, dir) {
+  const max = +I.dataset.max, st = g61Step(max), cur = Number(String(I.value).replace(',', '.')) || 0;
+  let n = Math.round((cur + dir * st) * 100) / 100; if (n < 0) n = 0; if (n > max) { n = max; g61Warn(t('The maximum for this box is %1.').replace('%1', max)) }
+  I.value = String(n); I.dispatchEvent(new Event('input', { bubbles: true })); I.focus()
+}
 const g61Refresh = (id) => {   // recompute the live numbers of a student's row
   const G = GR.grid, ex = G.exam, r = G.rows.find(x => x.id == id); if (!r) return;
   if (ex.mode == 'Q') { const cur = g61QVal(r), tot = g61QTot(cur, ex.qs), c1 = document.querySelector(`[data-g61t="${CSS.escape(id)}"]`), c2 = document.querySelector(`[data-g61p="${CSS.escape(id)}"]`); if (c1) c1.innerHTML = `<b>${tot.e == null ? '' : tot.e}</b>`; if (c2) c2.textContent = tot.p == null ? '' : tot.p + '%'; const st = document.getElementById('g61qs'); if (st) st.innerHTML = g61QStat() }
   else { const cur = g61Val(r), p = g61Pct(cur, ex.max), c = document.querySelector(`[data-g61p="${CSS.escape(id)}"]`); if (c) c.textContent = p == null ? '' : p + '%'; const st = document.getElementById('g61st'); if (st) st.innerHTML = g61StatHtml() }
+  const bm = document.querySelector(`[data-g61bm="${CSS.escape(id)}"]`); if (bm) bm.innerHTML = g61BloomMini(r);
   const sb = document.querySelector('[data-g61a=save],[data-g61a=qsave]'); if (sb) sb.disabled = false;
 };
 document.addEventListener('input', e => {
   if (!g61On()) return; const T = e.target, d = T.dataset || {};
   if (d.g61hq !== undefined) { const q = T.value.trim().toLowerCase(); T.closest('.g61hp').querySelectorAll('.g61hl label').forEach(l => { l.style.display = !q || l.innerText.toLowerCase().includes(q) ? '' : 'none' }); return }
+  if ((d.g61m !== undefined || d.g61s2 !== undefined) && !g61Ok(T.value, +d.max)) {   // reject at typing time: back to the last good value
+    T.value = d.prev || ''; T.classList.add('bad'); setTimeout(() => T.classList.remove('bad'), 700); g61Warn(t('The maximum for this box is %1.').replace('%1', d.max)); return
+  }
+  if (d.g61m !== undefined || d.g61s2 !== undefined) T.dataset.prev = T.value;
   if (d.g61m !== undefined) {
     const G = GR.grid, r = G.rows.find(x => x.id == d.g61m), cur = GR.edit[r.id] || { mark: r.mark, st: r.st }; cur.mark = T.value.replace(',', '.'); cur.st = ''; GR.edit[r.id] = cur;
     const x = Number(cur.mark); T.classList.toggle('bad', cur.mark !== '' && (isNaN(x) || x < 0 || x > G.exam.max)); g61Refresh(r.id)
@@ -8820,17 +9017,18 @@ document.addEventListener('input', e => {
 document.addEventListener('paste', e => {
   if (!g61On()) return; const T = e.target, d = T.dataset || {}; if (d.g61m === undefined && d.g61s2 === undefined) return;
   const txt = (e.clipboardData || window.clipboardData).getData('text'); if (!/[\t\n]/.test(txt.replace(/[\r\n]+$/, ''))) return; e.preventDefault();
-  const rows = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t')), G = GR.grid, ids = G.rows.map(r => r.id);
+  const rows = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t')), G = GR.grid, ids = G.rows.map(r => r.id); let rej = 0;
   if (d.g61m !== undefined) {
-    let i = ids.indexOf(d.g61m); rows.forEach(c => { const id = ids[i++]; if (!id) return; const r = G.rows.find(x => x.id == id), cur = GR.edit[id] || { mark: r.mark, st: r.st }; if (cur.st || (r.st && !GR.edit[id])) return; cur.mark = String(c[0]).trim().replace(',', '.'); cur.st = ''; GR.edit[id] = cur });
+    let i = ids.indexOf(d.g61m); rows.forEach(c => { const id = ids[i++]; if (!id) return; const r = G.rows.find(x => x.id == id), cur = GR.edit[id] || { mark: r.mark, st: r.st }; if (cur.st || (r.st && !GR.edit[id])) return; const v0 = String(c[0]).trim().replace(',', '.'); if (!g61Ok(v0, G.exam.max)) { rej++; return } cur.mark = v0; cur.st = ''; GR.edit[id] = cur });
   } else {
     const qs = G.exam.qs.map(q => String(q.no)); let i = ids.indexOf(d.g61s2); const j0 = qs.indexOf(d.q);
-    rows.forEach(c => { const id = ids[i++]; if (!id) return; const r = G.rows.find(x => x.id == id), cur = GR.edit[id] || { sc: Object.assign({}, r.sc || {}), st: r.st || '' }; if (cur.st) return; c.forEach((v, k) => { const q = qs[j0 + k]; if (q != null) cur.sc[q] = String(v).trim().replace(',', '.') }); GR.edit[id] = cur });
+    rows.forEach(c => { const id = ids[i++]; if (!id) return; const r = G.rows.find(x => x.id == id), cur = GR.edit[id] || { sc: Object.assign({}, r.sc || {}), st: r.st || '' }; if (cur.st) return; c.forEach((v, k) => { const q = qs[j0 + k]; if (q != null) { const v0 = String(v).trim().replace(',', '.'), mq = (G.exam.qs.find(z => String(z.no) == q) || {}).max; if (!g61Ok(v0, mq)) rej++; else cur.sc[q] = v0 } }); GR.edit[id] = cur });
   }
-  render(); toast(t('Pasted - check the numbers, then Save.'));
+  render(); toast(rej ? t('Pasted. %1 values were skipped because they are not numbers or are above the maximum.').replace('%1', rej) : t('Pasted - check the numbers, then Save.'), rej ? 1 : 0);
 });
 document.addEventListener('keydown', e => {
   if (g61On() && e.key == 'Escape' && GR.sf.hm) { GR.sf.hm = ''; return render() }
+  if (g61On() && (e.key == 'ArrowUp' || e.key == 'ArrowDown') && e.target.dataset && (e.target.dataset.g61m !== undefined || e.target.dataset.g61s2 !== undefined) && !e.altKey) { e.preventDefault(); return g61Bump(e.target, e.key == 'ArrowUp' ? 1 : -1) }
   if (!g61On() || e.key != 'Enter' || !e.target.dataset) return; const d = e.target.dataset;
   if (d.g61m !== undefined) { e.preventDefault(); const all = [...document.querySelectorAll('[data-g61m]:not(:disabled)')], i = all.indexOf(e.target); if (all[i + 1]) { all[i + 1].focus(); all[i + 1].select() } return }
   if (d.g61s2 === undefined) return; e.preventDefault();
@@ -8839,7 +9037,7 @@ document.addEventListener('keydown', e => {
   const nx = [...new Set([...document.querySelectorAll('[data-g61s2]:not(:disabled)')].map(x => x.dataset.q))], k = nx.indexOf(q), nxt = nx[k + 1];
   if (nxt != null) { const f = document.querySelector(`[data-g61s2][data-q="${nxt}"]:not(:disabled)`); if (f) { f.focus(); f.select() } }
 });
-PERM_GROUPS.push(['Exams & Grades', [['gr', 'Open Exams & Grades and enter marks (own class + subject)'], ['gr_view', 'See all classes: analysis and parent reports'], ['gr_manage', 'Manage students, grading setup and year move']]]); PERM_LIST.push(...PERM_GROUPS[PERM_GROUPS.length - 1][1]);
+PERM_GROUPS.push(['Exams & Grades', [['gr', 'Open Exams & Grades and enter marks (own class + subject)'], ['gr_view', 'See all classes: analysis and parent reports'], ['gr_manage', 'Manage students, grading setup and year move'], ['gr_kinds', 'Set subjects compulsory or elective (Settings › Subjects)'], ['gr_enrol', 'Enrol students in electives and exempt students from subjects'], ['gr_monitor', 'Follow-up report: who entered marks, who is late (inside his scope)'], ['gr_approve_pub', 'Decide requests to show results to parents (inside his scope)']]]); PERM_LIST.push(...PERM_GROUPS[PERM_GROUPS.length - 1][1]);
 /* tab */
 TABS.splice(Math.max(TABS.findIndex(x => x[0] == 'ct'), TABS.findIndex(x => x[0] == 'rp') + 1, 1), 0, ['gr', 'Exams & Grades', 'book']);
 const _rGr = render;
@@ -8880,13 +9078,13 @@ if (typeof g51KB != 'undefined') g51KB.push(
     a: ['لا تضيفهم مرتين: المواد والمدرسون والفصول تأتي من الجدول (الإعدادات ← المدرسون ← الإسنادات). في «الاختبارات والدرجات ← الإعدادات» تضبط درجة النجاح والمستويات والفترات وأنواع الاختبارات.', 'Subjects, teachers and classes come from the timetable (Settings › Teachers › Assignments); nothing is entered twice. Grading rules and assessment types are in Exams & Grades › Setup.'] }
 );
 Object.assign(AR, Object.fromEntries(Object.entries({
-  'Exams & Grades': 'الاختبارات والدرجات', 'Open Exams & Grades and enter marks (own class + subject)': 'فتح الاختبارات والدرجات وإدخال درجات فصله ومادته', 'See all classes: analysis and parent reports': 'رؤية كل الفصول: التحليل وتقارير أولياء الأمور', 'Manage students, grading setup and year move': 'إدارة الطلاب وإعدادات التقدير ونقل السنة',
+  'Set subjects compulsory or elective (Settings › Subjects)': 'تحديد المادة إجبارية أو اختيارية (الإعدادات › المواد)', 'Enrol students in electives and exempt students from subjects': 'تسجيل الطلاب في الاختيارية وإعفاء الطلاب من المواد', 'Exams & Grades': 'الاختبارات والدرجات', 'Result sheet': 'شيت الرصد', 'New list values wait for the administrator to approve them.': 'القيم الجديدة في القوائم تنتظر موافقة الإدارة.', 'Compulsory, elective and exempt subjects': 'المواد الإجبارية والاختيارية والإعفاء', 'These are set in one place: Timetable app › Settings › Subjects.': 'تُضبط من مكان واحد: تطبيق الجداول › الإعدادات › المواد.', 'Open Subjects': 'فتح المواد', 'Exempt': 'معفى', 'Non-Arabic speaker': 'غير ناطق بالعربية', 'Medical reason': 'ظرف صحي', 'Transferred from another curriculum': 'منقول من منهج آخر', 'Administration decision': 'قرار الإدارة', 'Compulsory or elective, per stage': 'إجباري أو اختياري لكل مرحلة', 'Press a cell to switch a subject between Compulsory (the whole class takes it) and Elective (only the students chosen below take it) in that stage. The default is Compulsory.': 'اضغط الخانة لتحويل المادة في تلك المرحلة بين إجباري (يدرسها الفصل كله) واختياري (يدرسها الطلاب المحددون بالأسفل فقط). الافتراضي إجباري.', 'Compulsory': 'إجباري', 'Elective': 'اختياري', 'Who takes an elective subject': 'من يدرس المادة الاختيارية', 'No elective subject yet. Mark a subject as Elective in a stage above, or add a rule below.': 'لا توجد مادة اختيارية بعد. اجعل مادة «اختياري» في مرحلة بالأعلى أو أضف قاعدة بالأسفل.', 'Tick the students who take this subject. Students matching a rule on the student file are ticked for you; your changes here are kept as exceptions.': 'علّم الطلاب الذين يدرسون هذه المادة. من ينطبق عليهم قاعدة ملف الطالب معلَّمون تلقائيًا، وما تغيّره هنا يُحفظ كاستثناء.', 'This subject is elective in no class yet.': 'هذه المادة ليست اختيارية في أي فصل بعد.', 'Full term report': 'تقرير الفترة الكامل', 'Elective subjects': 'المواد الاختيارية', 'Some subjects are taken by only some students of a class (French, German, Religion). For such a subject choose which students take it, by their 2nd language or religion in the student file. Its teacher then sees and marks only those students. A subject with no rule here is taken by the whole class.': 'بعض المواد يدرسها بعض طلاب الفصل فقط (فرنش، جيرمان، دين). لمثل هذه المادة اختر من يدرسها بحسب اللغة الثانية أو الديانة في ملف الطالب، فيرى مدرسها هؤلاء الطلاب فقط ويرصد لهم. المادة التي ليس لها قاعدة هنا يدرسها الفصل كله.', 'Taken by students whose': 'يدرسها الطلاب الذين', 'No values in the student file yet.': 'لا توجد قيم في ملف الطلاب بعد.', 'Add an elective subject': 'إضافة مادة اختيارية', 'Each rule needs a subject and at least one value.': 'كل قاعدة تحتاج مادة وقيمة واحدة على الأقل.', 'Teacher accounts check': 'فحص حسابات المدرسين', 'If a teacher sees "No classes or subjects are assigned to you yet", press Check. It shows, for every teacher, hod and coordinator account, whether its Scope matches a Teacher ID and how many assignments it finds.': 'لو ظهر لمدرس «لا توجد فصول أو مواد مسندة إليك بعد» اضغط «فحص». يعرض لكل حساب مدرس أو رئيس قسم أو منسق هل Scope يطابق كود مدرس وكم إسنادًا وجد له.', 'Accounts': 'الحسابات', 'Needs attention': 'تحتاج مراجعة', 'Role': 'الدور', 'Assignments': 'الإسنادات', 'The Scope of this account does not match any Teacher ID.': 'خانة Scope في هذا الحساب لا تطابق أي كود مدرس.', 'The Scope of this account is empty.': 'خانة Scope في هذا الحساب فارغة.', 'No assignment carries this teacher\'s ID.': 'لا يوجد إسناد يحمل كود هذا المدرس.', 'All of his assignments are marked inactive.': 'كل إسنادات هذا المدرس غير مفعّلة.', 'Assignments exist under his name but with another ID.': 'توجد إسنادات باسمه لكن بكود مختلف.', 'Scope * gives this teacher account every teacher\'s classes. Use his own Teacher ID.': 'Scope = * يعطي هذا الحساب فصول كل المدرسين. استخدم كود المدرس الخاص به.', 'Check': 'فحص', 'Rank': 'الترتيب', 'Highest average': 'الأعلى متوسطًا', 'Lowest average': 'الأدنى متوسطًا', 'Open Exams & Grades and enter marks (own class + subject)': 'فتح الاختبارات والدرجات وإدخال درجات فصله ومادته', 'See all classes: analysis and parent reports': 'رؤية كل الفصول: التحليل وتقارير أولياء الأمور', 'Manage students, grading setup and year move': 'إدارة الطلاب وإعدادات التقدير ونقل السنة',
   'Timetable app': 'تطبيق الجداول', 'Copy a direct link to this app': 'انسخ رابطاً مباشراً لهذا التطبيق', 'Direct link': 'رابط مباشر', 'Link copied': 'تم نسخ الرابط', 'Sign out': 'تسجيل الخروج', 'How it works': 'طريقة العمل', 'Choose the class and the subject': 'اختر الفصل والمادة', 'Press New assessment': 'اضغط «اختبار جديد»', 'Open it and type the marks, then Save': 'افتحه واكتب الدرجات ثم احفظ', 'Close': 'إغلاق',
   'Shown to parents': 'ظاهر للأهل', 'Show to parents': 'إظهار للأهل', 'Hide from parents': 'إخفاء عن الأهل', 'Show it to parents (you can change this later)': 'أظهره للأهل (يمكن تغيير ذلك لاحقاً)', 'Show this assessment to parents?': 'إظهار هذا الاختبار للأهل؟', 'Parents of the students in this class will see these marks and the skills report. You can hide it again at any time.': 'سيرى أولياء أمور طلاب هذا الفصل هذه الدرجات وتقرير المهارات. يمكنك إخفاءه في أي وقت.', 'Yes, show': 'نعم، أظهر',
   'Sort A → Z': 'ترتيب أ ← ي', 'Sort Z → A': 'ترتيب ي ← أ', 'Filter': 'فلتر', 'Some class names differ from the timetable': 'بعض أسماء الفصول تختلف عن الجدول', 'assessments': 'اختبار', 'Match the names with the timetable': 'طابق الأسماء مع الجدول', 'Classes with students but not in the timetable yet': 'فصول فيها طلاب وليست في الجدول بعد', 'Filters': 'الفلاتر', 'Sort by': 'الترتيب', 'Class, then name': 'الفصل ثم الاسم', 'Name (A-Z)': 'الاسم (إنجليزي)', 'Name (Arabic)': 'الاسم (عربي)', 'Without a parent phone': 'بدون رقم موبايل ولي أمر', 'Clear filters': 'مسح الفلاتر', 'of': 'من', 'total': 'الإجمالي', 'Select all': 'تحديد الكل', 'Showing the first 600; use the filters to narrow the list.': 'يُعرض أول 600؛ استخدم الفلاتر لتضييق القائمة.', 'Match the class names with the timetable?': 'مطابقة أسماء الفصول مع الجدول؟', 'Students and assessments keep all their marks; only the class name changes.': 'الطلاب والاختبارات تحتفظ بكل درجاتها؛ يتغيّر اسم الفصل فقط.', 'Yes, match': 'نعم، طابق', 'Class names matched with the timetable': 'أسماء فصول تمت مطابقتها مع الجدول',
   'Assessments': 'الاختبارات', 'Class analysis': 'تحليل الفصول', 'Parent reports': 'تقارير أولياء الأمور', 'Students': 'الطلاب', 'Setup': 'الإعدادات', 'Demo': 'عرض تجريبي',
   'Marks': 'الدرجات', 'Results': 'النتائج', 'Questions': 'الأسئلة', 'Section': 'السكشن', 'Sections': 'السكاشن', 'No section': 'بدون سكشن', 'Target skill': 'المهارة المستهدفة', 'Question type': 'نوع السؤال', 'marks': 'درجة',
-  'Term': 'الفترة', 'Class': 'الفصل', 'Subject': 'المادة', 'Teacher': 'المدرس', 'Out of': 'الدرجة العظمى', 'Save': 'حفظ', 'Lock': 'قفل', 'Unlock': 'فتح', 'Locked': 'مقفل',
+  'Term': 'الفترة', 'Class': 'الفصل', 'Subject': 'المادة', 'Teacher': 'المدرس', 'Out of': 'الدرجة العظمى', 'Save': 'حفظ', 'Lock': 'قفل', 'Unlock': 'فتح', 'Locked': 'مقفل', 'Assessment': 'التقييم', 'All counted assessments (term result)': 'كل التقييمات المحسوبة (نتيجة الفترة)', 'Open the student report': 'افتح تقرير الطالب', 'No mark yet.': 'لا توجد درجة بعد.', 'Class average': 'متوسط الفصل', 'Bloom level': 'مستوى Bloom', 'This assessment has one total mark per student. Enter it question by question to see skills, standards and Bloom levels here.': 'هذا التقييم له درجة إجمالية واحدة لكل طالب. أدخله سؤالًا بسؤال لترى المهارات والمعايير ومستويات Bloom هنا.', 'from (%)': 'من (%)', 'New type': 'نوع جديد', 'This value is already in the list.': 'هذه القيمة موجودة في القائمة.', 'Terms': 'الفترات', 'Assessment types': 'أنواع التقييم', 'Add new...': 'إضافة جديد...', 'New value': 'قيمة جديدة', 'Type a value.': 'اكتب قيمة.', 'Add 5 rows': 'أضف 5 صفوف', 'Clear the grid': 'امسح الجدول', 'Click a cell, then paste from Excel (Ctrl+V). Enter or the arrow keys move between cells.': 'اضغط على خانة ثم الصق من Excel (Ctrl+V). زر Enter أو الأسهم ينقلانك بين الخانات.', 'Pasted': 'تم اللصق', 'ID': 'الرقم', 'Name': 'الاسم', 'Name AR': 'الاسم بالعربي', 'Phone': 'الهاتف', 'Gender': 'النوع', 'Username': 'اسم المستخدم', 'Family code': 'كود العائلة', 'This assessment is locked. Nobody can change the marks until it is unlocked.': 'هذا التقييم مقفل. لا يستطيع أحد تغيير الدرجات حتى يتم فتحه.', 'The exam date is %1. Marks can be entered from that day.': 'موعد الامتحان %1. يمكن إدخال الدرجات من هذا اليوم.', 'As an administrator you can still enter them.': 'بصفتك مديرًا يمكنك الإدخال الآن.', 'The maximum for this box is %1.': 'أقصى درجة لهذه الخانة %1.', 'Pasted. %1 values were skipped because they are not numbers or are above the maximum.': 'تم اللصق. تم تخطي %1 قيمة لأنها ليست أرقامًا أو أعلى من الحد الأقصى.',
   'Student': 'الطالب', 'Mark': 'الدرجة', 'Absent': 'غائب', 'Not taking it': 'لا يدرسها', 'Entered': 'المُدخل', 'Missing': 'ناقص', 'Average': 'المتوسط', 'Pass rate': 'نسبة النجاح',
   'Save marks': 'حفظ الدرجات', 'Saved': 'تم الحفظ', 'Loading...': 'جارٍ التحميل...', 'Could not load the grades.': 'تعذّر تحميل الدرجات.', 'Refresh': 'تحديث',
   'No classes or subjects are assigned to you yet. Ask the administrator.': 'لا توجد فصول أو مواد مسندة إليك بعد. اطلب من الإدارة.', 'This class has no subjects yet.': 'لا توجد مواد لهذا الفصل بعد.',
@@ -8924,7 +9122,7 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'No assessments yet. Press New assessment to add a quiz, a test or an exam.': 'لا توجد اختبارات بعد. اضغط «اختبار جديد» لإضافة كويز أو اختبار أو امتحان.',
   'Not counted in the term result (listed on the report only)': 'لا تُحسب في نتيجة الفترة (تظهر في التقرير فقط)', 'Open': 'فتح', 'Open Assignments': 'فتح الإسنادات', 'Paste the paper from Excel': 'لصق الورقة من Excel', 'Pasted - check the numbers, then Save.': 'تم اللصق - راجع الأرقام ثم احفظ.',
   'Practice assessments are shown but not counted in the term result.': 'الاختبارات التدريبية تظهر في التقرير ولا تُحسب في نتيجة الفترة.', 'Print the sample report': 'اطبع التقرير التجريبي', 'Set up the questions': 'جهّز الأسئلة', 'Subjects, teachers and classes': 'المواد والمدرسون والفصول',
-  'The paper is made of sections. For each question: its section, the strand and substrand, the target skill, the standard it belongs to, its mark, the Bloom level and the question type. Choose from the list or type a new value; new values are remembered.': 'الورقة مقسمة إلى سكاشن. لكل سؤال: السكشن، المحور والمحور الفرعي، المهارة المستهدفة، الـ Standard التابعة لها، الدرجة، مستوى Bloom ونوع السؤال. اختر من القائمة أو اكتب قيمة جديدة؛ القيم الجديدة تُحفظ.',
+  'The paper is made of sections. For each question: its section, the strand and substrand, the target skill, the standard it belongs to, its mark, the Bloom level and the question type. Choose from the lists; if a value is missing, choose "+ Add new..." at the bottom of the list. New values are remembered.': 'الورقة مقسمة إلى سكاشن. لكل سؤال: السكشن، المحور والمحور الفرعي، المهارة المستهدفة، الـ Standard التابعة لها، الدرجة، مستوى Bloom ونوع السؤال. اختر من القوائم؛ وإن لم تجد القيمة اختر «+ إضافة جديد...» في آخر القائمة. القيم الجديدة تُحفظ.',
   'The term result of a subject = total marks of the counted assessments ÷ their total maximum.': 'نتيجة المادة في الفترة = مجموع درجات الاختبارات المحسوبة ÷ مجموع درجاتها العظمى.',
   'They come from the timetable (Settings › Teachers › Assignments). Nothing is entered twice: change an assignment there and it applies here.': 'تأتي من الجدول (الإعدادات › المدرسون › الإسنادات). لا شيء يُدخل مرتين: غيّر الإسناد هناك وسينعكس هنا.',
   'This assessment has one total mark per student. To get a skills report for parents, enter the paper question by question, with its section, skill, standard and Bloom level.': 'هذا الاختبار له درجة كلية واحدة لكل طالب. للحصول على تقرير مهارات لولي الأمر أدخل الورقة سؤالاً سؤالاً مع السكشن والمهارة والـ Standard ومستوى Bloom.',
@@ -9046,6 +9244,7 @@ function g62Report(R) {
   let h = `<div class="hero"><div><h2>${esc(nm)}</h2><small>${t('Class')} ${esc(r.cls)} · ${esc(R.term)} · ${esc(R.year)}</small></div>${r.avg != null ? `<div style="text-align:end"><div class="big">${r.avg}%</div><span class="lv">${esc(lv(r.lvl))}</span></div>` : ''}</div>`;
   h += `<div class="say">${esc(g61Comment(r, ar, R))}</div>`;
   r.subjects.forEach((s, i) => {
+    if (s.exempt) { h += `<div class="sj"><div style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:12px 14px"><span class="nm">${esc(s.subject)}</span><span class="g61l g61l1">${t('Exempt')}</span>${s.reason ? `<small class="msg">${esc(t(s.reason))}</small>` : ''}</div></div>`; return }
     const open = !!PAR.open[s.subject], d = s.det, ss = d && d.skillStd || {};
     h += `<div class="sj"><button data-g62s="${i}" aria-expanded="${open}"><span class="nm">${esc(s.subject)}</span>${s.pct != null ? `<span class="pc">${s.pct}%</span><span class="g61l g61l${s.lvl}">${esc(lv(s.lvl))}</span>` : `<span class="g61l g61l1">${s.st == 'AB' ? t('Absent') : '–'}</span>`}<span class="bw">${g61Bar(s.pct, s.avg)}</span></button>`;
     if (open) {
@@ -9058,7 +9257,7 @@ function g62Report(R) {
     }
     h += '</div>';
   });
-  h += `<div class="lgd">${cf.map((p, i) => `<span><i class="g61c${i}"></i>${esc(ar ? p[1] : p[0])}</span>`).join('')}<span>▏${t('Class average')}</span></div><div class="row" style="display:flex"><button class="b" data-g62a="print">${ic('print')} ${t('Print / save as PDF')}</button></div>`;
+  h += `<div class="lgd">${cf.map((p, i) => `<span><i class="g61c${i}"></i>${esc(ar ? p[1] : p[0])}</span>`).join('')}</div><div class="row" style="display:flex"><button class="b" data-g62a="print">${ic('print')} ${t('Print / save as PDF')}</button></div>`;
   return h;
 }
 document.addEventListener('click', async e => {
@@ -9217,6 +9416,470 @@ document.addEventListener('click', async e => {
   if (b.dataset.g63t) return g63Save(b.dataset.g63t);
   HUB.sub = b.dataset.g63; GR.form = null; GR.imp = { text: '', prev: null }; GR.sel.clear(); render();
 });
+</script>
+
+<style id="g64css">
+.g64 nav.sub{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;padding:6px;background:var(--sf);border-radius:16px;box-shadow:var(--sh);width:fit-content;max-width:100%}
+.g64 nav.sub .pill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:12px;padding:9px 14px;font:inherit;cursor:pointer;background:transparent;color:var(--ink);min-height:40px}
+.g64 nav.sub .pill.on{background:var(--navy);color:#fff;font-weight:700}
+.g64 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
+.g64 .grid label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)}
+.g64 .grid select{min-height:40px}
+.g64 .eff{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.g64 .eff.e{background:#fff3d6;color:#7a5200}.g64 .eff.c{background:#e3f1e6;color:#1e5b2d}.g64 .eff.x{background:#fde4e2;color:#8a1c14}
+.g64 .pick{max-height:260px;overflow:auto;border:1px solid var(--bd,#ddd);border-radius:10px;padding:6px}
+.g64 .pick label{display:flex;gap:8px;align-items:center;padding:6px;min-height:40px}
+@media(max-width:640px){.g64 nav.sub{width:100%}.g64 nav.sub .pill{flex:1 1 auto;justify-content:center}.g64 .grid{grid-template-columns:1fr 1fr}}
+</style>
+<script>
+/* ---------- G64: Settings › Subjects — compulsory / elective / exempt, one place ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Subject kinds': 'نوع المادة وتسجيل الطلاب', 'Rules': 'القواعد', 'Auto-selection': 'الاختيار التلقائي', 'Enrolment': 'التسجيل', 'Exemptions': 'الإعفاءات',
+  'Compulsory': 'إجبارية', 'Elective': 'اختيارية', 'Not set (compulsory)': 'غير محدد (إجبارية)', 'Inherit': 'يرث', 'Subject': 'المادة', 'Stage': 'المرحلة', 'Grade': 'الصف', 'Class': 'الفصل',
+  'Stages': 'المراحل', 'Grades': 'الصفوف', 'Classes': 'الفصول', 'Effective kind per class': 'النوع الفعلي لكل فصل', 'Save rules': 'حفظ القواعد',
+  'Narrowest rule wins: class, then grade, then stage. A subject with no rule is compulsory.': 'القاعدة الأضيق تغلب: الفصل ثم الصف ثم المرحلة. المادة بلا قاعدة إجبارية.',
+  'Elective subject picks its students from the student file': 'المادة الاختيارية تختار طلابها من ملف الطلاب',
+  'Second language': 'اللغة الثانية', 'Religion': 'الديانة', 'Values (comma separated)': 'القيم (مفصولة بفاصلة)', 'Field': 'الحقل', 'Add rule': 'إضافة قاعدة',
+  'Hand setting': 'اختيار يدوي', 'Automatic': 'تلقائي', 'In': 'مسجل', 'Out': 'غير مسجل', 'Save enrolment': 'حفظ التسجيل', 'Choose a subject': 'اختر المادة', 'Choose a class': 'اختر الفصل',
+  'Exempt students from a subject': 'إعفاء طلاب من مادة', 'Reason': 'السبب', 'New reason': 'سبب جديد', 'From term': 'من فصل', 'To term': 'إلى فصل', 'Whole year': 'السنة كاملة',
+  'Exempt': 'إعفاء', 'Remove': 'إزالة', 'Current exemptions': 'الإعفاءات الحالية', 'No exemptions.': 'لا إعفاءات.', 'Student': 'الطالب', 'Period': 'الفترة', 'By': 'بواسطة',
+  'Saved': 'تم الحفظ', 'You do not have permission for this page.': 'ليست لديك صلاحية لهذه الصفحة.', 'Loading': 'جارٍ التحميل', 'Remove this exemption?': 'إزالة هذا الإعفاء؟',
+  'An exempt student is not counted in the subject and the parent report shows "Exempt" with the reason.': 'الطالب المعفى لا يُحسب في المادة ويظهر في تقرير ولي الأمر «معفى» مع السبب.',
+  'Pick at least one student.': 'اختر طالباً واحداً على الأقل.', 'Added': 'تمت الإضافة'
+}).map(([k, v]) => [k, v])));
+const G64 = { D: null, err: '', tab: 'rules', subj: '', rules: null, elect: null, cls: '', en: {}, ex: { subj: '', cls: '', ids: [], reason: '', nr: '', from: '', to: '' } };
+const g64R = () => { try { const a = document.activeElement; if (a && a !== document.body && a.blur) a.blur() } catch (x) { } render() };
+const g64On = () => TAB == 'st' && SUB == 'subjects';
+const g64Stages = () => (G64.D.stages || []).map(s => Array.isArray(s) ? { n: s[0], g: s[1] || [] } : { n: s.name || s.n, g: s.grades || s.g || [] });
+const g64GradeOf = c => { const s = (G64.D.students || []).find(x => x[3] == c && x[4]); if (s) return String(s[4]).toUpperCase(); const m = /^(PKG|KG\d?|G?\d{1,2})/i.exec(c || ''); if (!m) return ''; let g = m[1].toUpperCase(); if (/^\d/.test(g)) g = 'G' + g; return g };
+const g64StageOf = g => { const s = g64Stages().find(x => x.g.includes(g)); return s ? s.n : '' };
+function g64Kind(subj, cls) {   // narrowest rule wins
+  const R = G64.rules, g = g64GradeOf(cls), st = g64StageOf(g);
+  const f = (lv, sc) => { const r = R.find(x => x.subject == subj && x.level == lv && String(x.scope).toUpperCase() == String(sc).toUpperCase()); return r ? r.kind : '' };
+  return f('class', cls) || f('grade', g) || f('stage', st) || 'compulsory';
+}
+const g64Rule = (subj, lv, sc) => { const r = G64.rules.find(x => x.subject == subj && x.level == lv && x.scope == sc); return r ? r.kind : '' };
+function g64SetRule(subj, lv, sc, kind) {
+  G64.rules = G64.rules.filter(x => !(x.subject == subj && x.level == lv && x.scope == sc));
+  if (kind) G64.rules.push({ subject: subj, level: lv, scope: sc, kind });
+}
+async function g64Load() {
+  if (G64.D || G64.err || G64.busy) return; G64.busy = 1;
+  try { G64.D = await srv('api_grKindsBoot'); G64.rules = JSON.parse(JSON.stringify(G64.D.rules)); G64.elect = JSON.parse(JSON.stringify(G64.D.elect || [])); if (!G64.subj) G64.subj = G64.D.subjects[0] || ''; if (!G64.D.canKinds && G64.D.canEnrol && /^(rules|auto)$/.test(G64.tab)) G64.tab = 'enrol' }
+  catch (e) { G64.err = String((e && e.message) || e) }
+  G64.busy = 0; if (g64On()) render();
+}
+const g64Opt = (list, cur, blank) => (blank != null ? `<option value="">${esc(blank)}</option>` : '') + list.map(x => `<option value="${esc(x)}"${x == cur ? ' selected' : ''}>${esc(x)}</option>`).join('');
+function g64KindSel(attr, val) {
+  return `<select ${attr}><option value=""${val ? '' : ' selected'}>${t('Inherit')}</option><option value="compulsory"${val == 'compulsory' ? ' selected' : ''}>${t('Compulsory')}</option><option value="elective"${val == 'elective' ? ' selected' : ''}>${t('Elective')}</option></select>`;
+}
+const g64Eff = k => `<span class="eff ${k == 'elective' ? 'e' : 'c'}">${t(k == 'elective' ? 'Elective' : 'Compulsory')}</span>`;
+function g64Rules() {
+  const D = G64.D, s = G64.subj, ed = D.canKinds;
+  let h = `<p class="msg">${t('Narrowest rule wins: class, then grade, then stage. A subject with no rule is compulsory.')}</p><div class="grid"><label>${t('Subject')}<select data-g64s="subj">${g64Opt(D.subjects, s)}</select></label></div>`;
+  if (!s) return h;
+  h += `<h4>${t('Stages')}</h4><div class="grid">${g64Stages().map(x => `<label>${esc(x.n)}${g64KindSel(`data-g64r="stage|${esc(x.n)}"${ed ? '' : ' disabled'}`, g64Rule(s, 'stage', x.n))}</label>`).join('')}</div>`;
+  h += `<h4>${t('Grades')}</h4><div class="grid">${D.grades.map(g => `<label>${esc(g)}${g64KindSel(`data-g64r="grade|${esc(g)}"${ed ? '' : ' disabled'}`, g64Rule(s, 'grade', g))}</label>`).join('')}</div>`;
+  h += `<h4>${t('Classes')}</h4><div class="grid">${D.classes.map(c => `<label>${esc(c)}${g64KindSel(`data-g64r="class|${esc(c)}"${ed ? '' : ' disabled'}`, g64Rule(s, 'class', c))}</label>`).join('')}</div>`;
+  h += `<h4>${t('Effective kind per class')}</h4><div class="tw"><table class="g61t" data-g64eff><tr><th>${t('Class')}</th><th>${t('Grade')}</th><th>${t('Subject')}: ${esc(s)}</th></tr>${D.classes.map(c => `<tr><td>${esc(c)}</td><td>${esc(g64GradeOf(c))}</td><td>${g64Eff(g64Kind(s, c))}</td></tr>`).join('')}</table></div>`;
+  if (ed) h += `<div class="row"><button class="b pri" data-g64a="save">${t('Save rules')}</button></div>`;
+  return h;
+}
+function g64Auto() {
+  const D = G64.D, ed = D.canKinds, E = G64.elect;
+  const subs = [...new Set(G64.rules.filter(r => r.kind == 'elective').map(r => r.subject))];
+  let h = `<p class="msg">${t('Elective subject picks its students from the student file')}</p>`;
+  h += E.length ? `<div class="tw"><table class="g61t"><tr><th>${t('Subject')}</th><th>${t('Field')}</th><th>${t('Values (comma separated)')}</th><th></th></tr>${E.map((r, i) => `<tr><td><select data-g64e="subject|${i}"${ed ? '' : ' disabled'}>${g64Opt(D.subjects, r.subject)}</select></td><td><select data-g64e="field|${i}"${ed ? '' : ' disabled'}><option value="lang"${r.field == 'lang' ? ' selected' : ''}>${t('Second language')}</option><option value="rel"${r.field == 'rel' ? ' selected' : ''}>${t('Religion')}</option></select></td><td><input data-g64e="values|${i}" value="${esc((r.values || []).join(', '))}"${ed ? '' : ' disabled'}></td><td>${ed ? `<button class="b dng" data-g64a="elrm" data-i="${i}">${t('Remove')}</button>` : ''}</td></tr>`).join('')}</table></div>` : '';
+  if (ed) h += `<div class="row"><button class="b" data-g64a="eladd">${t('Add rule')}</button><button class="b pri" data-g64a="save">${t('Save rules')}</button></div>`;
+  return h;
+}
+function g64EnMode(id, subj) { const r = (G64.D.enrol || []).find(x => x.id == id && x.subject == subj); return r ? r.mode : '' }
+function g64Enrol() {
+  const D = G64.D, ed = D.canEnrol, s = G64.subj, c = G64.cls;
+  let h = `<div class="grid"><label>${t('Subject')}<select data-g64s="subj">${g64Opt(D.subjects, s)}</select></label><label>${t('Class')}<select data-g64s="cls">${g64Opt(D.classes, c, t('Choose a class'))}</select></label></div>`;
+  if (!c) return h;
+  const L = D.students.filter(x => x[3] == c);
+  h += `<div class="tw"><table class="g61t"><tr><th>#</th><th>${t('Student')}</th><th>${t('Second language')}</th><th>${t('Religion')}</th><th>${t('Hand setting')}</th></tr>${L.map((x, i) => { const m = G64.en[x[0]] != null ? G64.en[x[0]] : g64EnMode(x[0], s); return `<tr><td>${i + 1}</td><td>${esc(x[1])}</td><td>${esc(x[5] || '')}</td><td>${esc(x[6] || '')}</td><td><select data-g64n="${esc(x[0])}"${ed ? '' : ' disabled'}><option value=""${m ? '' : ' selected'}>${t('Automatic')}</option><option value="in"${m == 'in' ? ' selected' : ''}>${t('In')}</option><option value="out"${m == 'out' ? ' selected' : ''}>${t('Out')}</option></select></td></tr>` }).join('')}</table></div>`;
+  if (ed) h += `<div class="row"><button class="b pri" data-g64a="ensave">${t('Save enrolment')}</button></div>`;
+  return h;
+}
+function g64Exempt() {
+  const D = G64.D, X = G64.ex, ed = D.canEnrol, nm = {}; D.students.forEach(s => nm[s[0]] = s);
+  const L = D.students.filter(x => !X.cls || x[3] == X.cls);
+  let h = '';
+  if (ed) {
+    h += `<h4>${t('Exempt students from a subject')}</h4><p class="msg">${t('An exempt student is not counted in the subject and the parent report shows "Exempt" with the reason.')}</p><div class="grid"><label>${t('Subject')}<select data-g64x="subj">${g64Opt(D.subjects, X.subj, t('Choose a subject'))}</select></label><label>${t('Class')}<select data-g64x="cls">${g64Opt(D.classes, X.cls, t('Choose a class'))}</select></label><label>${t('Reason')}<select data-g64x="reason">${g64Opt(D.reasons, X.reason, '—')}</select></label><label>${t('New reason')}<input data-g64x="nr" value="${esc(X.nr)}"></label><label>${t('From term')}<select data-g64x="from">${g64Opt(D.terms, X.from, t('Whole year'))}</select></label><label>${t('To term')}<select data-g64x="to">${g64Opt(D.terms, X.to, t('Whole year'))}</select></label></div>`;
+    h += `<div class="pick">${L.map(x => `<label><input type="checkbox" data-g64xi="${esc(x[0])}"${X.ids.includes(x[0]) ? ' checked' : ''}> ${esc(x[1])} <span class="msg">${esc(x[3] || '')}</span></label>`).join('') || `<span class="msg">${t('Choose a class')}</span>`}</div><div class="row"><button class="b pri" data-g64a="exadd">${t('Exempt')}</button></div>`;
+  }
+  h += `<h4>${t('Current exemptions')}</h4>`;
+  h += D.exempt.length ? `<div class="tw"><table class="g61t" data-g64exl><tr><th>${t('Student')}</th><th>${t('Class')}</th><th>${t('Subject')}</th><th>${t('Reason')}</th><th>${t('Period')}</th><th>${t('By')}</th><th></th></tr>${D.exempt.map((r, i) => { const s = nm[r.id] || []; return `<tr><td>${esc(s[1] || r.id)}</td><td>${esc(s[3] || '')}</td><td>${esc(r.subject)}</td><td>${esc(r.reason || '')}</td><td>${r.from ? esc(r.from) + ' → ' + esc(r.to) : t('Whole year')}</td><td>${esc(r.by || '')}</td><td>${ed ? `<button class="b dng" data-g64a="exrm" data-i="${i}">${t('Remove')}</button>` : ''}</td></tr>` }).join('')}</table></div>` : `<p class="msg">${t('No exemptions.')}</p>`;
+  return h;
+}
+function g64Card() {
+  if (!G64.D) { g64Load(); return `<div class="card g64"><h3>${t('Subject kinds')}</h3><p class="msg">${G64.err ? esc(G64.err) : t('Loading') + '…'}</p></div>` }
+  const D = G64.D, tabs = [];
+  if (D.canKinds) tabs.push(['rules', 'Rules'], ['auto', 'Auto-selection']);
+  if (D.canEnrol) tabs.push(['enrol', 'Enrolment'], ['exempt', 'Exemptions']);
+  if (!tabs.length) return `<div class="card g64"><h3>${t('Subject kinds')}</h3><p class="msg">${t('You do not have permission for this page.')}</p></div>`;
+  if (!tabs.some(x => x[0] == G64.tab)) G64.tab = tabs[0][0];
+  const body = { rules: g64Rules, auto: g64Auto, enrol: g64Enrol, exempt: g64Exempt }[G64.tab]();
+  return `<div class="card g64"><h3>${t('Subject kinds')}</h3><nav class="sub">${tabs.map(x => `<button class="pill${G64.tab == x[0] ? ' on' : ''}" data-g64t="${x[0]}">${t(x[1])}</button>`).join('')}</nav>${body}</div>`;
+}
+const _g64rs = rSettings;
+rSettings = function () {
+  let h = _g64rs();
+  if (g64On()) h = h.replace(/<\/div>\s*<\/div>\s*$/, m => g64Card() + m);
+  return h;
+};
+async function g64Save() {
+  try { const r = await srv('api_grKindsSave', G64.rules, G64.elect.filter(x => x.subject && (x.values || []).length)); G64.D = r; G64.rules = JSON.parse(JSON.stringify(r.rules)); G64.elect = JSON.parse(JSON.stringify(r.elect || [])); toast(t('Saved')) } catch (e) { return }
+  render();
+}
+document.addEventListener('click', async e => {
+  if (!g64On()) return;
+  const tb = e.target.closest('[data-g64t]'); if (tb) { G64.tab = tb.dataset.g64t; return g64R() }
+  const b = e.target.closest('[data-g64a]'); if (!b) return; const a = b.dataset.g64a, i = +b.dataset.i;
+  if (a == 'save') return g64Save();
+  if (a == 'eladd') { G64.elect.push({ subject: G64.D.subjects[0] || '', field: 'lang', values: [] }); return g64R() }
+  if (a == 'elrm') { G64.elect.splice(i, 1); return g64R() }
+  if (a == 'ensave') {
+    if (!G64.subj || !G64.cls) return;
+    const ids = G64.D.students.filter(x => x[3] == G64.cls).map(x => x[0]);
+    const en = ids.map(id => ({ id, mode: G64.en[id] != null ? G64.en[id] : g64EnMode(id, G64.subj) }));
+    try { const r = await srv('api_grEnrolSave', G64.subj, en); G64.D.enrol = r.enrol; G64.en = {}; toast(t('Saved')) } catch (x) { return } return g64R();
+  }
+  if (a == 'exadd') {
+    const X = G64.ex; if (!X.subj) return toast(t('Choose a subject'), 1); if (!X.ids.length) return toast(t('Pick at least one student.'), 1);
+    try { const r = await srv('api_grExempt', 'add', { ids: X.ids, subject: X.subj, reason: X.nr.trim() || X.reason, from: X.from, to: X.to }); G64.D.exempt = r.exempt; if (r.reasons) G64.D.reasons = r.reasons; X.ids = []; X.nr = ''; toast(t('Added')) } catch (x) { return } return g64R();
+  }
+  if (a == 'exrm') {
+    const r0 = G64.D.exempt[i]; if (!r0 || !(await UX.ask(t('Remove this exemption?'), esc(r0.subject + ' · ' + r0.id), { danger: true, yes: t('Remove') }))) return;
+    try { const r = await srv('api_grExempt', 'remove', { id: r0.id, subject: r0.subject, from: r0.from }); G64.D.exempt = r.exempt } catch (x) { return } return g64R();
+  }
+});
+document.addEventListener('change', e => {
+  if (!g64On()) return; const el = e.target, d = el.dataset || {};
+  if (d.g64s) { G64[d.g64s] = el.value; return g64R() }
+  if (d.g64r) { const [lv, sc] = d.g64r.split('|'); g64SetRule(G64.subj, lv, sc, el.value); return g64R() }
+  if (d.g64e) { const [k, i] = d.g64e.split('|'); const r = G64.elect[+i]; if (!r) return; if (k == 'values') r.values = el.value.split(/[,،]/).map(x => x.trim()).filter(Boolean); else r[k] = el.value; return g64R() }
+  if (d.g64n !== undefined) { G64.en[d.g64n] = el.value; return }
+  if (d.g64x) { const k = d.g64x; G64.ex[k] = el.value; if (k == 'nr') return; if (k == 'cls') G64.ex.ids = []; if (k == 'reason') G64.ex.nr = ''; return g64R() }
+  if (d.g64xi !== undefined) { const L = G64.ex.ids, i = L.indexOf(d.g64xi); if (el.checked && i < 0) L.push(d.g64xi); if (!el.checked && i >= 0) L.splice(i, 1) }
+});
+document.addEventListener('input', e => { if (g64On() && e.target.dataset && e.target.dataset.g64x == 'nr') G64.ex.nr = e.target.value });
+if (typeof g51KB != 'undefined') g51KB.push({ id: 'subj-kind', p: ['st:subjects'], kw: 'اجباري اختياري معفى اعفاء مادة تسجيل ثانية لغة ديانة elective compulsory exempt enrol', q: ['إزاي أحدد المادة إجبارية أو اختيارية أو أعفي طالب؟', 'How do I set a subject compulsory or elective, or exempt a student?'],
+  a: ['من «الإعدادات ← المواد» أسفل الصفحة: «القواعد» تحدد النوع بالمرحلة أو الصف أو الفصل (الأضيق يغلب). «الاختيار التلقائي» يختار طلاب المادة الاختيارية من اللغة الثانية أو الديانة. «التسجيل» لاستثناءات يدوية، و«الإعفاءات» لإعفاء طالب من أي مادة مع السبب.', 'Settings › Subjects, bottom of the page: Rules set the kind per stage, grade or class (narrowest wins); Auto-selection picks an elective\'s students by second language or religion; Enrolment gives hand exceptions; Exemptions excuse a student from any subject with a reason.'] });
+</script>
+
+<style id="g65css">
+#g65i{display:none;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer;background:#fff;color:#1d2a44;min-height:40px;margin-inline-end:6px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+#g65i.show{display:inline-flex}
+#g65i:focus-visible{outline:3px solid #8f86f0;outline-offset:2px}
+@media(max-width:640px){#g65i{min-height:44px;padding:8px 12px;margin:0;flex:0 0 auto;max-width:164px;font-size:12.5px;padding:8px 10px}#g65i span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+</style>
+<script>
+/* ---------- G65: "Install the app" button at the top (Android / desktop Chrome and Edge: the browser's install prompt; iPhone / iPad: a short how-to) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Install the app': 'تثبيت التطبيق', 'Install on this device': 'تثبيت على هذا الجهاز', 'On iPhone / iPad: tap the Share button in Safari, choose "Add to Home Screen", then Add.': 'على iPhone / iPad: اضغط زر المشاركة في Safari ثم «إضافة إلى الشاشة الرئيسية» ثم «إضافة».',
+  'On this browser open the browser menu (⋮) and choose "Install app" or "Add to Home screen".': 'من قائمة المتصفح (⋮) اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».',
+  'The app is installed.': 'تم تثبيت التطبيق.', 'Got it': 'تمام'
+}).filter(([k]) => !(k in AR))));
+const G65 = { ev: null, done: false };
+const g65Standalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true } catch (e) { return false } };
+const g65Ios = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform == 'MacIntel' && navigator.maxTouchPoints > 1);
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); G65.ev = e; g65Sync() });
+window.addEventListener('appinstalled', () => { G65.done = true; G65.ev = null; g65Sync(); try { toast(t('The app is installed.')) } catch (x) { } });
+function g65Btn() {
+  let b = document.getElementById('g65i'); if (b) return b;
+  const hd = document.querySelector('header'), seg = hd && hd.querySelector('.seg'); if (!hd) return null;      // a direct child of the header: the .seg box is hidden on phones, the button must not be
+  b = document.createElement('button'); b.id = 'g65i'; b.type = 'button'; b.innerHTML = '<svg class="ic"><use href="#i-down"/></svg><span></span>';
+  hd.insertBefore(b, seg || null); return b;
+}
+function g65Sync() {
+  const b = g65Btn(); if (!b) return;
+  b.querySelector('span').textContent = t('Install the app'); b.title = t('Install on this device'); b.setAttribute('aria-label', t('Install the app'));
+  b.classList.toggle('show', !G65.done && !g65Standalone() && (!!G65.ev || g65Ios()));
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest && e.target.closest('#g65i'); if (!b) return;
+  if (G65.ev) { const p = G65.ev; G65.ev = null; try { p.prompt(); await p.userChoice } catch (x) { } return g65Sync() }
+  try { await UX.ask(t('Install the app'), esc(t(g65Ios() ? 'On iPhone / iPad: tap the Share button in Safari, choose "Add to Home Screen", then Add.' : 'On this browser open the browser menu (⋮) and choose "Install app" or "Add to Home screen".')), { yes: t('Got it') }) } catch (x) { }
+});
+const _rI = render;
+render = function () { const r = _rI.apply(this, arguments); try { g65Sync() } catch (e) { } return r };
+setTimeout(g65Sync, 300);
+</script>
+
+<style id="g66css">
+.g66 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:8px 0}
+.g66 .grid label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)}
+.g66 select,.g66 input[type=text]{font:inherit;padding:7px 10px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--ink);min-width:0;min-height:40px;box-sizing:border-box}
+.g66 .tw{overflow-x:auto}.g66 .tw .pv{width:100%;min-width:150px}
+.g66 .st{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px}
+.g66 .st.p{background:#fff3d6;color:#7a5200}.g66 .st.a{background:#e3f1e6;color:#1e5b2d}.g66 .st.r{background:#fde4e2;color:#8a1c14}.g66 .st.u{background:#e6ecf5;color:#27406b}
+.g66 .num{display:inline-block;background:#d1291f;color:#fff;border-radius:999px;padding:0 8px;font-size:12px;font-weight:700;margin-inline-start:6px}
+</style>
+<script>
+/* ---------- G66: value policy. What happens when a teacher adds a strand / substrand / skill / standard that is not in the pick-lists. Shown in Exams & Grades › Setup (administrator). Server: Grades.gs (api_grPol*) ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Value policy': 'سياسة القيم الجديدة', 'Default for every teacher': 'الافتراضي لكل المدرسين', 'Add at once and tell the administrator': 'تُضاف فورًا وتُبلَّغ الإدارة', 'Wait for the administrator to approve': 'تنتظر موافقة الإدارة', 'Not allowed: choose from the lists only': 'ممنوع: الاختيار من القوائم فقط',
+  'Same as the default': 'مثل الافتراضي', 'Policy per teacher': 'السياسة لكل مدرس', 'Save the policy': 'حفظ السياسة', 'Waiting for approval': 'بانتظار الموافقة', 'Added automatically': 'أُضيفت تلقائيًا', 'Approve': 'موافقة', 'Reject': 'رفض', 'Dismiss': 'تمّت المشاهدة', 'History': 'السجل', 'Nothing is waiting.': 'لا يوجد شيء بانتظار الموافقة.',
+  'Teachers can type new strands, substrands, skills and standards when they prepare a paper. Choose what happens to a value that is not in the lists yet. You can set it for the whole school and change it for one teacher.': 'يستطيع المدرس كتابة محاور ومحاور فرعية ومهارات وStandards جديدة عند تجهيز الورقة. اختر ما يحدث لقيمة ليست في القوائم بعد. يمكنك ضبطها للمدرسة كلها وتغييرها لمدرس بعينه.',
+  'Approved': 'تمت الموافقة', 'Rejected': 'مرفوضة', 'Seen': 'تمت مشاهدتها', 'Value': 'القيمة', 'Teacher': 'المدرس', 'Kind': 'النوع', 'strand': 'محور', 'substrand': 'محور فرعي', 'skill': 'مهارة', 'standard': 'Standard', 'Search teachers': 'ابحث عن مدرس', 'Status': 'الحالة', 'Subject': 'المادة', 'Date': 'التاريخ'
+}).filter(([k]) => !(k in AR))));
+const G66 = { P: null, busy: false, err: '', pol: null, q: '' };
+const g66On = () => g61On() && GR.sub == 'setup' && GR.D && GR.D.mgr;
+async function g66Load() {
+  if (G66.P || G66.busy || G66.err) return; G66.busy = true;
+  try { G66.P = await srv('api_grPolBoot'); G66.pol = JSON.parse(JSON.stringify(G66.P.policy)) } catch (e) { G66.err = 'x' }
+  G66.busy = false; if (g66On()) render();
+}
+const g66Opts = (v, inherit) => [['', 'Same as the default'], ['free', 'Add at once and tell the administrator'], ['approval', 'Wait for the administrator to approve'], ['blocked', 'Not allowed: choose from the lists only']].filter(x => inherit || x[0]).map(x => `<option value="${x[0]}"${x[0] == (v || '') ? ' selected' : ''}>${t(x[1])}</option>`).join('');
+function g66Card() {
+  if (!G66.P) { g66Load(); return `<div class="card g66"><h3>${t('Value policy')}</h3><p class="msg">${G66.err ? t('Could not load the grades.') : t('Loading...')}</p></div>` }
+  const P = G66.P, pol = G66.pol, q = G66.q.trim().toLowerCase();
+  const waiting = P.pending.filter(x => x.status == 'pending'), auto = P.pending.filter(x => x.status == 'auto'), hist = P.pending.filter(x => x.status != 'pending' && x.status != 'auto');
+  const T = P.teachers.filter(x => !q || (x[1] + ' ' + x[0] + ' ' + (x[2] || '')).toLowerCase().includes(q));
+  const stl = { approved: ['a', 'Approved'], rejected: ['r', 'Rejected'], seen: ['u', 'Seen'] };
+  const row = (x, acts) => `<tr><td>${esc(t(x.kind))}</td><td>${esc(x.subject)}</td><td>${acts == 'p' ? `<input type="text" class="pv" data-g66v="${esc(x.id)}" value="${esc(x.value)}" maxlength="120">` : esc(x.value)}</td><td>${esc(x.by)}</td><td dir="ltr">${esc(x.at)}</td><td>${acts == 'p' ? `<button class="b pri" data-g66a="approve" data-id="${esc(x.id)}">${t('Approve')}</button> <button class="b dng" data-g66a="reject" data-id="${esc(x.id)}">${t('Reject')}</button>` : acts == 'a' ? `<button class="b" data-g66a="dismiss" data-id="${esc(x.id)}">${t('Dismiss')}</button>` : `<span class="st ${stl[x.status][0]}">${t(stl[x.status][1])}</span>${x.note ? ` <small class="msg">${esc(x.note)}</small>` : ''}`}</td></tr>`;
+  const head = `<tr><th>${t('Kind')}</th><th>${t('Subject')}</th><th>${t('Value')}</th><th>${t('Teacher')}</th><th>${t('Date')}</th><th></th></tr>`;
+  return `<div class="card g66"><h3>${t('Value policy')}${waiting.length ? `<span class="num">${waiting.length}</span>` : ''}</h3><p class="msg">${t('Teachers can type new strands, substrands, skills and standards when they prepare a paper. Choose what happens to a value that is not in the lists yet. You can set it for the whole school and change it for one teacher.')}</p>
+<div class="grid"><label>${t('Default for every teacher')}<select data-g66d="def">${g66Opts(pol.def, 0)}</select></label></div>
+<details><summary><b>${t('Policy per teacher')}</b></summary><div class="row"><input type="text" data-g66q="1" value="${esc(G66.q)}" placeholder="${esc(t('Search teachers'))}" aria-label="${esc(t('Search teachers'))}"></div><div class="tw"><table class="g61t"><tr><th>${t('Teacher')}</th><th></th><th></th></tr>${T.map(x => `<tr><td>${esc(x[1])}</td><td><small class="msg">${esc(x[2] || '')}</small></td><td><select data-g66t="${esc(x[0])}">${g66Opts(pol.t[x[0]], 1)}</select></td></tr>`).join('')}</table></div></details>
+<div class="row"><button class="b pri" data-g66a="save">${ic('check')} ${t('Save the policy')}</button></div>
+<h4>${t('Waiting for approval')}</h4>${waiting.length ? `<div class="tw"><table class="g61t">${head}${waiting.map(x => row(x, 'p')).join('')}</table></div>` : `<p class="msg">${t('Nothing is waiting.')}</p>`}
+${auto.length ? `<h4>${t('Added automatically')}</h4><div class="tw"><table class="g61t">${head}${auto.map(x => row(x, 'a')).join('')}</table></div>` : ''}
+${hist.length ? `<details><summary>${t('History')} (${hist.length})</summary><div class="tw"><table class="g61t">${head}${hist.slice(0, 80).map(x => row(x, 'h')).join('')}</table></div></details>` : ''}</div>`;
+}
+const _g61s66 = g61Setup;
+g61Setup = function () { return _g61s66() + g66Card() };
+document.addEventListener('click', async e => {
+  if (!g66On()) return; const b = e.target.closest && e.target.closest('[data-g66a]'); if (!b) return; const a = b.dataset.g66a;
+  try {
+    if (a == 'save') { G66.P = await srv('api_grPolSave', G66.pol); G66.pol = JSON.parse(JSON.stringify(G66.P.policy)); toast(t('Saved')); return render() }
+    const inp = document.querySelector(`[data-g66v="${CSS.escape(b.dataset.id)}"]`);
+    G66.P = await srv('api_grPolDecide', b.dataset.id, a, inp ? inp.value : ''); toast(t('Saved')); try { const c = await srv('api_grBoot'); GR.D = c } catch (x) { } return render();
+  } catch (x) { }
+});
+document.addEventListener('change', e => {
+  if (!g66On()) return; const d = e.target.dataset || {};
+  if (d.g66d) { G66.pol.def = e.target.value; return }
+  if (d.g66t) { if (e.target.value) G66.pol.t[d.g66t] = e.target.value; else delete G66.pol.t[d.g66t] }
+});
+document.addEventListener('input', e => { if (g66On() && e.target.dataset && e.target.dataset.g66q) { G66.q = e.target.value; clearTimeout(G66.tm); G66.tm = setTimeout(() => { render(); const i = document.querySelector('[data-g66q]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length) } }, 250) } });
+</script>
+
+<style id="g67css">
+.g67 .st{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;white-space:nowrap}
+.g67 .st.p{background:#fff3d6;color:#7a5200}.g67 .st.a{background:#e3f1e6;color:#1e5b2d}.g67 .st.r{background:#fde4e2;color:#8a1c14}.g67 .st.u{background:#e6ecf5;color:#27406b}
+.g67 .num{display:inline-block;background:#d1291f;color:#fff;border-radius:999px;padding:0 8px;font-size:12px;font-weight:700;margin-inline-start:6px}
+.g67 select,.g67 input[type=text],.g67 input[type=number]{font:inherit;padding:7px 10px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--ink);min-width:0;min-height:40px;box-sizing:border-box}
+.g67 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin:8px 0}.g67 .grid label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)}
+.g67 th button.so{border:0;background:none;font:inherit;font-weight:600;color:inherit;cursor:pointer;padding:0;white-space:nowrap}.g67 th button.so:hover{text-decoration:underline}
+.g67 td.bad{color:#d1291f;font-weight:700}.g67 td.dim{color:var(--mut)}
+.g67 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+@media(max-width:640px){.g67 select,.g67 input[type=text],.g67 input[type=number]{min-height:44px}.g67 .tabs .g61c{flex:1 1 auto}}
+</style>
+<script>
+/* ---------- G67 (M1): the administration's follow-up report + requests to show results to parents. Server: Grades.gs (api_grMonitor, api_grPubBoot, api_grPubDecide, api_grPubPolSave).
+   HOD sees his department's teachers, a coordinator his classes, the administrator everybody; the server decides, this page only shows what it was given. ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Follow-up': 'المتابعة', 'Follow-up report: who entered marks, who is late (inside his scope)': 'تقرير المتابعة: من رصد الدرجات ومن تأخر (داخل نطاقه)', 'Decide requests to show results to parents (inside his scope)': 'البتّ في طلبات إظهار النتائج للأهل (داخل نطاقه)',
+  'Teachers': 'المدرسون', 'Class and subject': 'الفصل والمادة', 'Late list': 'قائمة المتأخر', 'Parent visibility': 'الإظهار للأهل', 'Classes': 'الفصول', 'Quizzes': 'الاختبارات', 'No date': 'بلا تاريخ', 'Due': 'استحقت', 'Complete': 'مكتمل', 'Late': 'متأخر', 'Missing marks': 'درجات ناقصة', 'Shown': 'ظاهرة للأهل', 'Last entry': 'آخر إدخال',
+  'Days late': 'أيام التأخير', 'Missing': 'ناقص', 'Assessment': 'الاختبار', 'Type': 'النوع', 'Subject': 'المادة', 'Class': 'الفصل', 'Teacher': 'المدرس', 'Date': 'التاريخ', 'Term': 'الفترة', 'All terms': 'كل الفترات',
+  'Search': 'بحث', 'Filters': 'الفلاتر', 'Clear filters': 'مسح الفلاتر', 'Print': 'طباعة', 'of': 'من', 'Nothing to show.': 'لا يوجد ما يُعرض.', 'Loading...': 'جارٍ التحميل...', 'Could not load the grades.': 'تعذّر تحميل الدرجات.',
+  'Problem': 'الحالة', 'Has late assessments': 'فيه اختبارات متأخرة', 'Has assessments without a date': 'فيه اختبارات بلا تاريخ', 'Has missing marks': 'فيه درجات ناقصة', 'Nothing created yet': 'لم يُنشأ شيء بعد', 'Waiting for approval to show to parents': 'بانتظار الموافقة على إظهارها للأهل',
+  'Late means this many days after the exam date with marks still missing': 'المتأخر = مرور هذا العدد من الأيام بعد تاريخ الاختبار مع بقاء درجات ناقصة', 'days': 'أيام', 'You only see the teachers and classes inside your scope.': 'ترى المدرسين والفصول داخل نطاقك فقط.',
+  'Waiting': 'بانتظار القرار', 'Approved': 'تمت الموافقة', 'Rejected': 'مرفوضة', 'Cancelled': 'سُحبت', 'Status': 'الحالة', 'Requested by': 'طلبها', 'Note': 'ملاحظة', 'Approve': 'موافقة', 'Reject': 'رفض', 'Nothing is waiting.': 'لا يوجد شيء بانتظار الموافقة.', 'Decided by': 'قرارها', 'History': 'السجل',
+  'Showing results to parents': 'إظهار النتائج للأهل', 'Choose who may mark an assessment as shown to parents. The administrator and anybody with the approval permission can always do it. A teacher under approval can ask; the request waits in Follow-up › Parent visibility.': 'اختر من يستطيع جعل الاختبار ظاهرًا للأهل. الإدارة ومن يملك صلاحية الموافقة يستطيعون دائمًا. المدرس الخاضع للموافقة يطلب ويبقى الطلب في المتابعة › الإظهار للأهل.',
+  'Default for every teacher': 'الافتراضي لكل المدرسين', 'Allowed': 'مسموح', 'Needs approval': 'يحتاج موافقة', 'Forbidden': 'ممنوع', 'Same as the default': 'مثل الافتراضي', 'Policy per teacher': 'السياسة لكل مدرس', 'Search teachers': 'ابحث عن مدرس', 'Save': 'حفظ', 'Saved': 'تم الحفظ',
+  'Sent to the administrator for approval.': 'أُرسل للإدارة للموافقة.', 'Saved. Showing it to parents waits for approval.': 'تم الحفظ. إظهاره للأهل ينتظر الموافقة.', 'Ask to show to parents': 'اطلب إظهارها للأهل', 'Ask the administrator to show it to parents': 'اطلب من الإدارة إظهارها للأهل',
+  'Late after (days)': 'يُعتبر متأخرًا بعد (أيام)', 'Excel': 'Excel', 'Sort': 'ترتيب', 'students': 'طالب', 'Done': 'تم', 'Yes': 'نعم', 'Note (optional)': 'ملاحظة (اختيارية)'
+}).filter(([k]) => !(k in AR))));
+const G67 = { R: null, P: null, busy: false, pbusy: false, err: '', term: '', view: '', q: '', open: false, f: { cls: [], tch: [], subj: [], st: [] }, so: {}, pol: null, pq: '' };
+const g67On = () => g61On() && GR.sub == 'monitor' && GR.D && (GR.D.mon || GR.D.appr);
+const g67PolOn = () => g61On() && GR.sub == 'setup' && GR.D && GR.D.mgr;
+async function g67Load(force) {
+  if (G67.busy || (G67.R && !force) || G67.err) return; G67.busy = true;
+  try { if (GR.D.mon) G67.R = await srv('api_grMonitor', G67.term); else G67.R = { rows: [], teachers: [], late: [], lateDays: 3, scoped: true, none: 1 }; if (GR.D.appr) G67.P = await srv('api_grPubBoot') } catch (e) { G67.err = 'x' }
+  G67.busy = false; if (g67On()) render();
+}
+const g67Views = () => { const D = GR.D, o = []; if (D.mon) o.push(['teachers', 'Teachers'], ['rows', 'Class and subject'], ['late', 'Late list']); if (D.appr) o.push(['req', 'Parent visibility']); return o };
+const g67Has = (a, v) => !a.length || a.includes(v);
+const g67Pct = r => r.due ? Math.round(r.complete / r.due * 100) + '%' : '–';
+function g67State(r) { const o = []; if (r.late) o.push('late'); if (r.noDate) o.push('nodate'); if (r.missing) o.push('missing'); if (!r.exams) o.push('none'); return o }
+const G67_ST = { late: 'Has late assessments', nodate: 'Has assessments without a date', missing: 'Has missing marks', none: 'Nothing created yet' };
+function g67Filter(list, kind) {
+  const f = G67.f, q = G67.q.trim().toLowerCase();
+  return list.filter(r => g67Has(f.cls, r.cls == null ? '' : r.cls) && g67Has(f.tch, r.teacher) && g67Has(f.subj, r.subject == null ? '' : r.subject) &&
+    (!f.st.length || (kind == 'late' ? f.st.includes('late') : g67State(r).some(x => f.st.includes(x)))) &&
+    (!q || [r.teacher, r.cls, r.subject, r.name, r.type].join(' ').toLowerCase().includes(q)));
+}
+const g67Sort = (list, key) => { const s = G67.so[G67.view] || { k: key, d: 1 }, g = r => r[s.k]; return list.slice().sort((a, b) => { const x = g(a), y = g(b); return s.d * ((typeof x == 'number' && typeof y == 'number') ? x - y : String(x == null ? '' : x).localeCompare(String(y == null ? '' : y), undefined, { numeric: true })) }) };
+const g67Th = (k, label, num) => { const s = G67.so[G67.view]; return `<th class="${num ? 'n' : ''}"><button class="so" data-g67o="${k}" aria-label="${esc(t('Sort'))}: ${esc(label)}">${label}${s && s.k == k ? (s.d == 1 ? ' ▲' : ' ▼') : ''}</button></th>` };
+function g67Chips(k, label, vals, tr) {
+  const sel = G67.f[k]; if (!vals.length) return '';
+  return `<div class="g61fg"><b>${t(label)}</b><div class="g61ch">${vals.map(v => `<button class="g61c${sel.includes(v) ? ' on' : ''}" data-g67c="${k}|${esc(v)}" aria-pressed="${sel.includes(v)}">${esc(tr ? t(tr[v] || v) : v)}</button>`).join('')}</div></div>`;
+}
+const g67N = () => { const f = G67.f; return f.cls.length + f.tch.length + f.subj.length + f.st.length };
+function g67Table(kind, L) {
+  const dim = '';
+  if (kind == 'late') return `<table class="g61t"><tr>${g67Th('date', t('Date'))}${g67Th('cls', t('Class'))}${g67Th('subject', t('Subject'))}${g67Th('teacher', t('Teacher'))}${g67Th('name', t('Assessment'))}${g67Th('type', t('Type'))}${g67Th('daysLate', t('Days late'), 1)}${g67Th('missing', t('Missing'), 1)}</tr>${L.map(r => `<tr><td dir="ltr">${esc(r.date)}</td><td>${esc(r.cls)}</td><td>${esc(r.subject)}</td><td>${esc(r.teacher)}</td><td>${esc(r.name)}</td><td>${esc(t(r.type))}</td><td class="n bad">${r.daysLate}</td><td class="n">${r.missing} / ${r.total}</td></tr>`).join('')}</table>`;
+  const rowsMode = kind == 'rows';
+  return `<table class="g61t"><tr>${g67Th('teacher', t('Teacher'))}${rowsMode ? g67Th('cls', t('Class')) + g67Th('subject', t('Subject')) : g67Th('classes', t('Classes'), 1)}${g67Th('exams', t('Quizzes'), 1)}${g67Th('noDate', t('No date'), 1)}${g67Th('due', t('Due'), 1)}${g67Th('complete', t('Complete'), 1)}${g67Th('late', t('Late'), 1)}${g67Th('missing', t('Missing marks'), 1)}${g67Th('pub', t('Shown'), 1)}${g67Th('last', t('Last entry'))}</tr>${L.map(r => `<tr><td>${esc(r.teacher)}</td>${rowsMode ? `<td>${esc(r.cls)}</td><td>${esc(r.subject)}</td>` : `<td class="n">${r.classes}</td>`}<td class="n${r.exams ? '' : ' dim'}">${r.exams}</td><td class="n${r.noDate ? ' bad' : ' dim'}">${r.noDate}</td><td class="n">${r.due}</td><td class="n">${r.complete}${r.due ? ` <small class="msg">(${g67Pct(r)})</small>` : ''}</td><td class="n${r.late ? ' bad' : ' dim'}">${r.late}</td><td class="n${r.missing ? ' bad' : ' dim'}">${r.missing}</td><td class="n">${r.pub}${r.pubAsked ? ` <span class="st p" title="${esc(t('Waiting for approval to show to parents'))}">+${r.pubAsked}</span>` : ''}</td><td dir="ltr">${esc(r.last || '–')}</td></tr>`).join('')}</table>`;
+}
+function g67ReqTable(P) {
+  const st = { pending: ['p', 'Waiting'], approved: ['a', 'Approved'], rejected: ['r', 'Rejected'], cancelled: ['u', 'Cancelled'] };
+  const q = G67.q.trim().toLowerCase(), L = P.requests.filter(r => g67Has(G67.f.cls, r.cls) && g67Has(G67.f.subj, r.subject) && (!q || [r.by, r.cls, r.subject, r.name].join(' ').toLowerCase().includes(q)));
+  const wait = L.filter(r => r.status == 'pending'), rest = L.filter(r => r.status != 'pending');
+  const row = (r, act) => `<tr><td>${esc(r.cls)}</td><td>${esc(r.subject)}</td><td>${esc(r.name)}</td><td>${esc(r.by)}</td><td dir="ltr">${esc(r.at)}</td><td>${act ? `<input type="text" data-g67n="${esc(r.id)}" placeholder="${esc(t('Note (optional)'))}" maxlength="200" aria-label="${esc(t('Note'))}"> <button class="b pri" data-g67a="approve" data-id="${esc(r.id)}">${t('Approve')}</button> <button class="b dng" data-g67a="reject" data-id="${esc(r.id)}">${t('Reject')}</button>` : `<span class="st ${st[r.status][0]}">${t(st[r.status][1])}</span>${r.decidedBy ? ` <small class="msg">${esc(r.decidedBy)}</small>` : ''}${r.note ? ` <small class="msg">${esc(r.note)}</small>` : ''}`}</td></tr>`;
+  const head = `<tr><th>${t('Class')}</th><th>${t('Subject')}</th><th>${t('Assessment')}</th><th>${t('Requested by')}</th><th>${t('Date')}</th><th></th></tr>`;
+  return (wait.length ? `<div class="tw"><table class="g61t">${head}${wait.map(r => row(r, 1)).join('')}</table></div>` : `<p class="msg">${t('Nothing is waiting.')}</p>`) +
+    (rest.length ? `<details><summary>${t('History')} (${rest.length})</summary><div class="tw"><table class="g61t">${head}${rest.slice(0, 100).map(r => row(r, 0)).join('')}</table></div></details>` : '');
+}
+function g67Page() {
+  const D = GR.D, vs = g67Views(); if (!vs.length) return '';
+  if (!vs.some(x => x[0] == G67.view)) G67.view = vs[0][0];
+  if (!G67.R && !G67.busy && !G67.err) g67Load();
+  const R = G67.R, P = G67.P, v = G67.view;
+  let h = `<div class="card g67"><h3>${ic('eye')} ${t('Follow-up')}${P && P.waiting ? `<span class="num">${P.waiting}</span>` : ''}</h3>`;
+  if (G67.err) return h + `<p class="msg">${t('Could not load the grades.')}</p></div>`;
+  if (!R) return h + `<p class="msg">${t('Loading...')}</p></div>`;
+  h += `<nav class="sub">${vs.map(x => `<button class="pill${v == x[0] ? ' on' : ''}" data-g67v="${x[0]}">${t(x[1])}${x[0] == 'req' && P && P.waiting ? `<span class="num">${P.waiting}</span>` : ''}</button>`).join('')}</nav>`;
+  const src = v == 'late' ? R.late : v == 'rows' ? R.rows : v == 'teachers' ? R.teachers : [];
+  const all = v == 'req' ? (P ? P.requests : []) : src, uniq = k => [...new Set(all.map(r => r[k]).filter(x => x != null && x !== ''))].sort(natural);
+  const L = v == 'req' ? [] : g67Sort(g67Filter(src, v == 'late' ? 'late' : 'x'), v == 'late' ? 'daysLate' : v == 'rows' || v == 'teachers' ? 'teacher' : '');
+  if (v == 'late' && !G67.so.late) L.sort((a, b) => b.daysLate - a.daysLate);
+  const n = g67N();
+  h += `<div class="row"><label style="flex:1 1 240px">${t('Search')}<input type="text" data-g67q="1" value="${esc(G67.q)}" placeholder="${esc(t('Search'))}"></label>
+${v == 'req' ? '' : `<label>${t('Term')}<select data-g67t="1"><option value="">${t('All terms')}</option>${D.cfg.terms.map(x => `<option${x == G67.term ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></label>`}
+<button class="b${n ? ' pri' : ''}" data-g67a="fopen" aria-expanded="${G67.open}">${ic('filter')} ${t('Filters')}${n ? ` (${n})` : ''} ${G67.open ? '▴' : '▾'}</button>
+${v == 'req' ? '' : `<button class="b" data-g67a="print">${ic('print')} ${t('Print')}</button><button class="b" data-g67a="xl">${ic('down')} Excel</button>`}</div>`;
+  if (G67.open) h += `<div class="g61fp">${g67Chips('cls', 'Class', uniq('cls'))}${v == 'teachers' || v == 'req' ? '' : g67Chips('subj', 'Subject', uniq('subject'))}${v == 'req' ? '' : g67Chips('tch', 'Teacher', uniq('teacher'))}${v == 'req' ? '' : g67Chips('st', 'Problem', Object.keys(G67_ST), G67_ST)}<div class="row"><button class="b" data-g67a="fclear">${t('Clear filters')}</button></div></div>`;
+  if (v == 'req') return h + g67ReqTable(P || { requests: [] }) + '</div>';
+  h += `<p class="msg" role="status">${L.length ? `1–${L.length} ${t('of')} ${src.length}` : ''} · ${t('Late means this many days after the exam date with marks still missing')}: <b>${R.lateDays}</b> ${t('days')}${R.scoped ? ' · ' + t('You only see the teachers and classes inside your scope.') : ''}</p>`;
+  return h + (L.length ? `<div class="tw">${g67Table(v, L)}</div>` : `<p class="msg">${t('Nothing to show.')}</p>`) + '</div>';
+}
+function g67Sheet(v, L, R) { return `<div class="sheet">${typeof sxHead == 'function' ? sxHead() : ''}<h2>${esc(t('Follow-up'))} · ${esc(t(g67Views().find(x => x[0] == v)[1]))} · ${esc(R.year)}${R.term ? ' · ' + esc(R.term) : ''} · ${esc(R.today)}</h2>${g67Table(v, L).replace(/<button[^>]*>([^<]*)(?: [▲▼])?<\/button>/g, '$1')}</div>` }
+function g67Cur() { const R = G67.R, v = G67.view; const src = v == 'late' ? R.late : v == 'rows' ? R.rows : R.teachers; let L = g67Sort(g67Filter(src, v == 'late' ? 'late' : 'x'), v == 'late' ? 'daysLate' : 'teacher'); if (v == 'late' && !G67.so.late) L.sort((a, b) => b.daysLate - a.daysLate); return L }
+document.addEventListener('click', async e => {
+  if (!g67On()) return; const T = e.target;
+  const vb = T.closest && T.closest('[data-g67v]'); if (vb) { G67.view = vb.dataset.g67v; G67.f = { cls: [], tch: [], subj: [], st: [] }; G67.q = ''; return render() }
+  const so = T.closest && T.closest('[data-g67o]'); if (so) { const k = so.dataset.g67o, s = G67.so[G67.view]; G67.so[G67.view] = s && s.k == k ? { k, d: -s.d } : { k, d: 1 }; return render() }
+  const fc = T.closest && T.closest('[data-g67c]'); if (fc) { const k = fc.dataset.g67c.split('|')[0], val = fc.dataset.g67c.slice(k.length + 1), a = G67.f[k], i = a.indexOf(val); if (i >= 0) a.splice(i, 1); else a.push(val); return render() }
+  const b = T.closest && T.closest('[data-g67a]'); if (!b) return; const a = b.dataset.g67a;
+  try {
+    if (a == 'fopen') { G67.open = !G67.open; return render() }
+    if (a == 'fclear') { G67.f = { cls: [], tch: [], subj: [], st: [] }; G67.q = ''; return render() }
+    if (a == 'print') return printHtml(g67Sheet(G67.view, g67Cur(), G67.R))
+    if (a == 'xl') {
+      const L = g67Cur(), v = G67.view, rows = v == 'late' ? [[t('Date'), t('Class'), t('Subject'), t('Teacher'), t('Assessment'), t('Type'), t('Days late'), t('Missing'), t('Students')]].concat(L.map(r => [r.date, r.cls, r.subject, r.teacher, r.name, r.type, r.daysLate, r.missing, r.total]))
+        : [[t('Teacher')].concat(v == 'rows' ? [t('Class'), t('Subject')] : [t('Classes')], [t('Quizzes'), t('No date'), t('Due'), t('Complete'), t('Late'), t('Missing marks'), t('Shown'), t('Last entry')])].concat(L.map(r => [r.teacher].concat(v == 'rows' ? [r.cls, r.subject] : [r.classes], [r.exams, r.noDate, r.due, r.complete, r.late, r.missing, r.pub, r.last])));
+      return XL.save('Follow-up ' + v + ' ' + G67.R.year, [{ name: t('Follow-up'), rows, bold: [0], widths: [24, 12, 14, 12, 12, 12, 12, 14, 18] }])
+    }
+    if (a == 'approve' || a == 'reject') {
+      const inp = document.querySelector(`[data-g67n="${CSS.escape(b.dataset.id)}"]`);
+      G67.P = await srv('api_grPubDecide', b.dataset.id, a, inp ? inp.value : ''); toast(t('Saved'));
+      try { GR.D = await srv('api_grBoot'); if (GR.D.mon) G67.R = await srv('api_grMonitor', G67.term) } catch (x) { } return render()
+    }
+  } catch (x) { }
+});
+document.addEventListener('change', async e => {
+  if (!g67On()) return; const d = e.target.dataset || {};
+  if (d.g67t) { G67.term = e.target.value; G67.R = null; return render() }
+});
+document.addEventListener('input', e => {
+  if (!g67On() || !e.target.dataset || !e.target.dataset.g67q) return; G67.q = e.target.value; clearTimeout(G67.tm);
+  G67.tm = setTimeout(() => { render(); const i = document.querySelector('[data-g67q]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length) } }, 250)
+});
+/* ---------- Setup (administrator): who may show results to parents, and when a mark is late ---------- */
+async function g67PolLoad() {
+  if (G67.pol || G67.pbusy || G67.perr) return; G67.pbusy = true;
+  try { const P = await srv('api_grPubBoot'); G67.pol = { P, def: P.policy.def, t: Object.assign({}, P.policy.t), late: P.lateDays } } catch (e) { G67.perr = 'x' }
+  G67.pbusy = false; if (g67PolOn()) render();
+}
+const g67Opts = (v, inherit) => [['', 'Same as the default'], ['allowed', 'Allowed'], ['approval', 'Needs approval'], ['forbidden', 'Forbidden']].filter(x => inherit || x[0]).map(x => `<option value="${x[0]}"${x[0] == (v || '') ? ' selected' : ''}>${t(x[1])}</option>`).join('');
+function g67PolCard() {
+  if (!G67.pol) { g67PolLoad(); return `<div class="card g67"><h3>${t('Showing results to parents')}</h3><p class="msg">${G67.perr ? t('Could not load the grades.') : t('Loading...')}</p></div>` }
+  const Z = G67.pol, q = G67.pq.trim().toLowerCase(), T = Z.P.teachers.filter(x => !q || (x[1] + ' ' + x[0] + ' ' + (x[2] || '')).toLowerCase().includes(q));
+  return `<div class="card g67"><h3>${t('Showing results to parents')}</h3><p class="msg">${t('Choose who may mark an assessment as shown to parents. The administrator and anybody with the approval permission can always do it. A teacher under approval can ask; the request waits in Follow-up › Parent visibility.')}</p>
+<div class="grid"><label>${t('Default for every teacher')}<select data-g67pd="def">${g67Opts(Z.def, 0)}</select></label><label>${t('Late after (days)')}<input type="number" min="1" max="60" data-g67pd="late" value="${esc(Z.late)}" dir="ltr"></label></div>
+<details><summary><b>${t('Policy per teacher')}</b></summary><div class="row"><input type="text" data-g67pq="1" value="${esc(G67.pq)}" placeholder="${esc(t('Search teachers'))}" aria-label="${esc(t('Search teachers'))}"></div><div class="tw"><table class="g61t"><tr><th>${t('Teacher')}</th><th></th><th></th></tr>${T.map(x => `<tr><td>${esc(x[1])}</td><td><small class="msg">${esc(x[2] || '')}</small></td><td><select data-g67pt="${esc(x[0])}">${g67Opts(Z.t[x[0]], 1)}</select></td></tr>`).join('')}</table></div></details>
+<div class="row"><button class="b pri" data-g67p="save">${ic('check')} ${t('Save')}</button></div></div>`;
+}
+const _g61s67 = g61Setup;
+g61Setup = function () { return _g61s67() + g67PolCard() };
+document.addEventListener('click', async e => {
+  if (!g67PolOn()) return; const b = e.target.closest && e.target.closest('[data-g67p]'); if (!b) return;
+  try { const Z = G67.pol, P = await srv('api_grPubPolSave', { def: Z.def, t: Z.t, lateDays: Z.late }); G67.pol = { P, def: P.policy.def, t: Object.assign({}, P.policy.t), late: P.lateDays }; G67.R = null; toast(t('Saved')); render() } catch (x) { }
+});
+document.addEventListener('change', e => {
+  if (!g67PolOn()) return; const d = e.target.dataset || {};
+  if (d.g67pd) { G67.pol[d.g67pd] = e.target.value; return }
+  if (d.g67pt) { if (e.target.value) G67.pol.t[d.g67pt] = e.target.value; else delete G67.pol.t[d.g67pt] }
+});
+document.addEventListener('input', e => { if (g67PolOn() && e.target.dataset && e.target.dataset.g67pq) { G67.pq = e.target.value; clearTimeout(G67.ptm); G67.ptm = setTimeout(() => { render(); const i = document.querySelector('[data-g67pq]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length) } }, 250) } });
+if (typeof g51KB != 'undefined') g51KB.push({ id: 'gr-follow', p: ['gr'], kw: 'متابعه تقرير متاخر تاخير ادخال درجات مدرس hod منسق اظهار للاهل موافقه', q: ['فين تقرير متابعة المدرسين المتأخرين في الدرجات؟', 'Where is the follow-up report of late marks?'], go: { tab: 'gr' }, goL: ['افتح الاختبارات والدرجات', 'Open Exams & Grades'],
+  a: ['«الاختبارات والدرجات ← المتابعة»: لكل مدرس عدد الاختبارات، ما بلا تاريخ، ما استحق ولم تكتمل درجاته، والمتأخر (بعد عدد الأيام الذي تحدده من الإعدادات). رئيس القسم يرى مدرسي قسمه، والمنسق فصوله، والأدمن الكل. طلبات «إظهار للأهل» تظهر في تبويب «الإظهار للأهل» لمن يملك صلاحية الموافقة.', 'Exams & Grades › Follow-up shows, for each teacher, the assessments created, undated, due, complete and late. A head sees his department, a coordinator his classes. Requests to show results to parents are decided in the Parent visibility tab.'] });
+</script>
+
+<style id="g68css">
+.g68 select,.g68 input[type=text]{font:inherit;padding:7px 10px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--ink);min-width:0;min-height:40px;box-sizing:border-box}
+.g68 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:8px 0}.g68 .grid label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)}
+@media(max-width:640px){.g68 select,.g68 input[type=text]{min-height:44px}}
+</style>
+<script>
+/* ---------- G68: create the term's exams for every class at once (Setup, administrator). Server: api_grBulkNew in Grades.gs. ---------- */
+Object.assign(AR, Object.fromEntries(Object.entries({
+  'Create the term exams for all classes': 'إنشاء اختبارات الفترة لكل الفصول دفعة واحدة', 'Each line makes the assessment for every class of that grade that has the subject assigned to a teacher (Settings › Teachers › Assignments). Lines that already exist are skipped, so you can run it again safely. Teachers then open it and enter the marks.': 'كل سطر ينشئ الاختبار لكل فصل من ذلك الصف له مدرس مسند لهذه المادة (الإعدادات › المدرسون › الإسنادات). الأسطر الموجودة من قبل تُتخطى، فيمكنك التشغيل مرة ثانية بأمان. ثم يفتح المدرس الاختبار ويرصد الدرجات.',
+  'Class or grade': 'الفصل أو الصف', 'Date': 'التاريخ', 'Max': 'العظمى', 'Subject': 'المادة', 'Name': 'الاسم', 'Type': 'النوع', 'Term': 'الفترة', 'Assessment name': 'اسم الاختبار',
+  'Load the Trimester 1 schedule (Nov 2026)': 'تحميل جدول امتحانات الترم الأول (نوفمبر 2026)', 'Loaded %1 lines from the schedule. Lines without a date (ministry subjects) get their date later.': 'تم تحميل %1 سطر من الجدول. الأسطر بلا تاريخ (المواد الوزارية) يُحدَّد تاريخها لاحقًا.',
+  'The grade can be G4, a range G4-G9, or one class G4-A. The date looks like 2026-11-22. Leave Max empty for the default.': 'الصف يمكن أن يكون G4 أو مدى G4-G9 أو فصلًا واحدًا G4-A. التاريخ بصيغة 2026-11-22. اترك العظمى فارغة للقيمة الافتراضية.',
+  'Check': 'فحص', 'Create': 'إنشاء', 'to create': 'سيُنشأ', 'assessments': 'اختبار', 'Skipped': 'متخطى', 'no teacher assigned': 'لا يوجد مدرس مسند', 'already exists': 'موجود من قبل', 'Rows with a problem': 'أسطر بها مشكلة', 'Line': 'السطر',
+  'Unknown subject': 'مادة غير معروفة', 'Unknown class or grade': 'فصل أو صف غير معروف', 'Maximum mark must be a number above 0.': 'الدرجة العظمى يجب أن تكون رقمًا أكبر من 0.', 'This date does not exist.': 'هذا التاريخ غير موجود.', 'The date must look like 2026-11-25.': 'يجب أن يكون التاريخ بصيغة 2026-11-25.',
+  'Create %1 assessments?': 'إنشاء %1 اختبار؟', 'They are created as %1, %2, for the classes shown. Nothing is shown to parents.': 'تُنشأ باسم %1 من نوع %2 للفصول المعروضة. لا يظهر شيء لأولياء الأمور.', 'Yes, create': 'نعم، أنشئ', 'Created': 'تم الإنشاء', 'Nothing to check: add lines first.': 'لا يوجد ما يُفحص: أضف أسطرًا أولًا.', 'Show the classes': 'عرض الفصول',
+  'Fix the rows with a problem first (%1).': 'أصلح الأسطر التي بها مشكلة أولًا (%1).', 'Choose the type of assessment.': 'اختر نوع التقييم.', 'Choose the term.': 'اختر الفترة.', 'Give the assessment a name.': 'اكتب اسمًا للاختبار.', 'Clear the grid': 'امسح الجدول'
+}).filter(([k]) => !(k in AR))));
+const G68_SCHED = "G1\tMath\t2026-11-26\t100\nG1\tEnglish\t2026-11-22\t100\nG1\tScience\t2026-11-24\t100\nG1\tESS\t2026-11-25\t100\nG1\tMFL\t2026-11-23\t100\nG1\tArabic\t2026-11-29\t100\nG1\tReligion\t2026-11-29\t100\nG2\tMath\t2026-11-26\t100\nG2\tEnglish\t2026-11-22\t100\nG2\tScience\t2026-11-24\t100\nG2\tESS\t2026-11-25\t100\nG2\tMFL\t2026-11-23\t100\nG2\tArabic\t2026-11-29\t100\nG2\tReligion\t2026-11-29\t100\nG3\tMath\t2026-11-26\t100\nG3\tEnglish\t2026-11-22\t100\nG3\tScience\t2026-11-24\t100\nG3\tESS\t2026-11-25\t100\nG3\tMFL\t2026-11-23\t100\nG3\tArabic\t2026-11-29\t100\nG3\tReligion\t2026-11-29\t100\nG4\tMath\t2026-11-26\t100\nG4\tEnglish\t2026-11-22\t100\nG4\tScience\t2026-11-24\t100\nG4\tESS\t2026-11-25\t100\nG4\tMFL\t2026-11-23\t100\nG4\tArabic\t\t100\nG4\tReligion\t\t100\nG5\tMath\t2026-11-26\t100\nG5\tEnglish\t2026-11-22\t100\nG5\tScience\t2026-11-24\t100\nG5\tESS\t2026-11-25\t100\nG5\tMFL\t2026-11-23\t100\nG5\tArabic\t\t100\nG5\tReligion\t\t100\nG6\tMath\t2026-11-26\t100\nG6\tEnglish\t2026-11-22\t100\nG6\tScience\t2026-11-24\t100\nG6\tESS\t2026-11-25\t100\nG6\tMFL\t2026-11-23\t100\nG6\tArabic\t\t100\nG6\tReligion\t\t100\nG7\tMath\t2026-11-26\t100\nG7\tEnglish\t2026-11-22\t100\nG7\tScience\t2026-11-24\t100\nG7\tESS\t2026-11-25\t100\nG7\tMFL\t2026-11-23\t100\nG7\tArabic\t\t100\nG7\tReligion\t\t100\nG8\tMath\t2026-11-26\t100\nG8\tEnglish\t2026-11-22\t100\nG8\tScience\t2026-11-24\t100\nG8\tESS\t2026-11-25\t100\nG8\tMFL\t2026-11-23\t100\nG8\tArabic\t\t100\nG8\tReligion\t\t100\nG9\tMath\t2026-11-26\t100\nG9\tEnglish\t2026-11-22\t100\nG9\tScience\t2026-11-24\t100\nG9\tESS\t2026-11-25\t100\nG9\tMFL\t2026-11-23\t100\nG9\tArabic\t\t100\nG9\tReligion\t\t100\nG10\tMath\t2026-11-22\t100\nG10\tEnglish\t2026-11-29\t100\nG10\tMFL\t2026-11-25\t100\nG10\tArabic\t2026-11-30\t100\nG10\tReligion\t2026-11-30\t100\nG10\tChemistry\t2026-11-24\t100\nG10\tBiology\t2026-11-25\t100\nG10\tPhysics\t2026-11-26\t100\nG10\tWorld History\t2026-11-23\t100\nG10\tASS\t2026-12-01\t100\nG11\tMath\t2026-11-22\t100\nG11\tEnglish\t2026-11-29\t100\nG11\tMFL\t2026-11-25\t100\nG11\tArabic\t2026-11-30\t100\nG11\tChemistry\t2026-11-24\t100\nG11\tBiology\t2026-11-25\t100\nG11\tPhysics\t2026-11-26\t100\nG11\tHistory\t2026-12-01\t100\nG11\tSociology\t2026-11-23\t100\nG12\tMath\t2026-11-22\t100\nG12\tMFL\t2026-11-23\t100\nG12\tArabic\t2026-11-29\t100\nG12\tReligion\t2026-11-29\t100\nG12\tBiology\t2026-11-24\t100\nG12\tPhysics\t2026-11-25\t100\nG12\tPsychology\t2026-11-23\t100\nG12\tArt\t2026-11-23\t100";
+const G68 = { text: '', name: 'Trimester 1 Exam', type: '', term: '', prev: null, busy: false };
+const g68On = () => g61On() && GR.sub == 'setup' && GR.D && GR.D.mgr;
+G61X.bulk = { cols: ['Class or grade', 'Subject', 'Date', 'Max'], get: () => G68.text || '', set: v => { G68.text = v; G68.prev = null } };
+const g68Rows = () => (G68.text || '').split(/\r?\n/).map(l => l.split('\t')).filter(c => c.some(x => String(x || '').trim())).map(c => ({ scope: String(c[0] || '').trim(), subject: String(c[1] || '').trim(), date: String(c[2] || '').trim().replace(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/, (m, y, a, b) => y + '-' + a.padStart(2, '0') + '-' + b.padStart(2, '0')), max: String(c[3] || '').trim() }));
+const g68P = () => ({ name: G68.name, type: G68.type || GR.D.cfg.types[0], term: G68.term || GR.D.cfg.term });
+function g68Card() {
+  const D = GR.D, c = D.cfg, P = G68.prev, tt = k => t(String(k || ''));
+  let h = `<div class="card g68"><h3>${ic('plus')} ${t('Create the term exams for all classes')}</h3><p class="msg">${t('Each line makes the assessment for every class of that grade that has the subject assigned to a teacher (Settings › Teachers › Assignments). Lines that already exist are skipped, so you can run it again safely. Teachers then open it and enter the marks.')}</p>
+<div class="grid"><label>${t('Assessment name')}<input type="text" data-g68f="name" value="${esc(G68.name)}" maxlength="60"></label>
+<label>${t('Type')}<select data-g68f="type">${c.types.map(x => `<option value="${esc(x)}"${x == (G68.type || c.types[0]) ? ' selected' : ''}>${esc(t(x))}</option>`).join('')}</select></label>
+<label>${t('Term')}<select data-g68f="term">${c.terms.map(x => `<option${x == (G68.term || c.term) ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></label></div>
+<p class="msg">${t('The grade can be G4, a range G4-G9, or one class G4-A. The date looks like 2026-11-22. Leave Max empty for the default.')}</p>
+${g61Xg('bulk')}
+<div class="row"><button class="b" data-g68a="load">${ic('down')} ${t('Load the Trimester 1 schedule (Nov 2026)')}</button><button class="b" data-g68a="check">${t('Check')}</button>${P && !P.badN && P.add ? `<button class="b pri" data-g68a="go">${ic('check')} ${t('Create')} (${P.add})</button>` : ''}</div>`;
+  if (P) {
+    h += `<div class="g61s"><span>${t('to create')}: <b>${P.add}</b> ${t('assessments')}</span><span>${t('Skipped')}: <b>${P.skippedN}</b></span><span>${t('Rows with a problem')}: <b>${P.badN}</b></span></div>`;
+    if (P.badN) h += `<div class="g61w">${P.bad.map(b => esc(t('Line') + ' ' + b.row + ': ' + t(b.why.split(':')[0]) + (b.why.includes(':') ? ':' + b.why.split(':').slice(1).join(':') : ''))).join('<br>')}</div>`;
+    if (P.skippedN) { const g = {}; P.skipped.forEach(x => { (g[x.why] = g[x.why] || []).push(x.cls + ' · ' + x.subject) }); h += `<details><summary>${t('Skipped')} (${P.skippedN})</summary>${Object.keys(g).map(k => `<p class="msg"><b>${esc(t(k))}</b> (${g[k].length}): ${esc(g[k].slice(0, 40).join(', '))}${g[k].length > 40 ? ' …' : ''}</p>`).join('')}</details>`; }
+    if (P.plan.length) h += `<details><summary>${t('Show the classes')} (${P.plan.length})</summary><div class="tw" style="max-height:300px;overflow:auto"><table class="g61t"><tr><th>${t('Class')}</th><th>${t('Subject')}</th><th>${t('Date')}</th><th class="n">${t('Max')}</th></tr>${P.plan.map(x => `<tr><td>${esc(x.cls)}</td><td>${esc(x.subject)}</td><td dir="ltr">${esc(x.date || '–')}</td><td class="n">${x.max}</td></tr>`).join('')}</table></div></details>`;
+  }
+  return h + '</div>';
+}
+const _g61s68 = g61Setup;
+g61Setup = function () { return _g61s68() + g68Card() };
+document.addEventListener('click', async e => {
+  if (!g68On()) return; const b = e.target.closest && e.target.closest('[data-g68a]'); if (!b) return; const a = b.dataset.g68a;
+  try {
+    if (a == 'load') { G68.text = G68_SCHED; G68.prev = null; GR.gxn.bulk = 95; render(); return toast(t('Loaded %1 lines from the schedule. Lines without a date (ministry subjects) get their date later.').replace('%1', g68Rows().length)) }
+    const rows = g68Rows(); if (!rows.length) return toast(t('Nothing to check: add lines first.'), 1);
+    if (a == 'check') { G68.prev = await srv('api_grBulkNew', rows, g68P(), false); return render() }
+    if (a == 'go') {
+      const P = G68.prev, p = g68P(); if (!P) return;
+      if (!(await UX.ask(t('Create %1 assessments?').replace('%1', P.add), esc(t('They are created as %1, %2, for the classes shown. Nothing is shown to parents.').replace('%1', p.name).replace('%2', t(p.type))), { yes: t('Yes, create') }))) return;
+      const r = await srv('api_grBulkNew', rows, p, true); G68.prev = null; G68.text = ''; GR.ass = null; toast(t('Created') + ': ' + r.created); GR.D = await srv('api_grBoot'); G67.R = null; return render()
+    }
+  } catch (x) { }
+});
+document.addEventListener('change', e => { if (!g68On()) return; const d = e.target.dataset || {}; if (d.g68f) { G68[d.g68f] = e.target.value; G68.prev = null } });
+document.addEventListener('input', e => { if (!g68On()) return; const d = e.target.dataset || {}; if (d.g68f == 'name') { G68.name = e.target.value; G68.prev = null } });
 </script>
 
 <script>
