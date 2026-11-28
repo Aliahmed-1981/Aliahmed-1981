@@ -9838,14 +9838,22 @@ Object.assign(AR, Object.fromEntries(Object.entries({
   'Check': 'فحص', 'Create': 'إنشاء', 'to create': 'سيُنشأ', 'assessments': 'اختبار', 'Skipped': 'متخطى', 'no teacher assigned': 'لا يوجد مدرس مسند', 'already exists': 'موجود من قبل', 'Rows with a problem': 'أسطر بها مشكلة', 'Line': 'السطر',
   'Unknown subject': 'مادة غير معروفة', 'Unknown class or grade': 'فصل أو صف غير معروف', 'Maximum mark must be a number above 0.': 'الدرجة العظمى يجب أن تكون رقمًا أكبر من 0.', 'This date does not exist.': 'هذا التاريخ غير موجود.', 'The date must look like 2026-11-25.': 'يجب أن يكون التاريخ بصيغة 2026-11-25.',
   'Create %1 assessments?': 'إنشاء %1 اختبار؟', 'They are created as %1, %2, for the classes shown. Nothing is shown to parents.': 'تُنشأ باسم %1 من نوع %2 للفصول المعروضة. لا يظهر شيء لأولياء الأمور.', 'Yes, create': 'نعم، أنشئ', 'Created': 'تم الإنشاء', 'Nothing to check: add lines first.': 'لا يوجد ما يُفحص: أضف أسطرًا أولًا.', 'Show the classes': 'عرض الفصول',
-  'Fix the rows with a problem first (%1).': 'أصلح الأسطر التي بها مشكلة أولًا (%1).', 'Choose the type of assessment.': 'اختر نوع التقييم.', 'Choose the term.': 'اختر الفترة.', 'Give the assessment a name.': 'اكتب اسمًا للاختبار.', 'Clear the grid': 'امسح الجدول'
+  'Fix the rows with a problem first (%1).': 'أصلح الأسطر التي بها مشكلة أولًا (%1).', 'Choose the type of assessment.': 'اختر نوع التقييم.', 'Choose the term.': 'اختر الفترة.', 'Give the assessment a name.': 'اكتب اسمًا للاختبار.', 'Clear the grid': 'امسح الجدول',
+  'Subject name mapping': 'مطابقة أسماء المواد', 'One per line: the name in the schedule = the subject(s) in the timetable, separated by commas. MFL and Religion already map to all their groups (MFL/Fre + MFL/Ger...) by themselves.': 'سطر لكل مادة: الاسم في الجدول = المادة أو المواد في الجداول مفصولة بفاصلة. MFL وReligion تُربطان تلقائيًا بكل مجموعاتهما (MFL/Fre + MFL/Ger ...).',
+  'Also create it where no teacher is assigned (the administrator enters the marks)': 'أنشئه أيضًا حيث لا يوجد مدرس مسند (يرصد الأدمن الدرجات)',
+  'Assign a teacher': 'إسناد مدرس', 'Choose a teacher': 'اختر مدرسًا', 'Assign': 'إسناد', 'Assigned. Check again to see the change.': 'تم الإسناد.', 'No teacher yet: %1 (no teacher assigned)': 'بلا مدرس: %1',
+  'Groups inside a class: religion and 2nd language': 'مجموعات داخل الفصل: الدين واللغة الثانية', 'French / German and Islamic / Christian religion are subjects of their own in the timetable (MFL/Fre, MFL/Ger, Religion/Islamic, Religion/Christian). Each is taken only by the students whose 2nd language or religion matches, and each has its own teacher. This adds the missing subjects and rules; it never changes a rule you already set.': 'الفرنسية/الألمانية والدين الإسلامي/المسيحي مواد مستقلة في الجداول (MFL/Fre وMFL/Ger وReligion/Islamic وReligion/Christian). يدرس كلاً منها الطلاب الذين تطابق لغتهم الثانية أو ديانتهم، ولكل منها مدرسه. هذا يضيف المواد والقواعد الناقصة ولا يغيّر قاعدة ضبطتها من قبل.',
+  'New subject': 'مادة جديدة', 'Stages given a rule': 'مراحل تُضاف لها قاعدة', 'Students': 'الطلاب', 'Prepare the groups': 'تجهيز المجموعات', 'Done: %1 subjects and %2 rules added.': 'تم: أُضيفت %1 مادة و%2 قاعدة.', 'Students whose 2nd language is not French or German: %1. Students whose religion is not Muslim or Christian: %2. They are in no group until their file is corrected.': 'طلاب لغتهم الثانية ليست French أو German: %1. وطلاب ديانتهم ليست Muslim أو Christian: %2. لا يدخلون مجموعة حتى يُصحَّح ملفهم.',
+  'Then move the teachers of each group to its subject: Settings › Teachers › Assignments (a Religion teacher of Christian students gets Religion/Christian).': 'ثم انقل مدرس كل مجموعة إلى مادتها من: الإعدادات › المعلمون والإسناد (مدرس الدين للمسيحيين يأخذ Religion/Christian).',
+  'Waiting for your marks': 'ينتظر رصدك', 'Open': 'فتح', 'Due: enter the marks': 'حان موعده: أدخل الدرجات', 'Upcoming': 'قادم', 'No date yet': 'بلا تاريخ بعد', 'Missing': 'ناقص', 'Status': 'الحالة', 'Yes': 'نعم',
 }).filter(([k]) => !(k in AR))));
 const G68_SCHED = "G1\tMath\t2026-11-26\t100\nG1\tEnglish\t2026-11-22\t100\nG1\tScience\t2026-11-24\t100\nG1\tESS\t2026-11-25\t100\nG1\tMFL\t2026-11-23\t100\nG1\tArabic\t2026-11-29\t100\nG1\tReligion\t2026-11-29\t100\nG2\tMath\t2026-11-26\t100\nG2\tEnglish\t2026-11-22\t100\nG2\tScience\t2026-11-24\t100\nG2\tESS\t2026-11-25\t100\nG2\tMFL\t2026-11-23\t100\nG2\tArabic\t2026-11-29\t100\nG2\tReligion\t2026-11-29\t100\nG3\tMath\t2026-11-26\t100\nG3\tEnglish\t2026-11-22\t100\nG3\tScience\t2026-11-24\t100\nG3\tESS\t2026-11-25\t100\nG3\tMFL\t2026-11-23\t100\nG3\tArabic\t2026-11-29\t100\nG3\tReligion\t2026-11-29\t100\nG4\tMath\t2026-11-26\t100\nG4\tEnglish\t2026-11-22\t100\nG4\tScience\t2026-11-24\t100\nG4\tESS\t2026-11-25\t100\nG4\tMFL\t2026-11-23\t100\nG4\tArabic\t\t100\nG4\tReligion\t\t100\nG5\tMath\t2026-11-26\t100\nG5\tEnglish\t2026-11-22\t100\nG5\tScience\t2026-11-24\t100\nG5\tESS\t2026-11-25\t100\nG5\tMFL\t2026-11-23\t100\nG5\tArabic\t\t100\nG5\tReligion\t\t100\nG6\tMath\t2026-11-26\t100\nG6\tEnglish\t2026-11-22\t100\nG6\tScience\t2026-11-24\t100\nG6\tESS\t2026-11-25\t100\nG6\tMFL\t2026-11-23\t100\nG6\tArabic\t\t100\nG6\tReligion\t\t100\nG7\tMath\t2026-11-26\t100\nG7\tEnglish\t2026-11-22\t100\nG7\tScience\t2026-11-24\t100\nG7\tESS\t2026-11-25\t100\nG7\tMFL\t2026-11-23\t100\nG7\tArabic\t\t100\nG7\tReligion\t\t100\nG8\tMath\t2026-11-26\t100\nG8\tEnglish\t2026-11-22\t100\nG8\tScience\t2026-11-24\t100\nG8\tESS\t2026-11-25\t100\nG8\tMFL\t2026-11-23\t100\nG8\tArabic\t\t100\nG8\tReligion\t\t100\nG9\tMath\t2026-11-26\t100\nG9\tEnglish\t2026-11-22\t100\nG9\tScience\t2026-11-24\t100\nG9\tESS\t2026-11-25\t100\nG9\tMFL\t2026-11-23\t100\nG9\tArabic\t\t100\nG9\tReligion\t\t100\nG10\tMath\t2026-11-22\t100\nG10\tEnglish\t2026-11-29\t100\nG10\tMFL\t2026-11-25\t100\nG10\tArabic\t2026-11-30\t100\nG10\tReligion\t2026-11-30\t100\nG10\tChemistry\t2026-11-24\t100\nG10\tBiology\t2026-11-25\t100\nG10\tPhysics\t2026-11-26\t100\nG10\tWorld History\t2026-11-23\t100\nG10\tASS\t2026-12-01\t100\nG11\tMath\t2026-11-22\t100\nG11\tEnglish\t2026-11-29\t100\nG11\tMFL\t2026-11-25\t100\nG11\tArabic\t2026-11-30\t100\nG11\tChemistry\t2026-11-24\t100\nG11\tBiology\t2026-11-25\t100\nG11\tPhysics\t2026-11-26\t100\nG11\tHistory\t2026-12-01\t100\nG11\tSociology\t2026-11-23\t100\nG12\tMath\t2026-11-22\t100\nG12\tMFL\t2026-11-23\t100\nG12\tArabic\t2026-11-29\t100\nG12\tReligion\t2026-11-29\t100\nG12\tBiology\t2026-11-24\t100\nG12\tPhysics\t2026-11-25\t100\nG12\tPsychology\t2026-11-23\t100\nG12\tArt\t2026-11-23\t100";
-const G68 = { text: '', name: 'Trimester 1 Exam', type: '', term: '', prev: null, busy: false };
+const G68 = { text: '', name: 'Trimester 1 Exam', type: '', term: '', prev: null, busy: false, map: '', noT: false, grp: null };
 const g68On = () => g61On() && GR.sub == 'setup' && GR.D && GR.D.mgr;
 G61X.bulk = { cols: ['Class or grade', 'Subject', 'Date', 'Max'], get: () => G68.text || '', set: v => { G68.text = v; G68.prev = null } };
 const g68Rows = () => (G68.text || '').split(/\r?\n/).map(l => l.split('\t')).filter(c => c.some(x => String(x || '').trim())).map(c => ({ scope: String(c[0] || '').trim(), subject: String(c[1] || '').trim(), date: String(c[2] || '').trim().replace(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/, (m, y, a, b) => y + '-' + a.padStart(2, '0') + '-' + b.padStart(2, '0')), max: String(c[3] || '').trim() }));
-const g68P = () => ({ name: G68.name, type: G68.type || GR.D.cfg.types[0], term: G68.term || GR.D.cfg.term });
+const g68Map = () => { const o = {}; (G68.map || '').split(/\r?\n/).forEach(l => { const m = l.split('='); if (m.length >= 2 && m[0].trim()) o[m[0].trim()] = m.slice(1).join('=').trim() }); return o };
+const g68P = () => ({ name: G68.name, type: G68.type || GR.D.cfg.types[0], term: G68.term || GR.D.cfg.term, map: g68Map(), noTeacher: G68.noT ? 'create' : '' });
 function g68Card() {
   const D = GR.D, c = D.cfg, P = G68.prev, tt = k => t(String(k || ''));
   let h = `<div class="card g68"><h3>${ic('plus')} ${t('Create the term exams for all classes')}</h3><p class="msg">${t('Each line makes the assessment for every class of that grade that has the subject assigned to a teacher (Settings › Teachers › Assignments). Lines that already exist are skipped, so you can run it again safely. Teachers then open it and enter the marks.')}</p>
@@ -9854,21 +9862,59 @@ function g68Card() {
 <label>${t('Term')}<select data-g68f="term">${c.terms.map(x => `<option${x == (G68.term || c.term) ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></label></div>
 <p class="msg">${t('The grade can be G4, a range G4-G9, or one class G4-A. The date looks like 2026-11-22. Leave Max empty for the default.')}</p>
 ${g61Xg('bulk')}
+<details><summary>${t('Subject name mapping')}</summary><p class="msg">${t('One per line: the name in the schedule = the subject(s) in the timetable, separated by commas. MFL and Religion already map to all their groups (MFL/Fre + MFL/Ger...) by themselves.')}</p><textarea data-g68f="map" rows="3" dir="ltr" style="width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--ink)" placeholder="History = World History">${esc(G68.map)}</textarea></details>
+<label class="row" style="gap:8px"><input type="checkbox" data-g68f="noT"${G68.noT ? ' checked' : ''}> ${t('Also create it where no teacher is assigned (the administrator enters the marks)')}</label>
 <div class="row"><button class="b" data-g68a="load">${ic('down')} ${t('Load the Trimester 1 schedule (Nov 2026)')}</button><button class="b" data-g68a="check">${t('Check')}</button>${P && !P.badN && P.add ? `<button class="b pri" data-g68a="go">${ic('check')} ${t('Create')} (${P.add})</button>` : ''}</div>`;
   if (P) {
     h += `<div class="g61s"><span>${t('to create')}: <b>${P.add}</b> ${t('assessments')}</span><span>${t('Skipped')}: <b>${P.skippedN}</b></span><span>${t('Rows with a problem')}: <b>${P.badN}</b></span></div>`;
     if (P.badN) h += `<div class="g61w">${P.bad.map(b => esc(t('Line') + ' ' + b.row + ': ' + t(b.why.split(':')[0]) + (b.why.includes(':') ? ':' + b.why.split(':').slice(1).join(':') : ''))).join('<br>')}</div>`;
-    if (P.skippedN) { const g = {}; P.skipped.forEach(x => { (g[x.why] = g[x.why] || []).push(x.cls + ' · ' + x.subject) }); h += `<details><summary>${t('Skipped')} (${P.skippedN})</summary>${Object.keys(g).map(k => `<p class="msg"><b>${esc(t(k))}</b> (${g[k].length}): ${esc(g[k].slice(0, 40).join(', '))}${g[k].length > 40 ? ' …' : ''}</p>`).join('')}</details>`; }
+    if (P.skippedN) {
+      const g = {}, nt = []; P.skipped.forEach(x => { if (x.noTeacher) nt.push(x); else (g[x.why] = g[x.why] || []).push(x.cls + ' · ' + x.subject) });
+      h += `<details${nt.length ? ' open' : ''}><summary>${t('Skipped')} (${P.skippedN})</summary>${Object.keys(g).map(k => `<p class="msg"><b>${esc(t(k))}</b> (${g[k].length}): ${esc(g[k].slice(0, 40).join(', '))}${g[k].length > 40 ? ' …' : ''}</p>`).join('')}`;
+      if (nt.length) h += `<p class="msg"><b>${t('no teacher assigned')}</b> (${nt.length}) — ${t('Assign a teacher')}:</p><div class="tw" style="max-height:340px;overflow:auto"><table class="g61t"><tr><th>${t('Class')}</th><th>${t('Subject')}</th><th>${t('Teacher')}</th><th></th></tr>${nt.slice(0, 80).map((x, i) => `<tr><td>${esc(x.cls)}</td><td>${esc(x.subject)}</td><td><select id="g68t${i}"><option value="">${t('Choose a teacher')}</option>${D.teachers.map(r => `<option value="${esc(r[0])}">${esc(r[1])}</option>`).join('')}</select></td><td><button class="b" data-g68a="asg" data-i="${i}" data-c="${esc(x.cls)}" data-s="${esc(x.subject)}">${t('Assign')}</button></td></tr>`).join('')}</table></div>`;
+      h += `</details>`;
+    }
     if (P.plan.length) h += `<details><summary>${t('Show the classes')} (${P.plan.length})</summary><div class="tw" style="max-height:300px;overflow:auto"><table class="g61t"><tr><th>${t('Class')}</th><th>${t('Subject')}</th><th>${t('Date')}</th><th class="n">${t('Max')}</th></tr>${P.plan.map(x => `<tr><td>${esc(x.cls)}</td><td>${esc(x.subject)}</td><td dir="ltr">${esc(x.date || '–')}</td><td class="n">${x.max}</td></tr>`).join('')}</table></div></details>`;
   }
   return h + '</div>';
 }
+function g68Groups() {
+  const G = G68.grp;
+  let h = `<div class="card g68"><h3>${ic('users')} ${t('Groups inside a class: religion and 2nd language')}</h3><p class="msg">${t('French / German and Islamic / Christian religion are subjects of their own in the timetable (MFL/Fre, MFL/Ger, Religion/Islamic, Religion/Christian). Each is taken only by the students whose 2nd language or religion matches, and each has its own teacher. This adds the missing subjects and rules; it never changes a rule you already set.')}</p><div class="row"><button class="b" data-g68a="gprev">${t('Check')}</button>${G && !G.done ? `<button class="b pri" data-g68a="gapply">${ic('check')} ${t('Prepare the groups')}</button>` : ''}</div>`;
+  if (G) {
+    h += `<div class="tw"><table class="g61t"><tr><th>${t('Subject')}</th><th>${t('New subject')}</th><th>${t('Stages given a rule')}</th><th class="n">${t('Students')}</th></tr>${G.plan.map(x => `<tr><td>${esc(x.subject)}</td><td>${x.newSubject ? t('Yes') : '–'}</td><td dir="ltr">${esc(x.stageRules.join(', ') || '–')}</td><td class="n">${x.students}</td></tr>`).join('')}</table></div>`;
+    h += `<p class="msg">${t('Students whose 2nd language is not French or German: %1. Students whose religion is not Muslim or Christian: %2. They are in no group until their file is corrected.').replace('%1', G.withoutValue.lang).replace('%2', G.withoutValue.rel)}</p><p class="msg">${t('Then move the teachers of each group to its subject: Settings › Teachers › Assignments (a Religion teacher of Christian students gets Religion/Christian).')}</p>`;
+  }
+  return h + '</div>';
+}
 const _g61s68 = g61Setup;
-g61Setup = function () { return _g61s68() + g68Card() };
+g61Setup = function () { return _g61s68() + g68Card() + g68Groups() };
+/* the teacher's list of what still waits for his marks (his Assessments page, above the picker) */
+function g68Todo() {
+  const L = (GR.D && GR.D.todo) || []; if (!L.length) return '';
+  const st = { due: t('Due: enter the marks'), soon: t('Upcoming'), nodate: t('No date yet') };
+  return `<div class="card g68"><h3>${ic('book')} ${t('Waiting for your marks')} (${L.length})</h3><div class="tw" style="max-height:260px;overflow:auto"><table class="g61t"><tr><th>${t('Class')}</th><th>${t('Subject')}</th><th>${t('Name')}</th><th>${t('Date')}</th><th class="n">${t('Missing')}</th><th>${t('Status')}</th><th></th></tr>${L.map(x => `<tr class="${x.state == 'due' ? 'miss' : ''}"><td>${esc(x.cls)}</td><td>${esc(x.subject)}</td><td>${esc(x.name)}</td><td dir="ltr">${esc(x.date || '–')}</td><td class="n">${x.missing}/${x.total}</td><td>${esc(st[x.state])}</td><td><button class="b" data-g68o="${esc(x.key)}" data-c="${esc(x.cls)}" data-s="${esc(x.subject)}">${t('Open')}</button></td></tr>`).join('')}</table></div></div>`;
+}
+const _g61a68 = g61Ass;
+g61Ass = function () { const h = _g61a68(); return GR.cur ? h : g68Todo() + h };
+document.addEventListener('click', e => {
+  if (!g61On() || GR.sub != 'ass') return; const b = e.target.closest && e.target.closest('[data-g68o]'); if (!b) return;
+  GR.cls = b.dataset.c; GR.subj = b.dataset.s; GR.ass = null; GR.nf = null; GR.cur = b.dataset.g68o; GR.grid = null; GR.edit = {}; GR.dtab = 'marks'; GR.res = { key: '', R: null, busy: false }; render();
+});
 document.addEventListener('click', async e => {
   if (!g68On()) return; const b = e.target.closest && e.target.closest('[data-g68a]'); if (!b) return; const a = b.dataset.g68a;
   try {
     if (a == 'load') { G68.text = G68_SCHED; G68.prev = null; GR.gxn.bulk = 95; render(); return toast(t('Loaded %1 lines from the schedule. Lines without a date (ministry subjects) get their date later.').replace('%1', g68Rows().length)) }
+    if (a == 'gprev') { G68.grp = await srv('api_grGroupsSetup', false); return render() }
+    if (a == 'gapply') {
+      if (!(await UX.ask(t('Prepare the groups'), esc(G68.grp.plan.map(x => x.subject).join(', ')), { yes: t('Yes, create') }))) return;
+      const r = await srv('api_grGroupsSetup', true); G68.grp = r; toast(t('Done: %1 subjects and %2 rules added.').replace('%1', r.added.subjects).replace('%2', r.added.rules)); GR.D = await srv('api_grBoot'); return render()
+    }
+    if (a == 'asg') {
+      const tid = (document.getElementById('g68t' + b.dataset.i) || {}).value; if (!tid) return toast(t('Choose a teacher'), 1);
+      await srv('api_grAssign', b.dataset.c, b.dataset.s, tid, ''); toast(t('Assigned. Check again to see the change.')); GR.D = await srv('api_grBoot');
+      const rw = g68Rows(); if (rw.length) G68.prev = await srv('api_grBulkNew', rw, g68P(), false); return render()
+    }
     const rows = g68Rows(); if (!rows.length) return toast(t('Nothing to check: add lines first.'), 1);
     if (a == 'check') { G68.prev = await srv('api_grBulkNew', rows, g68P(), false); return render() }
     if (a == 'go') {
@@ -9878,8 +9924,8 @@ document.addEventListener('click', async e => {
     }
   } catch (x) { }
 });
-document.addEventListener('change', e => { if (!g68On()) return; const d = e.target.dataset || {}; if (d.g68f) { G68[d.g68f] = e.target.value; G68.prev = null } });
-document.addEventListener('input', e => { if (!g68On()) return; const d = e.target.dataset || {}; if (d.g68f == 'name') { G68.name = e.target.value; G68.prev = null } });
+document.addEventListener('change', e => { if (!g68On()) return; const d = e.target.dataset || {}; if (d.g68f) { G68[d.g68f] = d.g68f == 'noT' ? e.target.checked : e.target.value; G68.prev = null; if (d.g68f == 'noT') render() } });
+document.addEventListener('input', e => { if (!g68On()) return; const d = e.target.dataset || {}; if (d.g68f == 'name') { G68.name = e.target.value; G68.prev = null } if (d.g68f == 'map') { G68.map = e.target.value; G68.prev = null } });
 </script>
 
 <script>
